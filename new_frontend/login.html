@@ -20,19 +20,17 @@
     <!--<form action="">-->
     <h1>Login</h1>
     <div class = "input-box">
-      <input type = "text" placeholder = "Username" required>
+      <input id = "enterUsername" type = "text" placeholder = "Username" required>
       <i class='bx bxs-user'></i>
     </div>
     <div class = "input-box">
-      <input type = "password" placeholder = "Password" required>
-      <i class='bx bxs-lock-alt' ></i>
+      <input id = "enterPassword" type = "password" placeholder = "Password" required>
+      <i class='bx bxs-lock-alt'></i>
     </div>
 
-    <a href="projects.html">
-      <button type="submit" class="btn">Login</button>
-    </a>
+    <button id = "login" type="submit" class="btn">Login</button>
     <!--</form>-->
   </div>
-  <script src="script.js"></script>
+  <script type="module" src="firebase_database.js"></script>
 </body>
 </html>
