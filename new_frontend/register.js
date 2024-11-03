@@ -24,12 +24,12 @@ from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js"
 const db = getDatabase(app);
 
 document.addEventListener("DOMContentLoaded", function() {
-    var insertBtn = document.querySelector("#login");
+    var insertBtn = document.querySelector("#register");
     insertBtn.addEventListener("click", function(event) {
         event.preventDefault(); // Prevent default behavior of the button
         loginData().then(() => {
         // Navigate to projects.html after successful login
-        window.location.href = "projects.html";
+        window.location.href = "login.html";
         }).catch(error => {
             console.error("Login failed:", error);
         });
@@ -37,12 +37,14 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 function loginData() {
+    var email = document.querySelector("#enterEmail"); 
     var username = document.querySelector("#enterUsername");
-    var password = document.querySelector("#enterPassword"); 
+    var password = document.querySelector("#enterPassword");
 
     return set(ref(db, "People/" + username.value), {
         Username: enterUsername.value,
         Password: enterPassword.value,
+        Email: enterEmail.value,
     })
     .then(()=>{
         alert("Data added Successfully!")
