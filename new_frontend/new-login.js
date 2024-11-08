@@ -50,8 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     password: password,
                 };
                 showMessage('Account Created Successfully!', 'account-creation-message');
-                const docRef = doc(db, "users", user.uid);
-                setDoc(docRef, userData).then(() => {
+                const usersRef = doc(db, "users", user.uid);
+                setDoc(usersRef, userData).then(() => {
                     showForm(loginForm, registerForm);
                 })
                 .catch((error) => {
@@ -62,11 +62,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const errorCode = error.code;
                 if (errorCode === 'auth/email-already-in-use') {
                     showMessage('Email already Exists', 'account-creation-message');
-                }
-                else {
+                } else {
                     showMessage('Unable to Create User', 'account-creation-message');
-                }
-            });   
+                }           
+            });
         }
     });
 });

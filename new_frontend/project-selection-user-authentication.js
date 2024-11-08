@@ -20,14 +20,14 @@ const db = getFirestore(app);
 onAuthStateChanged(auth, (user) => {
     const loggedInUserId = localStorage.getItem('loggedInUserId');
     if (loggedInUserId) {
-        const docRef = doc(db, "users", loggedInUserId);
-        getDoc(docRef).then((docSnap) => {
-            if(docSnap.exists()) {
-                const userData = docSnap.data;
-                document.getElementById('logged-in-username').innerText = userData.username;
-            } else {
-                console.log("No document found matching id");
-            }
+        const usersRef = doc(db, "users", loggedInUserId);
+        getDoc(usersRef).then((docSnap) => {
+        if(docSnap.exists()) {
+            const userData = docSnap.data();
+            document.getElementById('logged-in-username').innerText = userData.username;
+        } else {
+            console.log("No document found matching id");
+        }
         })
         .catch ((error) => {
             console.log("Error getting document");
@@ -35,4 +35,4 @@ onAuthStateChanged(auth, (user) => {
     } else {
         console.log("UserId not found in local storage");
     }
-})
+});
