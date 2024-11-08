@@ -13,27 +13,54 @@ const firebaseConfig = {
     measurementId: "G-7DMVG3X5Y6"
 };
 
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const loginForm = document.getElementById('loginForm');
+const registerForm = document.getElementById('registerForm');
+
+document.addEventListener('DOMContentLoaded', () => {
+    const signupForm = document.getElementById('signup-form');
+    signupForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        if (registerForm.classList.contains('visible')) {
+            const email = signupForm['enterEmail'].value;
+            const password = signupForm['enterPassword'].value;
+
+            createUserWithEmailAndPassword(auth, email, password).then(cred => {
+                showForm(loginForm, registerForm);
+            });
+        }
+    });
+});
+
+const logout = document.querySelector("#logout");
+logout.addEventListener("click", (e) => {
+    e.preventDefault();
+    auth.signOut().then(() => {
+        console.log("User has logged out");
+    })
+})
+
 document.addEventListener('DOMContentLoaded', () => {
     const toggleLinks = document.querySelectorAll('.toggle-form');
     
     toggleLinks.forEach(link => {
         link.addEventListener('click', (event) => {
             event.preventDefault();
-            const loginForm = document.getElementById('loginForm');
-            const registerForm = document.getElementById('registerForm');
         
             if (loginForm.classList.contains('visible')) {
-                loginForm.classList.remove('visible');
-                loginForm.classList.add('hidden');
-                registerForm.classList.remove('hidden');
-                registerForm.classList.add('visible');
+                showForm(registerForm, loginForm);
             } else {
-                registerForm.classList.remove('visible');
-                registerForm.classList.add('hidden');
-                loginForm.classList.remove('hidden');
-                loginForm.classList.add('visible');
+                showForm(loginForm, registerForm);
             }
         });
     });
 });
 
+function showForm(formToShow, formToHide) {
+    formToHide.classList.remove('visible');
+    formToHide.classList.add('hidden');
+    formToShow.classList.remove('hidden');
+    formToShow.classList.add('visible');
+}
