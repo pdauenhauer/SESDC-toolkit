@@ -1,5 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
-import { getAuth, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
 import { getFirestore } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
 // Initialize Firebase
@@ -17,22 +17,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-//import {getDatabase, set, get, update, remove, ref, child}
-//from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js"
-
-const signupForm = document.querySelector("#signup-form");
-signupForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-
-    // get user info
-    const email = signupForm['enterEmail'].value;
-    const password = signupForm['enterPassword'].value;
-
-    createUserWithEmailAndPassword(auth, email, password).then(cred => {
-        window.location.href = "login.html";
-    });
-})
-
 const logout = document.querySelector("#logout");
 logout.addEventListener("click", (e) => {
     e.preventDefault();
@@ -41,13 +25,24 @@ logout.addEventListener("click", (e) => {
     })
 })
 
+const loginForm = document.querySelector("#login-form");
+loginForm.addEventListener('submit', (e) => {
+    e.preventDefault();
 
+    const email = document.getElementById("enterEmail").value;
+    const password = document.getElementById("enterPassword").value;
 
+    console.log(e);
 
+    //signInWithEmailAndPassword(auth, email, password).then(cred => {
+        //console.log(cred.user);
+        //window.location.href = "projects.html";
+    //})
+})
 
 /*
 document.addEventListener("DOMContentLoaded", function() {
-    var insertBtn = document.querySelector("#register");
+    var insertBtn = document.querySelector("#login");
     insertBtn.addEventListener("click", function(event) {
         event.preventDefault(); // Prevent default behavior of the button
         loginData().then(() => {
@@ -58,7 +53,9 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 });
+*/
 
+/*
 function loginData() {
     var email = document.querySelector("#enterEmail"); 
     var username = document.querySelector("#enterUsername");
