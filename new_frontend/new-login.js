@@ -19,6 +19,13 @@ const db = getFirestore(app);
 const loginForm = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
 
+function showForm(formToShow, formToHide) {
+    formToHide.classList.remove('visible');
+    formToHide.classList.add('hidden');
+    formToShow.classList.remove('hidden');
+    formToShow.classList.add('visible');
+}
+
 function showMessage(message, divId) {
     var messageDiv = document.getElementById(divId);
     messageDiv.textContent = message;
@@ -53,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .catch((error) => {
                 const errorCode = error.code;
-                if (errorCode =='auth/email-already-in-use') {
+                if (errorCode === 'auth/email-already-in-use') {
                     showMessage('Email already Exists', 'account-creation-message');
                 }
                 else {
@@ -63,6 +70,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+const signIn = document.getElementById('login-form');
+signIn.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = signIn['loginEmail'].value;
+    const password = signIn['loginPassword'].value;
+
+    signInWithEmailAndPassword(auth, email, password).then((cred) => {
+        showMessage('Login was Successful!', 'account-login-message');
+        const user = cred.user;
+        localStorage.setItem('loggedInUserId', user.uid);
+        window.location.href = "project-selection.html";
+    })
+    .catch((error) => {
+        const errorCode = error.code;
+        if (errorCode === 'auth/invalid-credential') {
+            showMessage('Incorrect Email or Password', 'account-login-message');
+        } else {
+            showMessage('Account does not Exist', 'account-login-message');
+        }
+    })
+})
 
 const logout = document.querySelector("#logout");
 logout.addEventListener("click", (e) => {
@@ -87,10 +116,3 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
-
-function showForm(formToShow, formToHide) {
-    formToHide.classList.remove('visible');
-    formToHide.classList.add('hidden');
-    formToShow.classList.remove('hidden');
-    formToShow.classList.add('visible');
-}

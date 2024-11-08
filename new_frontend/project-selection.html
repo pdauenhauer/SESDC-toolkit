@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Dashboard - Microgrid Design Tool</title>
-    <link href="projects.css" rel="stylesheet" type="text/css"/>
+    <link href="project-selection.css" rel="stylesheet" type="text/css"/>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
 <body>
@@ -28,13 +28,10 @@
     </div>
     <h1 class="main-title">Project Selection</h1>
     </div>
-    <script src="projects.js"></script>
 
     <header class="header">
         <h1>My Projects</h1>
-        <div class="user-info">
-            <span>Welcome, User</span>
-        </div>
+        <div class="user-info">Hello, <span id="logged-in-username"></span></div>
     </header>
 
     <main class="main-content">
@@ -72,5 +69,10 @@
             </form>
         </div>
     </div>
+    <script src="project-selection-display.js" defer></script>
+    <script type="module" src="project-selection-user-authentication.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore-compat.js"></script>
 </body>
 </html>
