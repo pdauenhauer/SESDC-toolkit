@@ -235,7 +235,18 @@ a.active {
   opacity: 0;
 }
   
-.visible {
+.messageDiv.visible {
   display: block;
   opacity: 1;
+}
+
+.messageDiv {
+  background-color: #008000;
+  color: white;
+  padding: 10px 20px;
+  margin: 10px;
+  border-radius: 5px;
+  font-size: 1rem;
+  opacity: 1;
+  animation: fadeOut 5s forwards;
 }
