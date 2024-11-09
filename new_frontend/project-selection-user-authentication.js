@@ -17,6 +17,12 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+window.addEventListener('load', (event) => {
+    if (localStorage.getItem('loggedInUserId') === null) {
+        window.location.href = "new-login.html";
+    }
+});
+
 onAuthStateChanged(auth, (user) => {
     const loggedInUserId = localStorage.getItem('loggedInUserId');
     if (loggedInUserId) {
