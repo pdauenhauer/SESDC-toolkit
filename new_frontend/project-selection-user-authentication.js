@@ -1,5 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
-import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
 import { getFirestore, getDoc, doc } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
 // Initialize Firebase
@@ -36,3 +36,14 @@ onAuthStateChanged(auth, (user) => {
         console.log("UserId not found in local storage");
     }
 });
+
+const logoutButton = document.getElementById('logout');
+logoutButton.addEventListener("click", () => {
+    localStorage.removeItem('loggedInUserId');
+    signOut(auth).then(() => {
+        window.location.href = 'new-login.html';
+    })
+    .catch((error) => {
+        console.error('Error Signing Out', error);
+    })
+})
