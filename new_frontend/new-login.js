@@ -41,6 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const email = signupForm['enterEmail'].value;
             const password = signupForm['enterPassword'].value;
             const username = signupForm['enterUsername'].value;
+            const numprojects = 0;
+
 
             createUserWithEmailAndPassword(auth, email, password).then(cred => {
                 const user = cred.user;
@@ -48,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     username: username,
                     email: email,
                     password: password,
+                    numprojects: numprojects,
                 };
                 showMessage('Account Created Successfully!', 'account-creation-message');
                 const usersRef = doc(db, "users", user.uid);
