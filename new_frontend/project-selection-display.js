@@ -1,6 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
 //import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
-import { getFirestore, getDoc, doc, FieldValue, setDoc, arrayUnion, collection } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+import { getFirestore, getDoc, doc, increment, setDoc, arrayUnion, collection, updateDoc } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
 // Initialize Firebase
 const firebaseConfig = {
@@ -24,24 +24,31 @@ document.addEventListener('DOMContentLoaded', function() {
 let projects = [,
 ];
 
-export function openModal() {
+document.getElementById('add-project').addEventListener('click', () => {
+    openModal();
+})
+
+function openModal() {
     document.getElementById('addProjectModal').classList.add('active');
 }
 
+document.getElementById('closeModal').addEventListener('click', () => {
+    closeModal();
+})
 
 function closeModal() {
     document.getElementById('addProjectModal').classList.remove('active');
 }
 
-async function handleAddProject(event) {
+document.getElementById('addProjectForm').addEventListener('submit', async (event) => {
     event.preventDefault();
 
     const userId = localStorage.getItem('loggedInUserId');
 
     var usersRef = doc(db, 'users', userId);
 
-    await updateDoc(usersRef, {
-        numprojects: FieldValue.increment(1)
+    updateDoc(usersRef, {
+        numprojects: increment(1)
     });
 
     const userDoc = await getDoc(usersRef);
@@ -58,18 +65,18 @@ async function handleAddProject(event) {
         id: projectId, 
     };
 
-    const projectRef = doc(collection(db, 'users', userId, 'projects'), newProject.id);
+    const projectRef = doc(db, 'users', userId, 'projects', newProject.id.toString());
     await setDoc(projectRef, newProject);
 
     await updateDoc(usersRef, {
-        projectids: arrayUnion(newProject.id),
+        projectids: arrayUnion(newProject.id.toString()),
     });
 
     projects.push(newProject);
     renderProjects();
     closeModal();
     event.target.reset();
-}
+})
 
 function renderProjects() {
     const grid = document.getElementById('projectsGrid');

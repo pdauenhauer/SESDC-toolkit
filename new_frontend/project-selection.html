@@ -37,7 +37,7 @@
     <main class="main-content">
         <div class="projects-header">
             <h2>Your Projects</h2>
-            <button class="add-project-btn" onclick="openModal()">
+            <button class="add-project-btn" id="add-project">
                 <i class='bx bx-plus'></i>
                 Add New Project
             </button>
@@ -54,9 +54,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Add New Project</h2>
-                <button class="close-modal" onclick="closeModal()">&times;</button>
+                <button class="close-modal" id="closeModal">&times;</button>
             </div>
-            <form id="addProjectForm" onsubmit="handleAddProject(event)">
+            <form id="addProjectForm">
                 <div class="form-group">
                     <label for="projectName">Project Name</label>
                     <input type="text" id="projectName" required>
