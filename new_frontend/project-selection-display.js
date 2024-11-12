@@ -47,7 +47,7 @@ document.getElementById('addProjectForm').addEventListener('submit', async (even
 
     var usersRef = doc(db, 'users', userId);
 
-    updateDoc(usersRef, {
+    await updateDoc(usersRef, {
         numprojects: increment(1)
     });
 
