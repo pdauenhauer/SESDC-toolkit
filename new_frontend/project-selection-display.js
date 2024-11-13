@@ -102,6 +102,7 @@ function renderProjects() {
             </div>    
         </div>
     `).join('');
+    attachDeleteProjectListeners();
 }
 
 async function loadProjects() {
@@ -127,4 +128,37 @@ async function loadProjects() {
     } catch (error) {
         console.error('Error loading projects:', error);
     }
+}
+
+
+async function attachDeleteProjectListeners() {
+    const deleteButtons = document.querySelectorAll('.delete-project-button');
+
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', async function() {
+            const projectCard = this.closest('.project-card');
+            const projectId = projectCard.getAttribute('data-project-id');
+
+            const userId = localStorage.getItem('loggedInUserId');
+
+            try {
+                const projectRef = doc(db, 'users', userId, 'projects', projectId);
+                await deleteDoc(projectRef);
+                
+                const userRef = doc(db, 'users', userId);
+                await updateDoc(userRef, {
+                    projectids: arrayRemove(projectId),
+                    numprojects: increment(-1),
+                });
+
+                const projectIndex = projects.findIndex(project => project.id.toString() === projectId);
+                if (projectIndex !== -1) {
+                    projects.splice(projectIndex, 1);
+                }
+                projectCard.remove();
+            } catch (error) {
+                console.error('Error deleting project:', error);
+            }
+        })
+    })
 }
