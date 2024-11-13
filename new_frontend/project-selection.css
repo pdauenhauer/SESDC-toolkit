@@ -318,10 +318,23 @@ nav {
 .project-header {
   display: flex;
   align-items: center;
-  gap: 225px;
+  gap: 245px;
 }
 
-.project-header #delete-project {
+.project-card[data-project-id] .project-header .bx.bxs-trash.delete-project {
   font-size: 22px;
   transform: translateY(-5px); 
+}
+
+.delete-project-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.delete-project-button:hover {
+  opacity: 0.8;
 }

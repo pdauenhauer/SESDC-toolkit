@@ -1,6 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
-//import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
-import { getFirestore, getDoc, doc, increment, setDoc, arrayUnion, collection, updateDoc } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+import { getFirestore, getDoc, deleteDoc,doc, increment, setDoc, arrayUnion, arrayRemove, collection, updateDoc } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
 // Initialize Firebase
 const firebaseConfig = {
@@ -14,10 +13,10 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-//const auth = getAuth(app);
 const db = getFirestore(app);
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadProjects();
     renderProjects();
 });
 
@@ -78,8 +77,6 @@ document.getElementById('addProjectForm').addEventListener('submit', async (even
     event.target.reset();
 })
 
-
-
 function renderProjects() {
     const grid = document.getElementById('projectsGrid');
     if (!grid) {
@@ -87,10 +84,12 @@ function renderProjects() {
         return;
     }
     grid.innerHTML = projects.map(project => `
-        <div class="project-card">
+        <div class="project-card" data-project-id="${project.id}">
             <div class="project-header">
                 <h3>${project.name}</h3>
-                <i id="delete-project" class='bx bxs-trash' style='color:#ff0303'></i>
+                <button class='delete-project-button'>
+                    <i class='bx bxs-trash delete-project' style='color:#ff0303'></i>
+                </button>
             </div>
             <p>${project.description}</p>
             <div class="project-meta">
@@ -103,4 +102,29 @@ function renderProjects() {
             </div>    
         </div>
     `).join('');
+}
+
+async function loadProjects() {
+    const userId = localStorage.getItem('loggedInUserId');
+    try {
+        const userDoc = await getDoc(doc(db, 'users', userId));
+        const projectIds = userDoc.data().projectids;
+        
+        projects = [];
+
+        for (const projectId of projectIds) {
+            const projectDoc = await getDoc(doc(db, 'users', userId, 'projects', projectId));
+            if (projectDoc.exists()) {
+                const data = projectDoc.data();
+                projects.push({
+                    id: projectId,
+                    name: data.name,
+                    description: data.description,
+                    created: data.created
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error loading projects:', error);
+    }
 }
