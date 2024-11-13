@@ -78,6 +78,8 @@ document.getElementById('addProjectForm').addEventListener('submit', async (even
     event.target.reset();
 })
 
+
+
 function renderProjects() {
     const grid = document.getElementById('projectsGrid');
     if (!grid) {
@@ -86,7 +88,10 @@ function renderProjects() {
     }
     grid.innerHTML = projects.map(project => `
         <div class="project-card">
-            <h3>${project.name}</h3>
+            <div class="project-header">
+                <h3>${project.name}</h3>
+                <i id="delete-project" class='bx bxs-trash' style='color:#ff0303'></i>
+            </div>
             <p>${project.description}</p>
             <div class="project-meta">
                 <span>Created: ${project.created}</span>
