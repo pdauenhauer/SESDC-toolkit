@@ -18,6 +18,33 @@ const db = getFirestore(app);
 document.addEventListener('DOMContentLoaded', async function() {
     await loadProjects();
     renderProjects();
+
+    document.getElementById('inputsForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+    
+        const projectId = document.getElementById('inputsModal').getAttribute('data-project-id');
+        const userId = localStorage.getItem('loggedInUserId');
+    
+        const inputs = {
+            electricalLoad: document.getElementById('electrical-load').value,
+            solarArraySize: document.getElementById('solar-array-size').value,
+        }
+    
+        try {
+            const projectRef = doc(db, 'users', userId, 'projects', projectId);
+            await setDoc(projectRef, {
+                inputs: inputs,
+            });
+    
+            closeInputsModal();
+        } catch (error) {
+            console.error('Error saving inputs:', error);
+        }
+    })
+    
+    document.getElementById('closeInputsModal').addEventListener('click', () => {
+        closeInputsModal();
+    })
 });
 
 let projects = [,
@@ -96,13 +123,12 @@ function renderProjects() {
                 <span>Created: ${project.created}</span>
             </div>
             <div class="simulation-btn">
-                <a href="simulation-inputs.html">
-                <button class="simulation">Simulate</button>
-                </a>
+                <button id="simulationButton" class="simulation">Add Inputs</button>
             </div>    
         </div>
     `).join('');
     attachDeleteProjectListeners();
+    attachSimulationListeners();
 }
 
 async function loadProjects() {
@@ -161,4 +187,27 @@ async function attachDeleteProjectListeners() {
             }
         })
     })
+}
+
+function openInputsModal(projectId) {
+    const modal = document.getElementById('inputsModal');
+
+    modal.classList.add('active');
+    modal.setAttribute('data-project-id', projectId);
+}
+
+function closeInputsModal() {
+    const modal = document.getElementById('inputsModal');
+    modal.classList.remove('active');
+}
+
+function attachSimulationListeners() {
+    const simulationButtons = document.querySelectorAll('.simulation');
+    simulationButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const projectCard = this.closest('.project-card');
+            const projectId = projectCard.getAttribute('data-project-id');
+            openInputsModal(projectId);
+        });
+    });
 }
