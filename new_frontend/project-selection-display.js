@@ -121,7 +121,7 @@ function renderProjects() {
             <div class="project-header">
                 <h3>${project.name}</h3>
                 <button class='share-project-button'>
-                    <box-icon name='paper-plane' type='solid' color='#31b9a5' ></box-icon>
+                    <i class='bx bxs-paper-plane share-project' style='color:#47d0d6'></i>
                 </button>
                 <button class='delete-project-button'>
                     <i class='bx bxs-trash delete-project' style='color:#ff0303'></i>
@@ -137,6 +137,7 @@ function renderProjects() {
         </div>
     `).join('');
     attachDeleteProjectListeners();
+    attachShareProjectListeners();
     attachSimulationListeners();
 }
 
@@ -147,6 +148,10 @@ async function loadProjects() {
         const projectIds = userDoc.data().projectids;
         
         projects = [];
+
+        if (!projectIds || projectIds.length === 0) {
+            return;
+        }
 
         for (const projectId of projectIds) {
             const projectDoc = await getDoc(doc(db, 'users', userId, 'projects', projectId));
@@ -233,6 +238,23 @@ function attachSimulationListeners() {
             openInputsModal(projectId);
         });
     });
+}
+
+function attachShareProjectListeners() {
+    const shareButtons = document.querySelectorAll('.share-project-button');
+    shareButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const projectCard = this.closest('.project-card');
+            const projectId = projectCard.getAttribute('data-project-id');
+            openShareProjectModal(projectId);
+        });
+    });
+}
+
+function openShareProjectModal(projectId) {
+    const modal = document.getElementById('shareProjectModal');
+    modal.classList.add('active');
+    modal.setAttribute('data-project-id', projectId);
 }
 
 function openDeleteConfirmationModal(projectId) {
