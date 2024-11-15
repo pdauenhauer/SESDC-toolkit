@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     
         try {
             const projectRef = doc(db, 'users', userId, 'projects', projectId);
-            await setDoc(projectRef, {
+            await updateDoc(projectRef, {
                 inputs: inputs,
             });
     
