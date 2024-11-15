@@ -178,13 +178,16 @@ async function attachDeleteProjectListeners() {
         const projectId = modal.getAttribute('data-project-id');
         
         try {
+            const userRef = doc(db, 'users', userId);
+            const userDoc = await getDoc(userRef);
+            const currentNumProjects = userDoc.data().numprojects;
+
             const projectRef = doc(db, 'users', userId, 'projects', projectId);
             await deleteDoc(projectRef);
                 
-            const userRef = doc(db, 'users', userId);
             await updateDoc(userRef, {
                 projectids: arrayRemove(projectId),
-                numprojects: increment(-1),
+                numprojects: currentNumProjects - 1
             });
 
             const projectIndex = projects.findIndex(project => project.id.toString() === projectId);
