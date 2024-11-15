@@ -82,13 +82,19 @@ document.getElementById('addProjectForm').addEventListener('submit', async (even
     const projectId = userDoc.data().numprojects;
     const name = document.getElementById('projectName').value;
     const description = document.getElementById('projectDescription').value;
+    const projectOwner = userId;
+    const projectEditors = [userId];
+    const projectViewers = [];
     
 
     const newProject = {
         name,
         description,
         created: new Date().toISOString().split('T')[0],
-        id: projectId, 
+        id: projectId,
+        projectOwner,
+        projectEditors,
+        projectViewers 
     };
 
     const projectRef = doc(db, 'users', userId, 'projects', newProject.id.toString());
@@ -114,6 +120,9 @@ function renderProjects() {
         <div class="project-card" data-project-id="${project.id}">
             <div class="project-header">
                 <h3>${project.name}</h3>
+                <button class='share-project-button'>
+                    <box-icon name='paper-plane' type='solid' color='#31b9a5' ></box-icon>
+                </button>
                 <button class='delete-project-button'>
                     <i class='bx bxs-trash delete-project' style='color:#ff0303'></i>
                 </button>
