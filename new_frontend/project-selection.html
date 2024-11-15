@@ -113,9 +113,16 @@
                         <p>Enter the email address of the person you want to share the project with:</p>
                         <input type="email" id="shareEmail" required>
                     </div>
-                    <div class="form-group">
-                        <p>Change Roles</p>
+                    <div class="role-select">
+                        <p>User Role</p>
+                        <select id="roleSelect" name="roleSelect">
+                            <option value="" disabled selected>Select Role</option>
+                            <option value="owner">Owner</option>
+                            <option value="editor">Editor</option>
+                            <option value="viewer">Viewer</option>
+                        </select>
                     </div>
+                    <button type="submit" class="share-submit-btn">Share Project</button>
                 </form>
             </div>
         </div>

@@ -267,3 +267,12 @@ function closeDeleteConfirmationModal() {
     const modal = document.getElementById('deleteConfirmationModal');
     modal.classList.remove('active');
 }
+
+function closeShareProjectModal() {
+    const modal = document.getElementById('shareProjectModal');
+    modal.classList.remove('active');
+}
+
+document.getElementById('closeShareProjectModal').addEventListener('click', () => {
+    closeShareProjectModal();
+})
