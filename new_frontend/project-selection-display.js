@@ -164,28 +164,39 @@ async function attachDeleteProjectListeners() {
         button.addEventListener('click', async function() {
             const projectCard = this.closest('.project-card');
             const projectId = projectCard.getAttribute('data-project-id');
+            openDeleteConfirmationModal(projectId);
+        });
+    });
 
-            const userId = localStorage.getItem('loggedInUserId');
+    document.getElementById('cancelDelete').addEventListener('click', () => {
+        closeDeleteConfirmationModal();
+    })
 
-            try {
-                const projectRef = doc(db, 'users', userId, 'projects', projectId);
-                await deleteDoc(projectRef);
+    document.getElementById('confirmDelete').addEventListener('click', async function() {
+        const modal = document.getElementById('deleteConfirmationModal');
+        const userId = localStorage.getItem('loggedInUserId');
+        const projectId = modal.getAttribute('data-project-id');
+        
+        try {
+            const projectRef = doc(db, 'users', userId, 'projects', projectId);
+            await deleteDoc(projectRef);
                 
-                const userRef = doc(db, 'users', userId);
-                await updateDoc(userRef, {
-                    projectids: arrayRemove(projectId),
-                    numprojects: increment(-1),
-                });
+            const userRef = doc(db, 'users', userId);
+            await updateDoc(userRef, {
+                projectids: arrayRemove(projectId),
+                numprojects: increment(-1),
+            });
 
-                const projectIndex = projects.findIndex(project => project.id.toString() === projectId);
-                if (projectIndex !== -1) {
-                    projects.splice(projectIndex, 1);
-                }
-                projectCard.remove();
-            } catch (error) {
-                console.error('Error deleting project:', error);
+            const projectIndex = projects.findIndex(project => project.id.toString() === projectId);
+            if (projectIndex !== -1) {
+                projects.splice(projectIndex, 1);
             }
-        })
+            
+            document.querySelector('.project-card[data-project-id="' + projectId + '"]').remove();
+            closeDeleteConfirmationModal();
+        } catch (error) {
+            console.error('Error deleting project:', error);
+        }
     })
 }
 
@@ -210,4 +221,15 @@ function attachSimulationListeners() {
             openInputsModal(projectId);
         });
     });
+}
+
+function openDeleteConfirmationModal(projectId) {
+    const modal = document.getElementById('deleteConfirmationModal');
+    modal.classList.add('active');
+    modal.setAttribute('data-project-id', projectId);
+}
+
+function closeDeleteConfirmationModal() {
+    const modal = document.getElementById('deleteConfirmationModal');
+    modal.classList.remove('active');
 }
