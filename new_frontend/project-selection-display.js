@@ -1,5 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
-import { getFirestore, getDoc, deleteDoc,doc, increment, setDoc, arrayUnion, arrayRemove, collection, updateDoc } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+import { getFirestore, getDoc, deleteDoc,doc, increment, setDoc, arrayUnion, arrayRemove, collection, updateDoc, where, query, getDocs } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
 // Initialize Firebase
 const firebaseConfig = {
@@ -83,7 +83,7 @@ document.getElementById('addProjectForm').addEventListener('submit', async (even
     const name = document.getElementById('projectName').value;
     const description = document.getElementById('projectDescription').value;
     const projectOwner = userId;
-    const projectEditors = [userId];
+    const projectEditors = [];
     const projectViewers = [];
     
 
@@ -275,4 +275,50 @@ function closeShareProjectModal() {
 
 document.getElementById('closeShareProjectModal').addEventListener('click', () => {
     closeShareProjectModal();
+})
+
+document.getElementById('shareProjectForm').addEventListener('submit', async(e) => {
+    e.preventDefault();
+    const projectId = document.getElementById('shareProjectModal').getAttribute('data-project-id');
+    const userId = localStorage.getItem('loggedInUserId');
+    const email = document.getElementById('shareEmail').value;
+    const projectRole = document.getElementById('roleSelect').value;
+    let isAlreadyShared = false;
+    
+    try {
+        const usersRef = collection(db, 'users');
+        const emailQuery = query(usersRef, where('email', '==', email));
+        const querySnapshot = await getDocs(emailQuery);
+
+        if (querySnapshot.empty) {
+            throw new Error('User with this email is not found');
+        }
+        
+        if (querySnapshot.docs[0].id === userId) {
+            throw new Error('You cannot share a project with yourself');
+        }
+
+        const sharedUserId = querySnapshot.docs[0].id;
+
+        const projectRef = doc(db, 'users', userId, 'projects', projectId);
+        if (projectRole === 'owner') {
+            await updateDoc(projectRef, {
+                projectOwner: sharedUserId,
+                projectEditors: arrayUnion(userId),
+            });
+        } else if (projectRole === 'editor') {
+            await updateDoc(projectRef, {
+                projectEditors: arrayUnion(sharedUserId),
+            });
+        } else if (projectRole === 'viewer') {
+            await updateDoc(projectRef, {
+                projectViewers: arrayUnion(sharedUserId),
+            });
+        }
+
+        closeShareProjectModal();
+        console.log('Project shared successfully');
+    } catch (error) {
+        console.error('Error sharing project:', error);
+    }
 })
