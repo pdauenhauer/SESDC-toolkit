@@ -86,12 +86,12 @@ document.getElementById('addProjectForm').addEventListener('submit', async (even
     const projectEditors = [];
     const projectViewers = [];
     
-
     const newProject = {
         name,
         description,
         created: new Date().toISOString().split('T')[0],
         id: projectId,
+        isShared: false,
         projectOwner,
         projectEditors,
         projectViewers 
@@ -283,7 +283,6 @@ document.getElementById('shareProjectForm').addEventListener('submit', async(e) 
     const userId = localStorage.getItem('loggedInUserId');
     const email = document.getElementById('shareEmail').value;
     const projectRole = document.getElementById('roleSelect').value;
-    let isAlreadyShared = false;
     
     try {
         const usersRef = collection(db, 'users');
@@ -300,25 +299,80 @@ document.getElementById('shareProjectForm').addEventListener('submit', async(e) 
 
         const sharedUserId = querySnapshot.docs[0].id;
 
-        const projectRef = doc(db, 'users', userId, 'projects', projectId);
+        const originalProjectRef = doc(db, 'users', userId, 'projects', projectId);
+        const originalProjectDoc = await getDoc(originalProjectRef);
+        const originalProjectData = originalProjectDoc.data();
+
+        const isEditor = originalProjectData.projectEditors.includes(sharedUserId);
+        const isViewer = originalProjectData.projectViewers.includes(sharedUserId);
+
+        const sharedProjectRef = doc(db, 'users', sharedUserId, 'projects', projectId);
+
+        await setDoc(sharedProjectRef, {
+            ...originalProjectData,
+            isShared: true,
+        });
+        
+        let updateData = {};
         if (projectRole === 'owner') {
-            await updateDoc(projectRef, {
+            updateData = {
                 projectOwner: sharedUserId,
                 projectEditors: arrayUnion(userId),
-            });
-        } else if (projectRole === 'editor') {
-            await updateDoc(projectRef, {
-                projectEditors: arrayUnion(sharedUserId),
-            });
-        } else if (projectRole === 'viewer') {
-            await updateDoc(projectRef, {
-                projectViewers: arrayUnion(sharedUserId),
-            });
+            }
+        }
+        
+        if (projectRole === 'editor' && isEditor) {
+            throw new Error('That user is already an editor of this project');
+        } else {
+            updateData.projectEditors = arrayUnion(sharedUserId);
+        } 
+        
+        if (projectRole === 'viewer' && isViewer) {
+            throw new Error('That user is already a viewer of this project');
+        } else {
+            updateData.projectViewers = arrayUnion(sharedUserId);
         }
 
+        await updateDoc(originalProjectRef, {
+            ...updateData,
+            isShared: true,
+        });
+
+        await setDoc(sharedProjectRef, {
+            ...originalProjectData,
+            ...updateData,
+            isShared: true,
+        });
+
+        await updateDoc(doc(db, 'users', sharedUserId), {
+            projectids: arrayUnion(projectId)
+        });
+        
         closeShareProjectModal();
         console.log('Project shared successfully');
     } catch (error) {
         console.error('Error sharing project:', error);
     }
 })
+
+async function checkUserProjectRole(projectId) {
+    const userId = localStorage.getItem('loggedInUserId');
+    const projectRef = doc(db, 'users', userId, 'projects', projectId);
+    const projectDoc = await getDoc(projectRef);
+    
+    if (projectDoc.exists()) {
+        const projectData = projectDoc.data();
+        const isEditor = projectData.projectEditors.includes(userId);
+        const isViewer = projectData.projectViewers.includes(userId);
+        const isOwner = projectData.projectOwner === userId;
+
+        if (isOwner) {
+            return isOwner;
+        } else if (isEditor) {
+            return isEditor;
+        } else if (isViewer) {
+            return isViewer;
+        }
+    }
+    return null;
+}
