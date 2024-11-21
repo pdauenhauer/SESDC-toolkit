@@ -117,6 +117,7 @@ function renderProjects() {
     const projectCards = projects.map(project => {
 
         const showShareButton = project.projectOwner === userId;
+        const showSimulationButton = project.projectEditors.includes(userId) || project.projectOwner === userId;
 
         return `
             <div class="project-card" data-project-id="${project.id}">
@@ -136,7 +137,9 @@ function renderProjects() {
                     <span>Created: ${project.created}</span>
                 </div>
                 <div class="simulation-btn">
-                    <button id="simulationButton" class="simulation">Add Inputs</button>
+                    ${showSimulationButton ? `
+                        <button id="simulationButton" class="simulation">Add Inputs</button>
+                    ` : ''}
                 </div>    
             </div>
         `;
