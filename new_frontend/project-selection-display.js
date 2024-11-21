@@ -1,5 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
-import { getFirestore, getDoc, deleteDoc,doc, increment, setDoc, arrayUnion, arrayRemove, collection, updateDoc, where, query, getDocs } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+import { onSnapshot, getFirestore, getDoc, deleteDoc,doc, increment, setDoc, arrayUnion, arrayRemove, collection, updateDoc, where, query, getDocs } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
 // Initialize Firebase
 const firebaseConfig = {
@@ -32,9 +32,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     
         try {
             const projectRef = doc(db, 'users', userId, 'projects', projectId);
-            await updateDoc(projectRef, {
-                inputs: inputs,
-            });
+            const changes = {inputs: inputs};
+
+            await updateDoc(projectRef, changes);
+
+            await syncProjectChanges(projectId, changes);
     
             closeInputsModal();
         } catch (error) {
@@ -163,11 +165,32 @@ async function loadProjects() {
                     description: data.description,
                     created: data.created
                 });
+
+                if (data.isShared) {
+                    setupProjectListener(projectId);
+                }
             }
         }
     } catch (error) {
         console.error('Error loading projects:', error);
     }
+}
+
+async function setupProjectListener(projectId) {
+    const userId = localStorage.getItem('loggedInUserId');
+    const projectRef = doc(db, 'users', userId, 'projects', projectId);
+
+    return onSnapshot(projectRef, (doc) => {
+        if (doc.exists()) {
+            const updatedProject = doc.data();
+
+            const projectIndex = projects.findIndex(project => project.id === projectId);
+            if (projectIndex !== -1) {
+                projects[projectIndex] = updatedProject;
+                renderProjects();
+            }
+        }
+    });
 }
 
 
@@ -314,23 +337,24 @@ document.getElementById('shareProjectForm').addEventListener('submit', async(e) 
         });
         
         let updateData = {};
+        console.log(projectRole);
         if (projectRole === 'owner') {
             updateData = {
                 projectOwner: sharedUserId,
                 projectEditors: arrayUnion(userId),
             }
-        }
-        
-        if (projectRole === 'editor' && isEditor) {
-            throw new Error('That user is already an editor of this project');
-        } else {
-            updateData.projectEditors = arrayUnion(sharedUserId);
-        } 
-        
-        if (projectRole === 'viewer' && isViewer) {
-            throw new Error('That user is already a viewer of this project');
-        } else {
-            updateData.projectViewers = arrayUnion(sharedUserId);
+        } else if (projectRole === 'editor') {
+            if (isEditor) {
+                throw new Error('That user is already an editor of this project');
+            } else {
+                updateData.projectEditors = arrayUnion(sharedUserId);
+            }
+        } else if (projectRole === 'viewer') {
+            if (isViewer) {
+                throw new Error('That user is already a viewer of this project');
+            } else {
+                updateData.projectViewers = arrayUnion(sharedUserId);
+            }
         }
 
         await updateDoc(originalProjectRef, {
@@ -375,4 +399,31 @@ async function checkUserProjectRole(projectId) {
         }
     }
     return null;
+}
+
+async function syncProjectChanges(projectId, changes) {
+    try {
+        const userId = localStorage.getItem('loggedInUserId');
+        const projectRef = doc(db, 'users', userId, 'projects', projectId);
+        const projectDoc = await getDoc(projectRef);
+        const projectData = projectDoc.data();
+
+        const sharedUsers = [
+            projectData.projectOwner,
+            ...projectData.projectEditors,
+            ...projectData.projectViewers
+        ];
+
+        const updatePromises = sharedUsers.map(async (sharedUserId) => {
+            if (sharedUserId !== userId) {
+                const sharedProjectRef = doc(db, 'users', sharedUserId, 'projects', projectId);
+                await updateDoc(sharedProjectRef, changes);
+            }
+        });
+
+        await Promise.all(updatePromises);
+    } catch (error) {
+        console.error('Error syncing project changes:', error);
+        throw error;
+    }
 }
