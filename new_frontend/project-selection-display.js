@@ -74,13 +74,10 @@ document.getElementById('addProjectForm').addEventListener('submit', async (even
     const userId = localStorage.getItem('loggedInUserId');
     var usersRef = doc(db, 'users', userId);
 
-    await updateDoc(usersRef, {
-        numprojects: increment(1)
-    });
+    const projectsCollectionRef = collection(db, 'users', userId, 'projects');
+    const newProjectRef = doc(projectsCollectionRef);
+    const projectId = newProjectRef.id;
 
-    const userDoc = await getDoc(usersRef);
-
-    const projectId = userDoc.data().numprojects;
     const name = document.getElementById('projectName').value;
     const description = document.getElementById('projectDescription').value;
     
@@ -95,11 +92,11 @@ document.getElementById('addProjectForm').addEventListener('submit', async (even
         projectViewers: [],
     };
 
-    const projectRef = doc(db, 'users', userId, 'projects', newProject.id.toString());
-    await setDoc(projectRef, newProject);
+    await setDoc(newProjectRef, newProject);
 
     await updateDoc(usersRef, {
         projectids: arrayUnion(newProject.id.toString()),
+        numprojects: increment(1)
     });
 
     projects.push(newProject);
@@ -246,7 +243,7 @@ async function attachDeleteProjectListeners() {
                 projects.splice(projectIndex, 1);
             }
             
-            document.querySelector('.project-card[data-project-id="' + projectId + '"]').remove();
+            renderProjects();
             closeDeleteConfirmationModal();
         } catch (error) {
             console.error('Error deleting project:', error);
