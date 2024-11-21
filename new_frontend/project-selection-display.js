@@ -72,7 +72,6 @@ document.getElementById('addProjectForm').addEventListener('submit', async (even
     event.preventDefault();
 
     const userId = localStorage.getItem('loggedInUserId');
-
     var usersRef = doc(db, 'users', userId);
 
     await updateDoc(usersRef, {
@@ -84,9 +83,6 @@ document.getElementById('addProjectForm').addEventListener('submit', async (even
     const projectId = userDoc.data().numprojects;
     const name = document.getElementById('projectName').value;
     const description = document.getElementById('projectDescription').value;
-    const projectOwner = userId;
-    const projectEditors = [];
-    const projectViewers = [];
     
     const newProject = {
         name,
@@ -94,9 +90,9 @@ document.getElementById('addProjectForm').addEventListener('submit', async (even
         created: new Date().toISOString().split('T')[0],
         id: projectId,
         isShared: false,
-        projectOwner,
-        projectEditors,
-        projectViewers 
+        projectOwner: userId,
+        projectEditors: [],
+        projectViewers: [],
     };
 
     const projectRef = doc(db, 'users', userId, 'projects', newProject.id.toString());
@@ -114,30 +110,42 @@ document.getElementById('addProjectForm').addEventListener('submit', async (even
 
 function renderProjects() {
     const grid = document.getElementById('projectsGrid');
+    const userId = localStorage.getItem('loggedInUserId');
+
     if (!grid) {
         console.error('Projects grid element not found!');
         return;
     }
-    grid.innerHTML = projects.map(project => `
-        <div class="project-card" data-project-id="${project.id}">
-            <div class="project-header">
-                <h3>${project.name}</h3>
-                <button class='share-project-button'>
-                    <i class='bx bxs-paper-plane share-project' style='color:#47d0d6'></i>
-                </button>
-                <button class='delete-project-button'>
-                    <i class='bx bxs-trash delete-project' style='color:#ff0303'></i>
-                </button>
+
+    const projectCards = projects.map(project => {
+
+        const showShareButton = project.projectOwner === userId;
+
+        return `
+            <div class="project-card" data-project-id="${project.id}">
+                <div class="project-header">
+                    <h3>${project.name}</h3>
+                    ${showShareButton ? `
+                        <button class='share-project-button'>
+                            <i class='bx bxs-paper-plane share-project' style='color:#47d0d6'></i>
+                        </button>
+                    ` : ''}
+                    <button class='delete-project-button'>
+                        <i class='bx bxs-trash delete-project' style='color:#ff0303'></i>
+                    </button>
+                </div>
+                <p>${project.description}</p>
+                <div class="project-meta">
+                    <span>Created: ${project.created}</span>
+                </div>
+                <div class="simulation-btn">
+                    <button id="simulationButton" class="simulation">Add Inputs</button>
+                </div>    
             </div>
-            <p>${project.description}</p>
-            <div class="project-meta">
-                <span>Created: ${project.created}</span>
-            </div>
-            <div class="simulation-btn">
-                <button id="simulationButton" class="simulation">Add Inputs</button>
-            </div>    
-        </div>
-    `).join('');
+        `;
+    });
+
+    grid.innerHTML = projectCards.join('');
     attachDeleteProjectListeners();
     attachShareProjectListeners();
     attachSimulationListeners();
@@ -159,14 +167,20 @@ async function loadProjects() {
             const projectDoc = await getDoc(doc(db, 'users', userId, 'projects', projectId));
             if (projectDoc.exists()) {
                 const data = projectDoc.data();
-                projects.push({
+                const projectData = {
                     id: projectId,
                     name: data.name,
                     description: data.description,
-                    created: data.created
-                });
+                    created: data.created,
+                    isShared: data.isShared || false,
+                    projectOwner: data.projectOwner || userId,
+                    projectEditors: data.projectEditors || [],
+                    projectViewers: data.projectViewers || []
+                }
 
-                if (data.isShared) {
+                projects.push(projectData);
+
+                if (projectData.isShared) {
                     setupProjectListener(projectId);
                 }
             }
@@ -337,26 +351,42 @@ document.getElementById('shareProjectForm').addEventListener('submit', async(e) 
         });
         
         let updateData = {};
-        console.log(projectRole);
         if (projectRole === 'owner') {
             updateData = {
                 projectOwner: sharedUserId,
                 projectEditors: arrayUnion(userId),
+                projectViewers: originalProjectData.projectViewers || []
             }
         } else if (projectRole === 'editor') {
             if (isEditor) {
                 throw new Error('That user is already an editor of this project');
             } else {
-                updateData.projectEditors = arrayUnion(sharedUserId);
+                updateData = {
+                    projectOwner: originalProjectData.projectOwner,
+                    projectEditors: arrayUnion(sharedUserId),
+                    projectViewers: originalProjectData.projectViewers || []
+                }
             }
         } else if (projectRole === 'viewer') {
             if (isViewer) {
                 throw new Error('That user is already a viewer of this project');
             } else {
-                updateData.projectViewers = arrayUnion(sharedUserId);
+                updateData = {
+                    projectOwner: originalProjectData.projectOwner,
+                    projectEditors: originalProjectData.projectEditors || [],
+                    projectViewers: arrayUnion(sharedUserId)
+                }
             }
         }
 
+        if(!originalProjectData.projectEditors) {
+            updateData.projectEditors = [];
+        }
+
+        if(!originalProjectData.projectViewers) {
+            updateData.projectViewers = [];
+        }
+        
         await updateDoc(originalProjectRef, {
             ...updateData,
             isShared: true,
