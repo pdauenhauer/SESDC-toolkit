@@ -399,6 +399,7 @@ document.getElementById('shareProjectForm').addEventListener('submit', async(e) 
         });
 
         await updateDoc(doc(db, 'users', sharedUserId), {
+            numprojects: increment(1),
             projectids: arrayUnion(projectId)
         });
         
