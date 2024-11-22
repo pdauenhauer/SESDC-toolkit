@@ -266,7 +266,8 @@ nav {
 }
 
 .form-group {
-    margin-bottom: 1rem;
+  margin-top: -40px;
+  margin-bottom: 1rem;
 }
 
 .form-group label {
@@ -438,4 +439,86 @@ nav {
   margin-top: 1rem;
   width: 100%;
   font-size: 1rem;
+}
+
+.form-wrapper {
+  display: flex;
+  width: 200%;
+  transition: trasform 0.5s ease;
+}
+
+#shareProjectForm, #removeUserForm {
+  width: 50%;
+  padding: 20px;
+  transition: opacity 0.3s ease;
+  flex-shrink: 0;
+}
+
+.button-box {
+  width: 50%;
+  margin: 35px auto;
+  position: relative;
+  box-shadow: 0 0 2px 0.1px grey;
+  border-radius: 30px;
+  background: #fff;
+}
+
+.toggle-btn {
+  color: black;
+  font-weight: 400;
+  padding: 10px 30px;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  position: relative;
+  text-align: center;
+  outline: none;
+}
+
+#btn {
+  top: 0;
+  left: 0;
+  position: absolute;
+  width: 110px;
+  height: 100%;
+  border-radius: 30px;
+  background: #008000;
+  border-radius: 30px;
+  transition: 0.5s;
+}
+
+.remove-user-btn {
+  background: #008000;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 1rem;
+  width: 100%;
+  font-size: 1rem;
+}
+
+.form-group-add-project {
+  margin-bottom: 1rem;
+}
+
+.form-group-add-project label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.form-group-add-project input, 
+.form-group-add-project textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.form-group-add-project textarea {
+  height: 100px;
+  resize: vertical;
 }

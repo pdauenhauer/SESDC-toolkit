@@ -57,11 +57,11 @@
                 <button class="close-modal" id="closeModal">&times;</button>
             </div>
             <form id="addProjectForm">
-                <div class="form-group">
+                <div class="form-group-add-project">
                     <label for="projectName">Project Name</label>
                     <input type="text" id="projectName" required>
                 </div>
-                <div class="form-group">
+                <div class="form-group-add-project">
                     <label for="projectDescription">Description</label>
                     <textarea id="projectDescription" required></textarea>
                 </div>
@@ -108,22 +108,36 @@
                 <button class="close-modal" id="closeShareProjectModal">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="shareProjectForm">
-                    <div class="form-group">
-                        <p>Enter the email address of the person you want to share the project with:</p>
-                        <input type="email" id="shareEmail" required>
-                    </div>
-                    <div class="role-select">
-                        <p>User Role</p>
-                        <select id="roleSelect" name="roleSelect">
-                            <option value="" disabled selected>Select Role</option>
-                            <option value="owner">Owner</option>
-                            <option value="editor">Editor</option>
-                            <option value="viewer">Viewer</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="share-submit-btn">Share Project</button>
-                </form>
+                <div class="button-box">
+                    <div id="btn"></div>
+                    <button type="button" class="toggle-btn" id="shareFormBtn">Share</button>
+                    <button type="button" class="toggle-btn" id="removeUserFormBtn">Remove</button>
+                </div>
+                <div class="form-wrapper">
+                    <form id="shareProjectForm">
+                        <div class="form-group">
+                            <p>Enter the email address of the person you want to share the project with:</p>
+                            <input type="email" id="shareEmail" required>
+                        </div>
+                        <div class="role-select">
+                            <p>User Role</p>
+                            <select id="roleSelect" name="roleSelect">
+                                <option value="" disabled selected>Select Role</option>
+                                <option value="owner">Owner</option>
+                                <option value="editor">Editor</option>
+                                <option value="viewer">Viewer</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="share-submit-btn">Share Project</button>
+                    </form>
+                    <form id="removeUserForm">
+                        <div class="form-group">
+                            <p>Enter the email address of the person you want to remove from the project:</p>
+                            <input type="email" id="removeEmail" required>
+                        </div>
+                        <button type="submit" class="remove-user-btn">Remove User</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

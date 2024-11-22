@@ -290,8 +290,16 @@ function attachShareProjectListeners() {
 
 function openShareProjectModal(projectId) {
     const modal = document.getElementById('shareProjectModal');
+    const shareForm = document.getElementById('shareProjectForm');
+    const removeForm = document.getElementById('removeUserForm');
+    const btn = document.getElementById('btn');
+
     modal.classList.add('active');
     modal.setAttribute('data-project-id', projectId);
+
+    shareForm.style.display = 'block';
+    removeForm.style.display = 'none';
+    btn.style.left = '0';
 }
 
 function openDeleteConfirmationModal(projectId) {
@@ -457,3 +465,97 @@ async function syncProjectChanges(projectId, changes) {
         throw error;
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const shareFormBtn = document.getElementById('shareFormBtn');
+    const removeUserFormBtn = document.getElementById('removeUserFormBtn');
+    const shareForm = document.getElementById('shareProjectForm');
+    const removeForm = document.getElementById('removeUserForm');
+
+    if (shareForm && removeForm) {
+        removeForm.style.display = 'none';
+        shareForm.style.display = 'block';
+    }
+
+    if (shareFormBtn) {
+        shareFormBtn.addEventListener('click', function() {
+            const formWrapper = document.querySelector('.form-wrapper');
+            const btn = document.getElementById('btn');
+            formWrapper.style.transform = 'translateX(0)';
+            btn.style.left = '0';
+
+            shareForm.style.display = 'block';
+            removeForm.style.display = 'none';
+        });
+    }
+
+    if (removeUserFormBtn) {
+        removeUserFormBtn.addEventListener('click', function() {
+            const formWrapper = document.querySelector('.form-wrapper');
+            const btn = document.getElementById('btn');
+            btn.style.left = '110px';
+
+            shareForm.style.display = 'none';
+            removeForm.style.display = 'block';
+        });
+    }
+});
+
+document.getElementById('removeUserForm').addEventListener('submit', async(e) => {
+    e.preventDefault();
+
+    const projectId = document.getElementById('shareProjectModal').getAttribute('data-project-id');
+    const userId = localStorage.getItem('loggedInUserId');
+    const email = document.getElementById('removeEmail').value;
+
+    try {
+        const usersRef = collection(db, 'users');
+        const emailQuery = query(usersRef, where('email', '==', email));
+        const querySnapshot = await getDocs(emailQuery);
+
+        if (querySnapshot.empty) {
+            throw new Error('User with this email is not found');
+        }
+
+        const removedUserId = querySnapshot.docs[0].id;
+
+        if (removedUserId === userId) {
+            throw new Error('You cannot remove the owner from the project');
+        }
+
+        const projectRef = doc(db, 'users', userId, 'projects', projectId);
+        const projectDoc = await getDoc(projectRef);
+        const projectData = projectDoc.data();
+
+        const isEditor = projectData.projectEditors.includes(removedUserId);
+        const isViewer = projectData.projectViewers.includes(removedUserId);
+        
+        if (!isEditor && !isViewer) {
+            throw new Error('That user is not a part of this project');
+        }
+
+        let updateData = {};
+        if (isEditor) {
+            updateData.projectEditors = arrayRemove(removedUserId);
+        } else if (isViewer) {
+            updateData.projectViewers = arrayRemove(removedUserId);
+        }
+
+        await updateDoc(projectRef, updateData);
+        const removedUserProjectRef = doc(db, 'users', removedUserId, 'projects', projectId);
+        await deleteDoc(removedUserProjectRef);
+
+        await updateDoc(doc(db, 'users', removedUserId), {
+            projectids: arrayRemove(projectId)
+        });
+
+        closeShareProjectModal();
+        console.log('User removed from project successfully');
+    } catch (error) {
+        console.error('Error removing user from project:', error);
+    }
+
+    
+        
+
+});
