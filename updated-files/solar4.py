@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import os
 
 ross_coef = 0.0563
 #temperature coefficient used to adjust the ambient temperature to the equivalent cell temperature in a solar panel.
@@ -9,7 +10,7 @@ STCTemp = 25
 #Standard Test Conditions Temperature
 
 
-file_path = r"C:\Users\bluis\KilowattsForHumanity\Data\test_load_plus_v1.csv"
+file_path = os.path.join(os.path.dirname(__file__), "..", "data", "test_load_plus_v1.csv")
 data_raw = pd.read_csv(file_path, parse_dates=["Datetime"])
 #"DateTime" in the CSV file should be treated as datetime objects. 
 

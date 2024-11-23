@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import os
 
 def generate_load_profile(time_points, load_values):
     """
@@ -52,7 +53,7 @@ def load_values_from_csv(file_path):
     return load_data['load_values'].to_numpy()
 
 # Example usage with CSV file
-csv_file_path = r"C:\Users\bluis\KilowattsForHumanity\Data\test_load_plus_v1.csv"
+csv_file_path = os.path.join(os.path.dirname(__file__), "..", "data", "test_load_plus_v1.csv")
 load_values = load_values_from_csv(csv_file_path)
 load_demo = load_values.reshape(-1, 1)
 load_demo[load_demo < 0] = 0
