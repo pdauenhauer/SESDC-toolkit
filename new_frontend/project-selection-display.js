@@ -234,6 +234,21 @@ async function attachDeleteProjectListeners() {
             const currentNumProjects = userDoc.data().numprojects;
 
             const projectRef = doc(db, 'users', userId, 'projects', projectId);
+            const projectDoc = await getDoc(projectRef);
+            const projectData = projectDoc.data();
+            const isShared = projectData.isShared;
+
+            if (isShared) {
+                const sharedUsers = [
+                    ...projectData.projectEditors,
+                    ...projectData.projectViewers
+                ];
+
+                for (const sharedUserId of sharedUsers) {
+                    const sharedProjectRef = doc(db, 'users', sharedUserId, 'projects', projectId);
+                    await deleteDoc(sharedProjectRef);
+                }
+            }
             await deleteDoc(projectRef);
                 
             await updateDoc(userRef, {
@@ -245,7 +260,7 @@ async function attachDeleteProjectListeners() {
             if (projectIndex !== -1) {
                 projects.splice(projectIndex, 1);
             }
-            
+
             renderProjects();
             closeDeleteConfirmationModal();
         } catch (error) {
@@ -555,8 +570,4 @@ document.getElementById('removeUserForm').addEventListener('submit', async(e) =>
     } catch (error) {
         console.error('Error removing user from project:', error);
     }
-
-    
-        
-
 });

@@ -1,7 +1,7 @@
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
 
 from solar4 import calculate_solar_energy, panel_losses, panel_char, coef, STCIrr, STCTemp, sub_data_raw
   
@@ -22,7 +22,7 @@ def calculate_net_energy(solar_power, load_values, time_interval):
 
 
 # Load solar data
-solar_file_path = r"C:\Users\bluis\KilowattsForHumanity\Data\test_load_plus_v1.csv"
+solar_file_path = os.path.join(os.path.dirname(__file__), "..", "data", "test_load_plus_v1.csv")
 solar_data_raw = pd.read_csv(solar_file_path, parse_dates=["Datetime"])
 
 # Extract relevant columns and calculate solar power
