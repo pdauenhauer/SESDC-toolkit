@@ -1,19 +1,7 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+import { app } from './firebase-init.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
 import { getFirestore, setDoc, doc } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
-// Initialize Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyDG7rEfTtegzIBHFvL6W2rV7HNmmMlkNcQ",
-    authDomain: "sesdc-micro-design-tool.firebaseapp.com",
-    projectId: "sesdc-micro-design-tool",
-    storageBucket: "sesdc-micro-design-tool.firebasestorage.app",
-    messagingSenderId: "99363626334",
-    appId: "1:99363626334:web:6aaa35b53358a235fc43cf",
-    measurementId: "G-7DMVG3X5Y6"
-};
-
-const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const loginForm = document.getElementById('loginForm');
@@ -49,7 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const userData = {
                     username: username,
                     email: email,
-                    password: password,
                     numprojects: numprojects,
                 };
                 showMessage('Account Created Successfully!', 'account-creation-message');
@@ -83,7 +70,7 @@ signIn.addEventListener('submit', (e) => {
         showMessage('Login was Successful!', 'account-login-message');
         const user = cred.user;
         localStorage.setItem('loggedInUserId', user.uid);
-        window.location.href = "project-selection.html";
+        window.location.href = "pages/project-selection.html";
     })
     .catch((error) => {
         const errorCode = error.code;

@@ -1,24 +1,12 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+import { app } from './firebase-init.js'
 import { onSnapshot, getFirestore, getDoc, deleteDoc,doc, increment, setDoc, arrayUnion, arrayRemove, collection, updateDoc, where, query, getDocs } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
-// Initialize Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyDG7rEfTtegzIBHFvL6W2rV7HNmmMlkNcQ",
-    authDomain: "sesdc-micro-design-tool.firebaseapp.com",
-    projectId: "sesdc-micro-design-tool",
-    storageBucket: "sesdc-micro-design-tool.firebasestorage.app",
-    messagingSenderId: "99363626334",
-    appId: "1:99363626334:web:6aaa35b53358a235fc43cf",
-    measurementId: "G-7DMVG3X5Y6"
-};
-
-const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 document.addEventListener('DOMContentLoaded', async function() {
     await loadProjects();
     renderProjects();
-
+    /*
     document.getElementById('inputsForm').addEventListener('submit', async (e) => {
         e.preventDefault();
     
@@ -29,20 +17,49 @@ document.addEventListener('DOMContentLoaded', async function() {
             electricalLoad: document.getElementById('electrical-load').value,
             solarArraySize: document.getElementById('solar-array-size').value,
         }
+
+        const fileInput = document.getElementById('fileInput');
+
+        if (!fileInput) {
+            console.error("File input element not found!");
+            return; // Exit if the file input is not found
+        }
+
+        const file = fileInput.files[0];
+
+        if (!file) {
+            alert("Please upload a CSV file.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
     
         try {
             const projectRef = doc(db, 'users', userId, 'projects', projectId);
             const changes = {inputs: inputs};
 
             await updateDoc(projectRef, changes);
-
             await syncProjectChanges(projectId, changes);
+            
+            //http://127.0.0.1:5001/sesdc-function-test/us-central1/run_simulation
+            const response = await fetch('http://127.0.0.1:5001/sesdc-function-test/us-central1/run_simulation', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            const result = await response.text();
+            alert(result);
     
             closeInputsModal();
         } catch (error) {
             console.error('Error saving inputs:', error);
         }
     })
+    */
     
     document.getElementById('closeInputsModal').addEventListener('click', () => {
         closeInputsModal();
@@ -271,7 +288,6 @@ async function attachDeleteProjectListeners() {
 
 function openInputsModal(projectId) {
     const modal = document.getElementById('inputsModal');
-
     modal.classList.add('active');
     modal.setAttribute('data-project-id', projectId);
 }
@@ -433,6 +449,7 @@ document.getElementById('shareProjectForm').addEventListener('submit', async(e) 
     }
 })
 
+/*
 async function checkUserProjectRole(projectId) {
     const userId = localStorage.getItem('loggedInUserId');
     const projectRef = doc(db, 'users', userId, 'projects', projectId);
@@ -454,6 +471,7 @@ async function checkUserProjectRole(projectId) {
     }
     return null;
 }
+*/
 
 async function syncProjectChanges(projectId, changes) {
     try {
@@ -569,5 +587,159 @@ document.getElementById('removeUserForm').addEventListener('submit', async(e) =>
         console.log('User removed from project successfully');
     } catch (error) {
         console.error('Error removing user from project:', error);
+    }
+});
+
+const dropArea = document.getElementById('drop-area');
+const fileInput = document.getElementById('fileInput');
+
+dropArea.addEventListener('dragover', (event) => {
+    event.preventDefault();
+    dropArea.classList.add('hover')
+})
+
+dropArea.addEventListener('dragleave', () => {
+    dropArea.classList.remove('hover');
+})
+
+dropArea.addEventListener('drop', (event) => {
+    event.preventDefault();
+    dropArea.classList.remove('hover');
+
+    const files = event.dataTransfer.files;
+    if (files.length > 0) {
+        fileInput.files = files;
+        document.getElementById('file-label').textContent = files[0].name;
+    }
+})
+
+dropArea.addEventListener('click', () => {
+    fileInput.click();
+});
+
+document.querySelectorAll('.input-buttons button').forEach(button => {
+    button.addEventListener('click', function() {
+        const inputsId = this.id.replace('Btn', '');
+        const inputs = document.getElementById(inputsId);
+        
+        document.querySelectorAll('.form-group').forEach(section => {
+            section.style.display = 'none';
+        });
+
+        inputs.style.display = 'block';
+
+        document.querySelectorAll('.input-buttons button').forEach(btn => {
+            btn.style.backgroundColor = '';
+        })
+
+        this.style.backgroundColor = '#00b600';
+    });
+});
+
+document.getElementById('save-battery-inputs').addEventListener('click', async (e) => {
+    e.preventDefault();
+    const userId = localStorage.getItem('loggedInUserId');
+    const projectId = document.getElementById('inputsModal').getAttribute('data-project-id');
+
+    const batteryInputs = {
+        usingBattery: document.getElementById('using-battery').checked,
+        batteryEfficiency: document.getElementById('efficiency-select').value,
+        batteryType: document.getElementById('battery-type-select').value,
+        maxDepthOfDischarge: document.getElementById('maximum-depth-of-discharge').value,
+        batteryLifespan: document.getElementById('battery-lifespan').value,
+        CAPEX: document.getElementById('capitol-cost-battery').value,
+    };
+
+    try {
+        const projectRef = doc(db, 'users', userId, 'projects', projectId);
+        await updateDoc(projectRef, {
+            batteryInputs: batteryInputs
+        });
+
+        alert('Battery inputs saved successfully!');
+    } catch (error) {
+        console.error('Error saving battery inputs:', error);
+    }
+});
+
+document.getElementById('save-generator-inputs').addEventListener('click', async (e) => {
+    e.preventDefault();
+    const userId = localStorage.getItem('loggedInUserId');
+    const projectId = document.getElementById('inputsModal').getAttribute('data-project-id');
+
+    const generatorInputs = {
+        usingGenerator: document.getElementById('using-generator').checked,
+        generatorType: document.getElementById('generator-type').value,
+        generatorEfficiency: document.getElementById('generator-efficiency').value,
+        generatorCapacity: document.getElementById('generator-capacity').value,
+        CAPEX: document.getElementById('capital-cost-generator').value,
+        fuelCost: document.getElementById('fuel-cost').value,
+        maintenanceCost: document.getElementById('maintenance-cost-generator').value,
+        generatorLifespan: document.getElementById('generator-lifetime').value,
+    };
+
+    try {
+        const projectRef = doc(db, 'users', userId, 'projects', projectId);
+        await updateDoc(projectRef, {
+            generatorInputs: generatorInputs
+        });
+
+        alert('Generator inputs saved successfully!');
+    } catch (error) {
+        console.error('Error saving generator inputs:', error);
+    }
+});
+
+document.getElementById('save-solar-panel-inputs').addEventListener('click', async (e) => {
+    e.preventDefault();
+    const userId = localStorage.getItem('loggedInUserId');
+    const projectId = document.getElementById('inputsModal').getAttribute('data-project-id');
+
+    const solarPanelInputs = {
+        usingSolarPanel: document.getElementById('using-solar-panel').checked,
+        solarPanelEfficiency: document.getElementById('solar-panel-efficiency').value,
+        solarArraySize: document.getElementById('solar-array-size').value,
+        otherLosses: document.getElementById('other-losses').value,
+        CAPEX: document.getElementById('capital-cost-solar-panel').value,
+        solarPanelLifespan: document.getElementById('solar-panel-lifespan').value,
+    };
+
+    try {
+        const projectRef = doc(db, 'users', userId, 'projects', projectId);
+        await updateDoc(projectRef, {
+            solarPanelInputs: solarPanelInputs
+        });
+
+        alert('Solar panel inputs saved successfully!');
+    } catch (error) {
+        console.error('Error saving solar panel inputs:', error);
+    }
+});
+
+document.getElementById('save-wind-turbine-inputs').addEventListener('click', async (e) => {
+    e.preventDefault();
+    const userId = localStorage.getItem('loggedInUserId');
+    const projectId = document.getElementById('inputsModal').getAttribute('data-project-id');
+
+    const windTurbineInputs = {
+        usingWindTurbine: document.getElementById('using-wind-turbine').checked,
+        windTurbineCapacity: document.getElementById('wind-turbine-capacity').value,
+        windTurbineLossFactor: document.getElementById('wind-turbine-loss-factor').value,
+        cutInSpeed: document.getElementById('cut-in-speed').value,
+        cutOutSpeed: document.getElementById('cut-out-speed').value,
+        CAPEX: document.getElementById('capitol-cost-wind-turbine').value,
+        windTurbineLifespan: document.getElementById('wind-turbine-lifespan').value,
+        maintenanceCost: document.getElementById('maintenance-cost-turbine').value,
+    };
+
+    try {
+        const projectRef = doc(db, 'users', userId, 'projects', projectId);
+        await updateDoc(projectRef, {
+            windTurbineInputs: windTurbineInputs
+        });
+
+        alert('Wind turbine inputs saved successfully!');
+    } catch (error) {
+        console.error('Error saving wind turbine inputs:', error);
     }
 });
