@@ -9,8 +9,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import os
 
-from calculations import process_csv, panel_losses, coef, STCIrr, STCTemp, calculate_solar_energy
-from graph import generate_power_graph
+from calculations import process_csv, panel_losses, coef, STCIrr, STCTemp, calculate_solar_energy, calculate_net_energy
+from graph import generate_power_graph, plot_load_profile
 
 
 app = Flask(__name__)
@@ -39,24 +39,64 @@ def upload_csv():
         print("CSV processed successfully:")
         print(df.head())
 
-        #extract relevant columns
+        # Extract relevant columns
+        print("Extracting data...")
         df["Irradiance (W/m2)"] = pd.to_numeric(df["Irradiance (W/m2)"], errors="coerce")
         df["Temp_C (oC)"] = pd.to_numeric(df["Temp_C (oC)"], errors="coerce")
-        
-        #calculate solar power
+        load_values_full = df['load_values'].to_numpy() #change this to the same or nah?
+        print("Irradiance, Temp, and Load values extracted successfully")
+
+        # Calculate solar power
+        print("Calculating solar power...")
         solar_power_full = calculate_solar_energy(df["Irradiance (W/m2)"], df["Temp_C (oC)"],
                           panel_name_plate_W=680, losses=panel_losses["loss_value"], coef=coef, STCIrr=STCIrr, STCTemp=STCTemp)
+        print("Solar power calculated.")
 
-        #amount of graph to plot
+        # Graph the solar power
+        print("Graphing solar power for the first 2 days...")
+        # Amount of graph to plot
         time_points = np.arange(0, 47)
         solar_power_test = solar_power_full[:47]
+        # Graph solar energy
+        solar_plot_path = generate_power_graph(time_points, solar_power_test)
+        print("Solar power graphed.")
 
-        #graph solar power
-        plot_path = generate_power_graph(time_points, solar_power_test)
+        
+        # Graph the load
+        print("Graphing load for first 2 days...")
+        # Shape the load for plotting
+        load_profile = load_values_full.reshape(-1, 1)
+        load_profile[load_profile < 0] = 0  # Ensure no negative values
+        load_profile = load_profile.flatten()  # Flatten the result to a 1D array
+        load_profile_subset = load_profile[:47]
+        # Plot
+        load_plot_path = plot_load_profile(time_points, load_profile_subset)
+        print("Load graphed.")
+
+        """
+        # Calculate net energy
+        print("Calculating net energy...")
+        net_energy_full = calculate_net_energy(solar_power_full, load_values_full)
+        print("Net Energy (Full Dataset):", net_energy_full)
+
+        print("Calculating net energy subset...")
+        # Subset solar_power and load_values to the first 100 hours
+        solar_power_subset = solar_power_full[:100]
+        load_values_subset_solar = load_values_full[:100]
+        # Calculate net energy for the first 100 hours
+        net_energy_subset = calculate_net_energy(solar_power_subset, load_values_subset_solar)
+        print("Net Energy (First 100 Hours):", net_energy_subset)
+
+        print("Length of Solar Power (Full):", len(solar_power_full))
+        print("Length of Load Values (Full):", len(load_values_full))
+        print("NaN in Solar Power (Full):", np.isnan(solar_power_full).any())
+        print("NaN in Load Values (Full):", np.isnan(load_values_full).any())
+        """
 
         return jsonify({
             "message": "Graph generated!",
-            "plot_url": plot_path
+            "solar_plot_url": solar_plot_path,
+            "load_plot_url": load_plot_path
         })
     except Exception as e:
         print(f"Error: {str(e)}")

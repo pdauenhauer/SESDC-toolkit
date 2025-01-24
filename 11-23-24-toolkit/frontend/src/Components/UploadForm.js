@@ -3,7 +3,9 @@ import React, { useState } from "react";
 function UploadForm() {
   const [file, setFile] = useState(null); //store the uploaded file
   const [responseMessage, setResponseMessage] = useState(""); //to display server response
-  const [imageUrl, setImageUrl] = useState(null);
+  const [solarUrl, setSolarUrl] = useState(null);
+  const [loadUrl, setLoadUrl] = useState(null);
+
 
   const handleFileChange = (event) => {
     setFile(event.target.files[0]); //update the file state with the selected file
@@ -47,9 +49,14 @@ function UploadForm() {
 	  alert("Message not found in response.");
       }
 
-      if (data.plot_url) {
-          setImageUrl(data.plot_url);  //set the plot image URL returned from the backend
+      if (data.solar_plot_url) {
+          setSolarUrl(data.solar_plot_url);  //set the plot image URL returned from the backend
       }
+
+      if (data.load_plot_url) {
+          setLoadUrl(data.load_plot_url);  //set the plot image URL returned from the backend
+      }
+
 
     } catch (error) {
       console.error("Error uploading file:", error);
@@ -66,9 +73,14 @@ function UploadForm() {
       </form>
       {responseMessage && <p>{responseMessage}</p>}
       {/* Display the generated plot image */}
-      {imageUrl && <div>
-          <h3>Generated Graph:</h3>
-          <img src={`http://localhost:8080/${imageUrl}`} alt="Generated graph" style={{ maxWidth: '100%' }} />
+      {solarUrl && <div>
+          <h3>Generated Solar:</h3>
+          <img src={`http://localhost:8080/${solarUrl}`} alt="Generated solar" style={{ maxWidth: '100%' }} />
+      </div>}
+
+      {loadUrl && <div>
+          <h3>Generated Load:</h3>
+          <img src={`http://localhost:8080/${loadUrl}`} alt="Generated load" style={{ maxWidth: '100%' }} />
       </div>}
     </div>
   );
