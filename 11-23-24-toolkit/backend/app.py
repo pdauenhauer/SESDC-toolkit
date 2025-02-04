@@ -49,13 +49,12 @@ def upload_csv():
         # Ensure values are numeric and drop NaN values
         df["Irradiance (W/m2)"] = pd.to_numeric(df["Irradiance (W/m2)"], errors="coerce")
         df["Temp_C (oC)"] = pd.to_numeric(df["Temp_C (oC)"], errors="coerce")
-        print("cleaning wind...")
         df['Wind_speed(km/h)'] = pd.to_numeric(df['Wind_speed(km/h)'], errors='coerce')
         print("dropping na...")
         df.dropna(subset=['Wind_speed(km/h)'], inplace=True)
-        print("wind cleaned")
+        print("Diesel cleaning...")
         df[["generator_output", "fuel_consumption"]] = df[["generator_output", "fuel_consumption"]].apply(pd.to_numeric, errors="coerce")
-        #df.dropna(subset=['diesel stuff'], inplace=True) #!!!
+        df.dropna(subset=['generator_output', "fuel_consumption"], inplace=True) 
         print("Data cleaned up.")
 
         # Convert wind speed from km/h to m/s
@@ -106,24 +105,22 @@ def upload_csv():
         wind_energy_subset = hourly_wind_energy[:47]
         wind_plot_path = plot_wind_energy(time_points, wind_energy_subset)
         print("Wind energy graphed.")
-        '''
-        print("Hourly Wind Energy Output:")
-        for i in range(len(hourly_wind_energy)):
-            print(f"Hour {i + 1}: {hourly_wind_energy[i]} Wh")
-        '''
 
-        '''
-        # Subset the data to include only the first 24 hours
-        hourly_diesel_data = df.head(26)
 
         # Calculate diesel energy
-        hourly_diesel_energy = calculate_hourly_diesel_energy(hourly_diesel_data, list(diesel_losses.values()))  # Pass only the loss values
-        print("Hourly Diesel Energy Output:")
-        for i in range(len(hourly_diesel_energy)):
-            print(f"Hour {i + 1}: {hourly_diesel_energy[i]} Wh")
+        print("Calculating diesel...")
+        # Subset the data to include only the first 48 hours
+        data_48 = df.head(50)
+        # Calculate
+        hourly_diesel_energy = calculate_hourly_diesel_energy(data_48, list(diesel_losses.values()))  # Pass only the loss values
+        print("Diesel calculated.")
 
-        '''
-        
+        # Graph diesel energy
+        print("Graphing diesel")
+        diesel_energy_subset = hourly_diesel_energy[:47]
+        diesel_plot_path = plot_generic(time_points, diesel_energy_subset, "Diesel Energy", "Diesel Energy Generation", "diesel_plot")
+        print("Diesel graphed")
+
         # Calculate net energy
         #print("Calculating net energy...")
         #net_energy_full = calculate_net_energy(solar_power_full, load_values_full)
@@ -138,19 +135,14 @@ def upload_csv():
         print("Graphing net energy...")
         net_energy_plot_path = plot_generic(time_points, net_energy_subset, "Net Energy", "Net Energy: Solar, Wind, Load", "net_energy_plot")
         print("Net energy graphed.")
-        """
-        print("Length of Solar Power (Full):", len(solar_power_full))
-        print("Length of Load Values (Full):", len(load_values_full))
-        print("NaN in Solar Power (Full):", np.isnan(solar_power_full).any())
-        print("NaN in Load Values (Full):", np.isnan(load_values_full).any())
-        """
 
         return jsonify({
             "message": "Graph generated!",
             "solar_plot_url": solar_plot_path,
             "load_plot_url": load_plot_path,
             "wind_plot_url": wind_plot_path,
-            "net_energy_plot_url": net_energy_plot_path
+            "net_energy_plot_url": net_energy_plot_path,
+            "diesel_plot_url": diesel_plot_path
         })
     except Exception as e:
         print(f"Error: {str(e)}")

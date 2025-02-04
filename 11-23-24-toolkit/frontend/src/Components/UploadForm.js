@@ -6,9 +6,8 @@ function UploadForm() {
   const [solarUrl, setSolarUrl] = useState(null);
   const [loadUrl, setLoadUrl] = useState(null);
   const [windUrl, setWindUrl] = useState(null);
+  const [dieselUrl, setDieselUrl] = useState(null);
   const [netUrl, setNetUrl] = useState(null);
-
-
 
 
   const handleFileChange = (event) => {
@@ -56,12 +55,14 @@ function UploadForm() {
       if (data.solar_plot_url) {
           setSolarUrl(data.solar_plot_url);  //set the plot image URL returned from the backend
       }
-
       if (data.load_plot_url) {
           setLoadUrl(data.load_plot_url);  //set the plot image URL returned from the backend
       }
       if (data.wind_plot_url) {
           setWindUrl(data.wind_plot_url);  //set the plot image URL returned from the backend
+      }
+      if (data.diesel_plot_url) {
+          setDieselUrl(data.diesel_plot_url);  //set the plot image URL returned from the backend
       }
       if (data.net_energy_plot_url) {
           setNetUrl(data.net_energy_plot_url);  //set the plot image URL returned from the backend
@@ -96,6 +97,11 @@ function UploadForm() {
       {windUrl && <div>
           <h3>Generated Wind Energy:</h3>
           <img src={`http://localhost:8080/${windUrl}`} alt="Generated wind energy" style={{ maxWidth: '100%' }} />
+      </div>}
+
+      {dieselUrl && <div>
+          <h3>Generated Diesel Energy:</h3>
+          <img src={`http://localhost:8080/${dieselUrl}`} alt="Diesel energy" style={{ maxWidth: '100%' }} />
       </div>}
 
       {netUrl && <div>
