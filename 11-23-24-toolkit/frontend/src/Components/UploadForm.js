@@ -5,6 +5,10 @@ function UploadForm() {
   const [responseMessage, setResponseMessage] = useState(""); //to display server response
   const [solarUrl, setSolarUrl] = useState(null);
   const [loadUrl, setLoadUrl] = useState(null);
+  const [windUrl, setWindUrl] = useState(null);
+  const [netUrl, setNetUrl] = useState(null);
+
+
 
 
   const handleFileChange = (event) => {
@@ -56,6 +60,12 @@ function UploadForm() {
       if (data.load_plot_url) {
           setLoadUrl(data.load_plot_url);  //set the plot image URL returned from the backend
       }
+      if (data.wind_plot_url) {
+          setWindUrl(data.wind_plot_url);  //set the plot image URL returned from the backend
+      }
+      if (data.net_energy_plot_url) {
+          setNetUrl(data.net_energy_plot_url);  //set the plot image URL returned from the backend
+      }
 
 
     } catch (error) {
@@ -82,6 +92,17 @@ function UploadForm() {
           <h3>Generated Load:</h3>
           <img src={`http://localhost:8080/${loadUrl}`} alt="Generated load" style={{ maxWidth: '100%' }} />
       </div>}
+
+      {windUrl && <div>
+          <h3>Generated Wind Energy:</h3>
+          <img src={`http://localhost:8080/${windUrl}`} alt="Generated wind energy" style={{ maxWidth: '100%' }} />
+      </div>}
+
+      {netUrl && <div>
+          <h3>Generated Net Energy:</h3>
+          <img src={`http://localhost:8080/${netUrl}`} alt="Net energy" style={{ maxWidth: '100%' }} />
+      </div>}
+
     </div>
   );
 };

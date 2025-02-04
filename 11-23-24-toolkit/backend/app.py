@@ -9,8 +9,13 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import os
 
-from calculations import process_csv, panel_losses, coef, STCIrr, STCTemp, calculate_solar_energy, calculate_net_energy
-from graph import generate_power_graph, plot_load_profile
+from calculations  import (
+    process_csv, panel_losses, coef, STCIrr, STCTemp, panel_char, calculate_hourly_solar_energy, calculate_solar_energy,
+    calculate_net_energy, net_energy_for_graph,
+    calculate_hourly_wind_energy, calculate_power_output, 
+    calculate_hourly_diesel_energy, diesel_losses
+)
+from graph import generate_power_graph, plot_load_profile, plot_wind_energy, plot_generic
 
 
 app = Flask(__name__)
@@ -39,12 +44,29 @@ def upload_csv():
         print("CSV processed successfully:")
         print(df.head())
 
-        # Extract relevant columns
-        print("Extracting data...")
+        # Clean up the data
+        print("Cleaning data...")
+        # Ensure values are numeric and drop NaN values
         df["Irradiance (W/m2)"] = pd.to_numeric(df["Irradiance (W/m2)"], errors="coerce")
         df["Temp_C (oC)"] = pd.to_numeric(df["Temp_C (oC)"], errors="coerce")
+        print("cleaning wind...")
+        df['Wind_speed(km/h)'] = pd.to_numeric(df['Wind_speed(km/h)'], errors='coerce')
+        print("dropping na...")
+        df.dropna(subset=['Wind_speed(km/h)'], inplace=True)
+        print("wind cleaned")
+        df[["generator_output", "fuel_consumption"]] = df[["generator_output", "fuel_consumption"]].apply(pd.to_numeric, errors="coerce")
+        #df.dropna(subset=['diesel stuff'], inplace=True) #!!!
+        print("Data cleaned up.")
+
+        # Convert wind speed from km/h to m/s
+        df['Wind_speed(m/s)'] = df['Wind_speed(km/h)'] * (1000 / 3600)
+
+        # Extract relevant columns
+        print("Extracting columns...")
         load_values_full = df['load_values'].to_numpy() #change this to the same or nah?
-        print("Irradiance, Temp, and Load values extracted successfully")
+        print("Load values extracted successfully")
+
+        #hourly_solar_energy = calculate_hourly_solar_energy(df, panel_name_plate_W=panel_char[0], losses=panel_losses["loss_value"], coef=coef, STCIrr=STCIrr, STCTemp=STCTemp)
 
         # Calculate solar power
         print("Calculating solar power...")
@@ -56,9 +78,9 @@ def upload_csv():
         print("Graphing solar power for the first 2 days...")
         # Amount of graph to plot
         time_points = np.arange(0, 47)
-        solar_power_test = solar_power_full[:47]
+        solar_power_subset = solar_power_full[:47]
         # Graph solar energy
-        solar_plot_path = generate_power_graph(time_points, solar_power_test)
+        solar_plot_path = generate_power_graph(time_points, solar_power_subset)
         print("Solar power graphed.")
 
         
@@ -73,20 +95,50 @@ def upload_csv():
         load_plot_path = plot_load_profile(time_points, load_profile_subset)
         print("Load graphed.")
 
-        """
+
+        # Calculate hourly wind energy - returns an array with all the wind energy generated
+        hourly_wind_energy = calculate_hourly_wind_energy(df)
+        # Add hourly wind energy to the dataframe
+        df['Hourly_Wind_Energy(Wh)'] = hourly_wind_energy
+
+        # Graph wind energy
+        print("Graphing wind energy...")
+        wind_energy_subset = hourly_wind_energy[:47]
+        wind_plot_path = plot_wind_energy(time_points, wind_energy_subset)
+        print("Wind energy graphed.")
+        '''
+        print("Hourly Wind Energy Output:")
+        for i in range(len(hourly_wind_energy)):
+            print(f"Hour {i + 1}: {hourly_wind_energy[i]} Wh")
+        '''
+
+        '''
+        # Subset the data to include only the first 24 hours
+        hourly_diesel_data = df.head(26)
+
+        # Calculate diesel energy
+        hourly_diesel_energy = calculate_hourly_diesel_energy(hourly_diesel_data, list(diesel_losses.values()))  # Pass only the loss values
+        print("Hourly Diesel Energy Output:")
+        for i in range(len(hourly_diesel_energy)):
+            print(f"Hour {i + 1}: {hourly_diesel_energy[i]} Wh")
+
+        '''
+        
         # Calculate net energy
-        print("Calculating net energy...")
-        net_energy_full = calculate_net_energy(solar_power_full, load_values_full)
-        print("Net Energy (Full Dataset):", net_energy_full)
+        #print("Calculating net energy...")
+        #net_energy_full = calculate_net_energy(solar_power_full, load_values_full)
+        #print("Net Energy (Full Dataset):", net_energy_full)
 
+        # Calculate net energy for the first 48 hours
         print("Calculating net energy subset...")
-        # Subset solar_power and load_values to the first 100 hours
-        solar_power_subset = solar_power_full[:100]
-        load_values_subset_solar = load_values_full[:100]
-        # Calculate net energy for the first 100 hours
-        net_energy_subset = calculate_net_energy(solar_power_subset, load_values_subset_solar)
-        print("Net Energy (First 100 Hours):", net_energy_subset)
+        net_energy_subset = net_energy_for_graph(solar_power_subset, load_profile_subset, wind_energy_subset)
+        print("Net energy calculated.")
 
+        # Graph the net energy
+        print("Graphing net energy...")
+        net_energy_plot_path = plot_generic(time_points, net_energy_subset, "Net Energy", "Net Energy: Solar, Wind, Load", "net_energy_plot")
+        print("Net energy graphed.")
+        """
         print("Length of Solar Power (Full):", len(solar_power_full))
         print("Length of Load Values (Full):", len(load_values_full))
         print("NaN in Solar Power (Full):", np.isnan(solar_power_full).any())
@@ -96,7 +148,9 @@ def upload_csv():
         return jsonify({
             "message": "Graph generated!",
             "solar_plot_url": solar_plot_path,
-            "load_plot_url": load_plot_path
+            "load_plot_url": load_plot_path,
+            "wind_plot_url": wind_plot_path,
+            "net_energy_plot_url": net_energy_plot_path
         })
     except Exception as e:
         print(f"Error: {str(e)}")
