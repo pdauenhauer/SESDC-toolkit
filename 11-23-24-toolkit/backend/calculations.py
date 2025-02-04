@@ -102,8 +102,8 @@ def calculate_net_energy(solar_power, load_values, time_interval = 1):
 
     return net_energy
 
-# Calculate net energy for graph (solar + wind - load)
-def net_energy_for_graph(solar_power, load_values, wind_values, time_interval = 1):
+# Calculate net energy for graph (solar + wind + diesel - load)
+def net_energy_for_graph(solar_power, load_values, wind_values, diesel_values, time_interval = 1):
     # solar_power: output of calculate_solar_energy()
     # load_values: extracted load values
     # time_interval: the time difference between data points (in hours), default is 1
@@ -112,9 +112,10 @@ def net_energy_for_graph(solar_power, load_values, wind_values, time_interval = 
     solar_power = np.nan_to_num(solar_power)
     load_values = np.nan_to_num(load_values)
     wind_values = np.nan_to_num(wind_values)
+    wind_values = np.nan_to_num(diesel_values)
 
     # Calculate net power
-    net_energy = solar_power + wind_values - load_values
+    net_energy = solar_power + wind_values + diesel_values - load_values
 
     return net_energy
 

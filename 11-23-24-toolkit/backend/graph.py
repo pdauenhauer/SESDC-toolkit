@@ -116,3 +116,35 @@ def plot_generic(time_points, energy, label, title, filename):
     plt.close()  # Close the plot to free memory
 
     return plot_path  # Return the path to the saved plot
+
+
+def plot_net_energy(time_points, net_energy, load, solar, wind, diesel):
+    """
+    Plot the net energy.
+
+    Parameters:
+    - time_points: Array representing time points.
+    - ...
+    """
+    plt.figure(figsize=(12, 6))
+    plt.plot(time_points, net_energy, label='Net Energy')
+    plt.plot(time_points, load, label='Load')
+    plt.plot(time_points, solar, label='Solar')
+    plt.plot(time_points, wind, label='Wind')
+    plt.plot(time_points, diesel, label='Diesel')
+    plt.title("Net Energy: Solar, Wind, Load")
+    plt.xlabel('Time (hours)')
+    plt.ylabel('Energy (kW)')
+    plt.legend()
+    plt.grid(True)
+    
+    # Ensure the "static" directory exists
+    if not os.path.exists("static"):
+        os.makedirs("static")
+
+    # Save the plot
+    plot_path = "static/net_energy_plot.png"
+    plt.savefig(plot_path)
+    plt.close()  # Close the plot to free memory
+
+    return plot_path  # Return the path to the saved plots

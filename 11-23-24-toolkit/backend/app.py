@@ -15,7 +15,7 @@ from calculations  import (
     calculate_hourly_wind_energy, calculate_power_output, 
     calculate_hourly_diesel_energy, diesel_losses
 )
-from graph import generate_power_graph, plot_load_profile, plot_wind_energy, plot_generic
+from graph import generate_power_graph, plot_load_profile, plot_wind_energy, plot_generic, plot_net_energy
 
 
 app = Flask(__name__)
@@ -128,12 +128,17 @@ def upload_csv():
 
         # Calculate net energy for the first 48 hours
         print("Calculating net energy subset...")
-        net_energy_subset = net_energy_for_graph(solar_power_subset, load_profile_subset, wind_energy_subset)
+        net_energy_subset = net_energy_for_graph(solar_power_subset, load_profile_subset, wind_energy_subset, diesel_energy_subset)
         print("Net energy calculated.")
 
         # Graph the net energy
         print("Graphing net energy...")
-        net_energy_plot_path = plot_generic(time_points, net_energy_subset, "Net Energy", "Net Energy: Solar, Wind, Load", "net_energy_plot")
+        net_energy_plot_path = plot_net_energy(time_points, 
+                                               net_energy_subset, 
+                                               load_profile_subset, 
+                                               solar_power_subset, 
+                                               wind_energy_subset, 
+                                               diesel_energy_subset)
         print("Net energy graphed.")
 
         return jsonify({
