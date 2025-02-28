@@ -45,11 +45,12 @@ def fetch_solar_data(latitude, longitude, userId, projectId, api_key="TC1RGLjNIw
 
         timestamp_columns['Datetime'] = timestamp_columns['Timestamp'].dt.strftime('%#m/%#d/%Y %H:%M')
 
-        additional_columns = df[['DNI', 'Temperature']]
+        additional_columns = df[['DNI', 'Temperature', 'Wind Speed']]
 
         additional_columns = additional_columns.rename(columns={
             'DNI': 'Irradiance (W/m2)',
-            'Temperature': 'Temp_C (oC)'
+            'Temperature': 'Temp_C (oC)',
+            'Wind Speed': 'Wind_speed(km/h)'
         })
 
         test_df = pd.read_csv('test.csv')
@@ -63,21 +64,8 @@ def fetch_solar_data(latitude, longitude, userId, projectId, api_key="TC1RGLjNIw
         new_df.to_csv(csv_buffer, index=False)
         csv_data = csv_buffer.getvalue().encode('utf-8')
 
-        cloud_storage_path = f"{userId}/{projectId}/test.csv"
-        bucket = storage.bucket()
-
-        temp_blob_path = f"{userId}/{projectId}/.temp"
-        temp_blob = bucket.blob(temp_blob_path)
-
-        if temp_blob.exists():
-            print(f"Deleting existing temp file at {temp_blob_path}")
-            temp_blob.delete()
-        
-        blob = bucket.blob(cloud_storage_path)
-        blob.upload_from_string(csv_data, content_type='text/csv')
-
         destination_file_name = 'download_csv.csv'
-        blob.download_to_filename(destination_file_name)
+        new_df.to_csv(destination_file_name, index=False)
     else:
         print(f"Error: {response.status_code}")
         print(response.text)

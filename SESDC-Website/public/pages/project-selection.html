@@ -72,6 +72,31 @@
                 <h2>Project Inputs</h2>
                 <button class="close-modal" id="closeInputsModal">&times;</button>
             </div>
+            <div class="reset-button" style="display: none;">
+                <button id="resetBtn">Reset Project</button>
+            </div>
+            <div class="input-buttons">
+                <button id="addCsvBtn">Add CSV</button>
+                <button id="locationInputsBtn">Add Location</button>
+            </div>
+            <form id="runSimForm">
+                <div id="addCsv" class="form-group" style="display: none;">
+                    <div id="drop-area">
+                        <p>Drag and drop your csv file here or click to select one</p>
+                        <input type="file" id="fileInput" accept=".csv"/>
+                        <label for="fileInput" id="file-label">Select a file</label>
+                    </div>
+                    <button type="submit" id="save-csv" class="save-inputs-btn">Save CSV</button>
+                </div>
+                <div id="locationInputs" class="form-group" style="display: none;">
+                    <p class="input-section-header">Location Inputs</p>
+                    <label for="location-latitude">Latitude</label>
+                    <input type="number" id="location-latitude" name="location-latitude">
+                    <label for="location-longitude">Longitude</label>
+                    <input type="number" id="location-longitude" name="location-longitude">
+                    <button type="submit" id="save-location-inputs" class="save-inputs-btn">Save Location Inputs</button>
+                </div>
+            <!--
             <div class="input-buttons">
                 <button id="locationInputsBtn">Location</button>
                 <button id="batteryInputsBtn">Battery</button>
@@ -202,9 +227,10 @@
                     <button type="submit" id="save-wind-turbine-inputs"class="save-inputs-btn">Save Wind Turbine Inputs</button>
                 </div>
                 <hr>
-                <button type="submit" class="save-submit-btn">Run Simulation</button>
-                <button type="button" class="redirect-btn">View Project Graphs</button>
+                -->
             </form>
+            <button type="submit" id="run-sim" class="save-submit-btn">Run Simulation</button>
+            <button type="button" class="redirect-btn" style="display: none;">View Project Graphs</button>
         </div>
     </div>
     <div id="deleteConfirmationModal" class="modal">

@@ -1,54 +1,86 @@
 import { app, storage } from './firebase-init.js'
 import { onSnapshot, getFirestore, getDoc, deleteDoc, doc, increment, setDoc, arrayUnion, arrayRemove, collection, updateDoc, where, query, getDocs, writeBatch } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
-import { ref, deleteObject, uploadBytes, uploadString, listAll} from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js';
+import { ref, deleteObject, uploadBytes, uploadString, listAll, getDownloadURL} from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js';
 
 const db = getFirestore(app);
 
 document.addEventListener('DOMContentLoaded', async function() {
     await loadProjects();
     renderProjects();
-    
-    document.getElementById('inputsForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-    
-        const projectId = document.getElementById('inputsModal').getAttribute('data-project-id');
-        const userId = localStorage.getItem('loggedInUserId');
 
-        const projectRef = doc(db, 'users', userId, 'projects', projectId);
-        const projectDoc = await getDoc(projectRef);
-        const data = projectDoc.data();
+    document.addEventListener('click', async (e) => {
+        if (e.target && e.target.id === 'run-sim') {
+            e.preventDefault();
+
+            const projectId = document.getElementById('inputsModal').getAttribute('data-project-id');
+            const userId = localStorage.getItem('loggedInUserId');
+    
+            const projectRef = doc(db, 'users', userId, 'projects', projectId);
+            const projectDoc = await getDoc(projectRef);
+            const data = projectDoc.data();
+    
+            if (data.uploadedCsv) {
+                const fileRef = ref(storage, `${userId}/${projectId}/simulation-csv`);
+                const url = await getDownloadURL(fileRef);
+    
+                const response = await fetch(url);
+                const csvData = await response.text();
+    
+                try {            
+                    // http://127.0.0.1:5001/sesdc-function-test/us-central1/run_simulation
+                    // /run_simulation
+                    // https://us-central1-sesdc-function-test.cloudfunctions.net/run_simulation
+                    // http://127.0.0.1:5001/sesdc-function-test/us-central1/run_simulation
+                    const response = await fetch('https://us-central1-sesdc-function-test.cloudfunctions.net/run_simulation', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            //'Accept': 'application/json'
+                        },
+                        body: JSON.stringify ({
+                            userId: userId,
+                            projectId: projectId,
+                            csvData: csvData
+                        })
+                    });
+    
+                    const result = await response.text();
+                    alert(result);
         
-        //const latitude = data.locationInputs.latitude;
-        //const longitude = data.locationInputs.longitude;
-    
-        try {            
-            //http://127.0.0.1:5001/sesdc-function-test/us-central1/fetch_solar_data_function
-            const response = await fetch('http://127.0.0.1:5001/sesdc-function-test/us-central1/run_simulation', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    //'Accept': 'application/json'
-                },
-                body: JSON.stringify ({
-                    //latitude: latitude,
-                    //longitude: longitude,
-                    userId: userId,
-                    projectId: projectId
-                })
-            });
-
-            const result = await response.text();
-            alert(result);
-    
-            closeInputsModal();
-        } catch (error) {
-            console.error('Error saving inputs:', error);
+                    closeInputsModal();
+                } catch (error) {
+                    console.error('Error saving inputs:', error);
+                }
+            } else if (data.addedLocationData) {
+                const latitude = data.locationInputs.latitude;
+                const longitude = data.locationInputs.longitude;
+                // /fetch_solar_data_function
+                // http://127.0.0.1:5001/sesdc-function-test/us-central1/fetch_solar_data_function
+                const simulationResponse = await fetch('https://us-central1-sesdc-function-test.cloudfunctions.net/fetch_solar_data_function', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        projectId: projectId,
+                        latitude: latitude,
+                        longitude: longitude
+                    })
+                });
+                const result = await simulationResponse.text();
+            } else {
+                alert('Neither location data nor CSV data has been added. Please add One.');
+            }
+            
+            const redirectButton = document.querySelector('.redirect-btn');
+            redirectButton.style.display = 'block';
         }
-    })
+    });
     
     document.getElementById('closeInputsModal').addEventListener('click', () => {
         closeInputsModal();
-    })
+    });
 });
 
 let projects = [,
@@ -56,7 +88,7 @@ let projects = [,
 
 document.getElementById('add-project').addEventListener('click', () => {
     openModal();
-})
+});
 
 function openModal() {
     document.getElementById('addProjectModal').classList.add('active');
@@ -64,7 +96,7 @@ function openModal() {
 
 document.getElementById('closeModal').addEventListener('click', () => {
     closeModal();
-})
+});
 
 function closeModal() {
     document.getElementById('addProjectModal').classList.remove('active');
@@ -89,6 +121,8 @@ document.getElementById('addProjectForm').addEventListener('submit', async (even
         created: new Date().toISOString().split('T')[0],
         id: projectId,
         isShared: false,
+        uploadedCsv: false,
+        addedLocationData: false,
         projectOwner: userId,
         projectEditors: [],
         projectViewers: [],
@@ -133,11 +167,11 @@ function renderProjects() {
                 <div class="project-header">
                     <h3>${project.name}</h3>
                     ${showShareButton ? `
-                        <button class='share-project-button'>
+                        <button class='share-project-button' title="Share Project">
                             <i class='bx bxs-paper-plane share-project' style='color:#47d0d6'></i>
                         </button>
                     ` : ''}
-                    <button class='delete-project-button'>
+                    <button class='delete-project-button' title="Delete Project">
                         <i class='bx bxs-trash delete-project' style='color:#ff0303'></i>
                     </button>
                 </div>
@@ -310,10 +344,31 @@ async function deleteFolder(folderRef) {
     }
 }
 
-function openInputsModal(projectId) {
+async function openInputsModal(projectId) {
     const modal = document.getElementById('inputsModal');
     modal.classList.add('active');
     modal.setAttribute('data-project-id', projectId);
+
+    const userId = localStorage.getItem('loggedInUserId');
+
+    const projectRef = doc(db, 'users', userId, 'projects', projectId);
+    const projectDoc = await getDoc(projectRef);
+
+    if (projectDoc.exists()) {
+        const projectData = projectDoc.data();
+
+        if (projectData.uploadedCsv || projectData.addedLocationData) {
+            document.getElementById('runSimForm').style.display = 'none';
+            document.querySelector('.input-buttons').style.display = 'none';
+            document.querySelector('.reset-button').style.display = 'block';
+        } else {
+            document.getElementById('runSimForm').style.display = 'block';
+            document.querySelector('.input-buttons').style.display = 'flex';
+            document.querySelector('.reset-button').style.display = 'none';
+        }
+    } else {
+        console.error("Project document does not exist!");
+    }
 }
 
 function closeInputsModal() {
@@ -614,7 +669,6 @@ document.getElementById('removeUserForm').addEventListener('submit', async(e) =>
     }
 });
 
-/*
 const dropArea = document.getElementById('drop-area');
 const fileInput = document.getElementById('fileInput');
 
@@ -641,7 +695,7 @@ dropArea.addEventListener('drop', (event) => {
 dropArea.addEventListener('click', () => {
     fileInput.click();
 });
-*/
+
 
 document.querySelectorAll('.input-buttons button').forEach(button => {
     button.addEventListener('click', function() {
@@ -662,6 +716,7 @@ document.querySelectorAll('.input-buttons button').forEach(button => {
     });
 });
 
+/*
 document.getElementById('save-battery-inputs').addEventListener('click', async (e) => {
     e.preventDefault();
     const userId = localStorage.getItem('loggedInUserId');
@@ -769,6 +824,46 @@ document.getElementById('save-wind-turbine-inputs').addEventListener('click', as
         console.error('Error saving wind turbine inputs:', error);
     }
 });
+*/
+
+document.getElementById('save-csv').addEventListener('click', async (e) => {
+    e.preventDefault();
+    const userId = localStorage.getItem('loggedInUserId');
+    const projectId = document.getElementById('inputsModal').getAttribute('data-project-id');
+
+    const fileInput = document.getElementById('fileInput');
+
+    if (!fileInput) {
+        console.error("File input element not found!");
+        return;
+    }
+
+    const file = fileInput.files[0];
+
+    const fileExtension = file.name.split('.').pop().toLowerCase();
+    if (fileExtension !== 'csv') {
+        alert('Please upload a valid CSV file.');
+        return;
+    }
+
+    try {
+        const fileRef = ref(storage, `${userId}/${projectId}/simulation-csv`);
+        await uploadBytes(fileRef, file);
+
+        const projectRef = doc(db, 'users', userId, 'projects', projectId);
+        await updateDoc(projectRef, {
+            uploadedCsv: true
+        });
+
+        document.getElementById('runSimForm').style.display = 'none';
+        document.querySelector('.input-buttons').style.display = 'none';
+        document.querySelector('.reset-button').style.display = 'block';
+
+        alert('File uploaded successfully!'); 
+    } catch (error) {
+        console.error('Error saving CSV', error);
+    }
+});
 
 document.getElementById('save-location-inputs').addEventListener('click', async (e) => {
     e.preventDefault();
@@ -783,10 +878,13 @@ document.getElementById('save-location-inputs').addEventListener('click', async 
     try {
         const projectRef = doc(db, 'users', userId, 'projects', projectId);
         await updateDoc(projectRef, {
-            locationInputs: locationInputs
+            locationInputs: locationInputs,
+            addedLocationData: true
         });
 
-        alert('Location inputs saved successfully!');
+        document.getElementById('runSimForm').style.display = 'none';
+        document.querySelector('.input-buttons').style.display = 'none';
+        document.querySelector('.reset-button').style.display = 'block';
     } catch (error) {
         console.error('Error saving location inputs:', error);
     }
@@ -799,4 +897,34 @@ document.addEventListener('DOMContentLoaded', function() {
         const projectId = document.getElementById('inputsModal').getAttribute('data-project-id');
         window.location.href = 'project-outputs.html?projectId=' + encodeURIComponent(projectId);
     });
+});
+
+document.getElementById('resetBtn').addEventListener('click', async function() {
+    const userId = localStorage.getItem('loggedInUserId');
+    const projectId = document.getElementById('inputsModal').getAttribute('data-project-id');
+
+    if (!projectId) {
+        console.error("Project ID not found!");
+        return;
+    }
+
+    const projectRef = doc(db, 'users', userId, 'projects', projectId);
+
+    try {
+        await updateDoc(projectRef, {
+            uploadedCsv: false,
+            addedLocationData: false 
+        });
+
+        const redirectButton = document.querySelector('.redirect-btn');
+        if (redirectButton.style.display === 'block') {
+            redirectButton.style.display = 'none';
+        }
+
+        document.getElementById('runSimForm').style.display = 'block';
+        document.querySelector('.input-buttons').style.display = 'flex'; 
+        document.querySelector('.reset-button').style.display = 'none'; 
+    } catch (error) {
+        console.error('Error resetting project:', error);
+    }
 });

@@ -121,7 +121,7 @@ def plot_generic(time_points, energy, label, title, filename, userId, projectId)
     return blob_path  # Return the path to the saved plot
 
 
-def plot_net_energy(time_points, net_energy, load, solar, wind, diesel, userId, projectId):
+def plot_net_energy(time_points, net_energy, load, solar, wind, userId, projectId):
     """
     Plot the net energy.
 
@@ -134,7 +134,6 @@ def plot_net_energy(time_points, net_energy, load, solar, wind, diesel, userId, 
     plt.plot(time_points, load, label='Load')
     plt.plot(time_points, solar, label='Solar')
     plt.plot(time_points, wind, label='Wind')
-    plt.plot(time_points, diesel, label='Diesel')
     plt.title("Net Energy: Solar, Wind, Load")
     plt.xlabel('Time (hours)')
     plt.ylabel('Energy (kW)')

@@ -22,7 +22,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('project-name').innerText = projectName;
 
     const plotNames = [
-        'diesel_plot_plot.png',
         'energy_plot.png',
         'load_plot.png',
         'net_energy_plot.png',
