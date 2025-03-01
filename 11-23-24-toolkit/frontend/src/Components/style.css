@@ -20,7 +20,7 @@ nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 100vw; /* Ensure full width */
+  width: 100vw;
   height: 55px;
   position: fixed;
   top: 0;
@@ -44,7 +44,7 @@ nav {
   justify-content: center;
 }
 
-/* Navigation Links */
+/* Navigation Links Container */
 .nav-links {
   display: flex;
   gap: 30px;
@@ -60,11 +60,12 @@ nav {
 
 /* Individual links */
 .nav-link {
-  color: black;
+  color: #fff;           /* White text for contrast */
   text-decoration: none;
   font-size: 16px;
   font-weight: 500;
-  padding: 5px 10px;
+  line-height: 60px;     /* Vertically centers text in a 60px nav bar */
+  padding: 0 10px;       /* Some horizontal padding */
   background: none;
   border: none;
   cursor: pointer;
@@ -74,10 +75,11 @@ nav {
   text-decoration: underline;
 }
 
+/* Logo Image Sizing */
 .logo-image {
-  width: 60px;  /* or any value you want */
+  width: 60px;
   height: auto;
-  object-fit: contain; /* optional, helps keep the image contained */
+  object-fit: contain;
 }
 
 /* === Button Container === */
@@ -200,7 +202,6 @@ nav {
   object-fit: contain; /* Keeps aspect ratio */
 }
 
-
 /* === Overview Section (Fix Alignment) === */
 .overview-section {
   display: flex;
@@ -238,5 +239,83 @@ nav {
 }
 
 .get-started:hover {
+  background-color: #15803d;
+}
+
+/* === Homepage Container for Flex Layout === */
+.homepage-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Full viewport height */
+}
+
+.content-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 55px); /* Subtract the fixed navbar's height */
+  /* Optional: add some top padding if needed */
+  padding-top: 10px;
+}
+
+/* === Footer (Bottom Bar) === */
+footer {
+  background-color: #2d3748; /* Tailwind's bg-gray-800 */
+  color: #ffffff;            /* Tailwind's text-white */
+  padding: 1rem 0;           /* 1rem top and bottom */
+  width: 100%;
+  text-align: center;
+  margin-top: auto;          /* Push footer to the bottom of the flex container */
+}
+
+
+.page-container {
+  max-width: 800px;
+  margin: 80px auto; /* Adjust top margin to prevent overlap with fixed navbar */
+  padding: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.page-container h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.page-container p {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.contact-form label {
+  font-weight: bold;
+}
+
+.contact-form input,
+.contact-form textarea {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.contact-form button {
+  width: fit-content;
+  background-color: #16a34a;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.contact-form button:hover {
   background-color: #15803d;
 }
