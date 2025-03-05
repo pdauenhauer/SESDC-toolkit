@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home Page</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="min-h-screen flex flex-col">
+  <!-- Navigation Bar -->
+  <nav>
+    <div class="nav-wrapper">
+      <div class="logo">
+        <img src="logo.png" alt="SESDC Logo" class="logo-image" />
+      </div>
+      <div class="nav-center">
+        <ul class="nav-links">
+          <li><a href="homepage.html" class="nav-link">Home</a></li>
+          <li><a href="about.html" class="nav-link">About</a></li>
+          <li><a href="help.html" class="nav-link">Help</a></li>
+          <li><a href="contactus.html" class="nav-link">Contact Us</a></li>
+        </ul>
+      </div>
+      <div class="button-container">
+        <button id="signupBtn" class="register-btn">Sign Up</button>
+        <button id="loginBtn" class="login-btn">Login</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content Wrapper -->
+  <main class="content-wrapper">
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="content-box">
+        <div class="left-content">
+          <h1 class="title">
+            A user-friendly microgrid <br /> design tool
+          </h1>
+          <button class="design-tool-button" onclick="alert('Open Design Tool')">
+            Open Design Tool <!-- Need to add link -->
+          </button>
+        </div>
+        <div class="graph-placeholder">
+          <img
+            src="https://www.investopedia.com/thmb/4KkPFX210Dfk2P1vrH2WcJ_IsYc=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/CPI_select-c0428c0813204d739c2e48785d3bc49a.JPG"
+            alt="Graph Example"
+            class="graph-image"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- Overview Section -->
+    <section class="overview-section">
+      <p>
+        Understanding Our Project: Learn why we created this tool and how it benefits users.
+        In addition to answering any questions you may have.
+      </p>
+      <button class="get-started" onclick="window.location.href='help.html'">
+        Learn More!
+      </button>
+      
+    </section>
+  </main>
+
+  <!-- Modal Popup for Login -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <button id="modal-close" class="modal-close">&times;</button>
+      <!-- Iframe loads login.html or signup.html based on which button is clicked -->
+      <iframe id="loginIframe" src="" frameborder="0"></iframe>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2025 SESDC. All rights reserved.</p>
+  </footer>
+  
+  <!-- Homepage JavaScript -->
+  <script src="script.js"></script>
+</body>
+</html>

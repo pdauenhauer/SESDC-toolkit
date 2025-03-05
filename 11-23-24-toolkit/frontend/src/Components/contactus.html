@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact Us</title>
+  <!-- Link to your general stylesheet -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="flex flex-col">
+  <!-- Navbar -->
+  <nav>
+    <div class="nav-wrapper">
+      <div class="logo">
+        <img src="logo.png" alt="SESDC Logo" class="logo-image" />
+      </div>
+      <div class="nav-center">
+        <ul class="nav-links">
+          <li><a href="homepage.html" class="nav-link">Home</a></li>
+          <li><a href="about.html" class="nav-link">About</a></li>
+          <li><a href="help.html" class="nav-link">Help</a></li>
+          <li><a href="contactus.html" class="nav-link">Contact Us</a></li>
+        </ul>
+      </div>
+      <div class="button-container">
+        <!-- Use buttons (not links) so that the popup logic is triggered -->
+        <button id="signupBtn" class="register-btn">Sign Up</button>
+        <button id="loginBtn" class="login-btn">Login</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content Wrapper -->
+  <main class="content-wrapper">
+    <!-- Page Content -->
+    <div class="page-container">
+      <h1>Contact Us</h1>
+      <p>
+        If you have any questions or need support, please fill out the form below:
+      </p>
+      <form id="contactForm" class="contact-form" novalidate>
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" placeholder="Your name" required />
+
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" placeholder="Your email" required />
+
+        <label for="message">Message</label>
+        <textarea id="message" name="message" placeholder="Your message" required></textarea>
+
+        <button type="submit">Send Message</button>
+      </form>
+    </div>
+  </main>
+
+  <!-- Modal Popup for Login/Signup -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <button id="modal-close" class="modal-close">&times;</button>
+      <!-- Iframe loads login.html or signup.html based on which button is clicked -->
+      <iframe id="loginIframe" src="" frameborder="0"></iframe>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2025 SESDC. All rights reserved.</p>
+  </footer>
+  
+  <!-- ContactUs JavaScript -->
+  <script src="contactus.js"></script>
+  <!-- Common JavaScript for popup functionality -->
+  <script src="script.js"></script>
+</body>
+</html>

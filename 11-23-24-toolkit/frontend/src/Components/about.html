@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>About Us</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="min-h-screen flex flex-col">
+  <!-- Navbar -->
+  <nav>
+    <div class="nav-wrapper">
+      <div class="logo">
+        <img src="logo.png" alt="SESDC Logo" class="logo-image" />
+      </div>
+      <div class="nav-center">
+        <ul class="nav-links">
+          <li><a href="homepage.html" class="nav-link">Home</a></li>
+          <li><a href="about.html" class="nav-link">About</a></li>
+          <li><a href="help.html" class="nav-link">Help</a></li>
+          <li><a href="contactus.html" class="nav-link">Contact Us</a></li>
+        </ul>
+      </div>
+      <div class="button-container">
+        <!-- Use buttons to trigger the modal popup -->
+        <button id="signupBtn" class="register-btn">Sign Up</button>
+        <button id="loginBtn" class="login-btn">Login</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content Wrapper -->
+  <main class="content-wrapper">
+    <div class="page-container">
+      <h1>About Us</h1>
+      <h3>Welcome to our project!</h3>
+      <p>
+        Our mission is to help plan for the long-term impact and sustainability of microgrid installations.
+        The main feature of the tool is a customizable simulation that predicts energy production and consumption,
+        as well as socioeconomic impacts of a microgrid system. This web application is designed to help system
+        designers optimize their plans for energy solutions in developing countries.
+      </p>
+    </div>
+  </main>
+
+  <!-- Modal Popup for Login/Signup -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <button id="modal-close" class="modal-close">&times;</button>
+      <!-- Iframe loads login.html or signup.html based on which button is clicked -->
+      <iframe id="loginIframe" src="" frameborder="0"></iframe>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2025 SESDC. All rights reserved.</p>
+  </footer>
+  
+  <!-- JavaScript for popup functionality -->
+  <script src="script.js"></script>
+</body>
+</html>

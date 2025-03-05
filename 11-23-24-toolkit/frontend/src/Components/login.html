@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login</title>
+  <link rel="stylesheet" href="login.css" />
+</head>
+<body>
+  <div class="auth-container">
+    <h2>Login</h2>
+    <form id="loginForm" novalidate>
+      <input type="email" class="auth-input" placeholder="Email" id="emailInput" />
+      <input type="password" class="auth-input" placeholder="Password" id="passwordInput" />
+      <p id="errorMsg" class="auth-error" style="display: none;"></p>
+      <button type="submit" class="auth-button">Login</button>
+    </form>
+    <p>
+      Don’t have an account?
+      <button class="auth-switch" id="toggleToSignup">Sign Up</button>
+    </p>
+  </div>
+
+  <!-- Login JavaScript -->
+  <script src="login.js"></script>
+</body>
+</html>

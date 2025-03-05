@@ -1,3 +1,8 @@
+/* Optional global reset to ensure box-sizing applies to all elements */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 /* === Modal Background Overlay (with blur effect) === */
 .modal-overlay {
   position: fixed;
@@ -5,8 +10,8 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.4); /* Dark overlay */
-  backdrop-filter: blur(5px); /* Background blur effect */
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(5px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -15,11 +20,13 @@
 
 /* === Modal Box === */
 .modal-content {
-  background: white;
+  background: #fff;
+  /* Use a responsive width so it fits on smaller screens without scrolling */
+  width: 90%;
+  max-width: 400px;
   padding: 24px;
   border-radius: 10px;
   box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
-  width: 400px;
   text-align: center;
   position: relative;
 }
@@ -35,7 +42,6 @@
   cursor: pointer;
   color: #555;
 }
-
 .modal-close:hover {
   color: black;
 }
@@ -44,6 +50,10 @@
 .auth-container {
   width: 100%;
   text-align: center;
+  font-family: Arial, sans-serif;
+  background-color: transparent; /* No extra box background */
+  margin: 0 auto;
+  padding: 0;                    /* Let .modal-content handle padding */
 }
 
 /* === Input Fields === */
@@ -55,27 +65,30 @@
   border-radius: 5px;
   font-size: 16px;
   outline: none;
+
+  /* Ensure padding doesn't cause horizontal overflow */
+  box-sizing: border-box;
 }
 
 .auth-input:focus {
-  border-color: #16a34a;
+  border-color: #16a34a; /* Green highlight on focus */
 }
 
 /* === Buttons === */
 .auth-button {
   width: 100%;
   padding: 12px;
-  background-color: #16a34a;
+  background-color: #16a34a; /* Match homepage green */
   color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
   font-size: 16px;
   margin-top: 10px;
+  box-sizing: border-box;
 }
-
 .auth-button:hover {
-  background-color: #15803d;
+  background-color: #15803d; /* Slightly darker green */
 }
 
 /* === Switch Between Login & Signup === */
@@ -86,10 +99,10 @@
   cursor: pointer;
   font-weight: bold;
   margin-top: 10px;
-}
-
-.auth-switch:hover {
   text-decoration: underline;
+}
+.auth-switch:hover {
+  text-decoration: none;
 }
 
 /* === Error Messages === */
@@ -102,7 +115,7 @@
 /* === Responsive Design (Optional) === */
 @media (max-width: 500px) {
   .modal-content {
-      width: 90%;
+    width: 90%;
+    max-width: 90%; /* So it doesn't exceed screen width on very small devices */
   }
 }
-  
