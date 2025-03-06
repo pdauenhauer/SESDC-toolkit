@@ -38,18 +38,20 @@
       <p>
         If you have any questions or need support, please fill out the form below:
       </p>
-      <form id="contactForm" class="contact-form" novalidate>
-        <label for="name">Name</label>
-        <input type="text" id="name" name="name" placeholder="Your name" required />
-
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" placeholder="Your email" required />
-
-        <label for="message">Message</label>
-        <textarea id="message" name="message" placeholder="Your message" required></textarea>
-
-        <button type="submit">Send Message</button>
-      </form>
+      <form action="https://api.web3forms.com/submit" method="POST" class="contact-form">
+        <input class="input" type="hidden" name="access_key" value="b577f2c5-cd3f-4e78-8641-fc14d0f4f76e">
+        <label for="name">Name:</label>
+        <input class="input" type="text" name="name" required>
+ 
+ 
+        <label for="email">Email:</label>
+        <input class="input"type="email" id="email" name="email" required>
+ 
+ 
+        <label for="message">Message:</label>
+        <textarea class="textarea" id="message" name="message" rows="2" required></textarea>
+        <button class="contact-form" id="button" type="submit">Submit</button>
+      </form >
     </div>
   </main>
 
