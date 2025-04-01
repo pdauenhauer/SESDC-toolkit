@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home Page</title>
+  <link rel="stylesheet" href="css/homepage.css" />
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+</head>
+<body class="min-h-screen flex flex-col">
+  <!-- Navigation Bar -->
+  <nav>
+    <input type="checkbox" id="check">
+    <label for="check" class="check-btn">
+      <i class='bx bx-menu'></i>
+    </label>
+    <label class="logo-nav">Microgrid Toolkit</label>
+    <ul>
+      <li><a class="active" href="#">Home</a></li>
+      <li><a href="pages/about.html">About</a></li>
+      <li><a href="pages/contact.html">Contact</a></li>
+      <li><a href="pages/login.html">Login</a></li>
+    </ul>
+  </nav>
+  
+
+  <!-- Main Content Wrapper -->
+  <main class="content-wrapper">
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="content-box">
+        <div class="left-content">
+          <h1 class="title">
+            A user-friendly microgrid <br /> design tool
+          </h1>
+          <button class="design-tool-button" onclick="window.location.href='html/login.html'">
+            Open Design Tool <!-- Need to add link -->
+          </button>
+        </div>
+        <div class="graph-placeholder">
+          <img
+            src="media/green.png"
+            alt="Graph Example"
+            class="graph-image"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- Overview Section -->
+    <section class="overview-section">
+      <p>
+        Understanding Our Project: Learn why we created this tool and how it benefits users.
+        In addition to answering any questions you may have.
+      </p>
+      <button class="get-started" onclick="window.location.href='html/help.html'">
+        Learn More!
+      </button>
+      
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2025 SESDC. All rights reserved.</p>
+  </footer>
+</body>
+</html>

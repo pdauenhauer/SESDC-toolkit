@@ -15,7 +15,7 @@ from firebase_admin import storage
 
 from calculations import (
     EnergyStorageSystem,
-    process_csv, panel_losses, coef, STCIrr, STCTemp, panel_char, calculate_hourly_solar_energy, calculate_solar_energy,
+    process_csv, coef, STCIrr, STCTemp, panel_char, calculate_hourly_solar_energy, calculate_solar_energy,
     calculate_net_energy, net_energy_for_graph,
     calculate_hourly_wind_energy, calculate_power_output, 
     calculate_hourly_diesel_energy, diesel_losses
@@ -52,9 +52,20 @@ def run_simulation(req: https_fn.Request) -> https_fn.Response:
     print("Function run_simulation started.")
 
     try:
+        #user data
         data = req.get_json(silent=True)
         userId = data.get('userId')
         projectId = data.get('projectId')
+        #wind inputs
+        numTurbines = data.get('numTurbines')
+        # battery inputs
+        chargeCapacity = data.get('chargeCapacity')
+        maxStorage = data.get('maxStorage')
+        #solar inputs
+        arrayWattage = data.get('arrayWattage')
+        solar_losses = {"loss_type": ["wire_losses", "Module_mismatch", "Module_Aging", "Dust/Dirt", "converter"],
+                        "loss_value": [data.get('wireLosses'), data.get('moduleMismatch'), data.get('moduleAging'), data.get('dustDirt'), data.get('converterLosses')]}
+
         print(f"User ID: {userId}, Project ID: {projectId}")
         
         blob_path = f"{userId}/{projectId}/simulation-csv"
@@ -68,7 +79,7 @@ def run_simulation(req: https_fn.Request) -> https_fn.Response:
         
         df = process_csv(io.StringIO(csv_content))
         print("CSV processed successfully:")
-        run_simulation_function(projectId, userId, df)
+        run_simulation_function(projectId, userId, df, numTurbines, chargeCapacity, maxStorage, arrayWattage, solar_losses)
 
         return https_fn.Response(
             "Simulation Ran",
@@ -177,10 +188,10 @@ def fetch_solar_data_function(req: https_fn.Request) -> https_fn.Response:
     
     return https_fn.Response("Data fetched successfully")
 
-def run_simulation_function(projectId, userId, df):
+def run_simulation_function(projectId, userId, df, numTurbines, chargeCapacity, maxStorage, arrayWattage, solar_losses):
 
     #Initialize Energy Storage System
-    e1 = EnergyStorageSystem(5, 15)
+    e1 = EnergyStorageSystem(chargeCapacity, maxStorage)
 
     # Clean up the data
     print("Cleaning data...")
@@ -204,7 +215,7 @@ def run_simulation_function(projectId, userId, df):
     # Calculate solar power
     print("Calculating solar power...")
     solar_power_full = calculate_solar_energy(df["Irradiance (W/m2)"], df["Temp_C (oC)"],
-                          panel_name_plate_W=(10.6 * 1000), losses=panel_losses["loss_value"], coef=coef, STCIrr=STCIrr, STCTemp=STCTemp)
+                          panel_name_plate_W=(arrayWattage * 1000), losses=solar_losses["loss_value"], coef=coef, STCIrr=STCIrr, STCTemp=STCTemp)
     print("Solar power calculated.")
 
     # Graph the solar power
@@ -231,7 +242,7 @@ def run_simulation_function(projectId, userId, df):
     print("Load graphed.")
 
     # Calculate hourly wind energy - returns an array with all the wind energy generated
-    hourly_wind_energy = calculate_hourly_wind_energy(df, 8)
+    hourly_wind_energy = calculate_hourly_wind_energy(df, numTurbines)
     # Add hourly wind energy to the dataframe
     df['Hourly_Wind_Energy(Wh)'] = hourly_wind_energy
 
