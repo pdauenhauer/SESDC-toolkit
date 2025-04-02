@@ -1,0 +1,39 @@
+/* Default styles (fixed width for large screens) */
+.container {
+  width: 800px; /* Fixed width for larger screens */
+  margin: auto;
+}
+
+/* Make the layout adjust for tablets */
+@media (max-width: 768px) {
+  .container {
+    width: 90%; /* Adjust width to be more flexible */
+  }
+}
+
+/* Make it fully responsive for mobile screens */
+@media (max-width: 480px) {
+  .container {
+    width: 100%; /* Full width on very small screens */
+    padding: 10px; /* Add some padding to prevent content from touching edges */
+  }
+}
+
+/* Responsive Images */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Optional: Make text adjust slightly on smaller screens */
+body {
+  font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+  body {
+    font-size: 0.9rem; /* Reduce font size slightly for smaller screens */
+}
+}
+
+ 
