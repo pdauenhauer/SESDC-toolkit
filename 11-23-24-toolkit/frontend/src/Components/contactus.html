@@ -8,14 +8,16 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="flex flex-col">
-  <!-- Navbar -->
+  <!-- Navigation Bar -->
   <nav>
     <div class="nav-wrapper">
       <div class="logo">
-        <img src="logo.png" alt="SESDC Logo" class="logo-image" />
+        <a href="homepage.html">
+          <img src="logo.png" alt="SESDC Logo" class="logo-image" />
+        </a>
       </div>
       <div class="nav-center">
-        <ul class="nav-links">
+        <ul class="nav-links" id="navLinks">
           <li><a href="homepage.html" class="nav-link">Home</a></li>
           <li><a href="about.html" class="nav-link">About</a></li>
           <li><a href="help.html" class="nav-link">Help</a></li>
@@ -23,9 +25,14 @@
         </ul>
       </div>
       <div class="button-container">
-        <!-- Use buttons (not links) so that the popup logic is triggered -->
         <button id="signupBtn" class="register-btn">Sign Up</button>
         <button id="loginBtn" class="login-btn">Login</button>
+      </div>
+      <!-- Hamburger Icon -->
+      <div class="hamburger" id="hamburgerMenu">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
       </div>
     </div>
   </nav>
@@ -42,12 +49,12 @@
         <input class="input" type="hidden" name="access_key" value="b577f2c5-cd3f-4e78-8641-fc14d0f4f76e">
         <label for="name">Name:</label>
         <input class="input" type="text" name="name" required>
- 
- 
+
+
         <label for="email">Email:</label>
         <input class="input"type="email" id="email" name="email" required>
- 
- 
+
+
         <label for="message">Message:</label>
         <textarea class="textarea" id="message" name="message" rows="2" required></textarea>
         <button class="contact-form" id="button" type="submit">Submit</button>
@@ -68,7 +75,7 @@
   <footer class="footer">
     <p>&copy; 2025 SESDC. All rights reserved.</p>
   </footer>
-  
+
   <!-- ContactUs JavaScript -->
   <script src="contactus.js"></script>
   <!-- Common JavaScript for popup functionality -->

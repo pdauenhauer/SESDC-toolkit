@@ -5,6 +5,12 @@ document.addEventListener("DOMContentLoaded", function () {
   const signupBtn = document.getElementById("signupBtn");
   const modalClose = document.getElementById("modal-close");
 
+  // Hamburger Menu Toggle
+  document.getElementById("hamburgerMenu").addEventListener("click", function () {
+    const navLinks = document.getElementById("navLinks");
+    navLinks.classList.toggle("active");
+  });
+
   console.log("Elements loaded:", { modal, loginIframe, loginBtn, signupBtn, modalClose });
 
   if (loginBtn) {
@@ -37,4 +43,3 @@ document.addEventListener("DOMContentLoaded", function () {
     console.log("modalClose not found");
   }
 });
-
