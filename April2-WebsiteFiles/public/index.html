@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Microgrid Toolkit</title>
+  <link rel="stylesheet" href="css/homepage.css" />
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <!-- <link rel="favicon" href="media/Logo.svg" type="image/svg"> -->
+</head>
+
+<body class="min-h-screen flex flex-col">
+  <!-- Navigation Bar -->
+  <nav>
+    <input type="checkbox" id="check">
+    <label for="check" class="check-btn">
+      <i class='bx bx-menu'></i>
+    </label>
+
+    <div class="nav-left">
+      <img src="media/Logo-white.svg" alt="Logo" class="nav-logo" />
+      <label class="logo-nav">Microgrid Toolkit</label>
+    </div>
+
+    <ul>
+      <li><a class="active" href="#">Home</a></li>
+      <li><a href="pages/about.html">About</a></li>
+      <li><a href="pages/contact.html">Contact</a></li>
+      <li><a href="pages/login.html">Login</a></li>
+    </ul>
+  </nav>
+  
+
+  <!-- Main Content Wrapper -->
+  <main class="content-wrapper">
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="content-box">
+        <div class="hero-image">
+          <img
+            src="media/Logo.svg"
+            alt="Graph Example"
+            class="graph-image"
+          />
+        </div>
+
+        <div class="left-content">
+          <h1>Welcome to the SESDC Microgrid Toolkit</h1>
+          <h3>Design, simulate, and plan your microgrid with ease.</h3>
+          <button class="design-tool-button" onclick="window.location.href='html/login.html'">
+            Open Design Tool
+          </button>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- Overview Section -->
+    <section class="overview-section">
+      <p>
+        Understanding Our Project: Learn why we created this tool and how it benefits users.
+        In addition to answering any questions you may have.
+      </p>
+      <button class="get-started" onclick="window.location.href='html/help.html'">
+        Learn More!
+      </button>
+      
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2025 SESDC. All rights reserved.</p>
+  </footer>
+</body>
+</html>

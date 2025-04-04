@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Dashboard - Microgrid Design Tool</title>
+    <link href="../css/project-selection.css" rel="stylesheet" type="text/css"/>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="icon" href="/media/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <nav>
+      <input type="checkbox" id="check">
+      <label for="check" class="check-btn">
+        <i class='bx bx-menu'></i>
+      </label>
+      <div class="nav-left">
+        <img src="media/Logo-white.svg" alt="Logo" class="nav-logo" />
+        <label class="logo-nav">Microgrid Toolkit</label>
+      </div>
+      <ul>
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a class="active" href="#">Dashboard</a></li>
+        <li><a id="logout" href="../pages/login.html">Logout</a></li>
+        <!-- Account, About, Contact-->
+      </ul>
+    </nav>
+
+    <div class="logo-container">
+      <img src="../media/Logo (3).svg" alt="KWH Logo" class="logo">
+    </div>
+    <h1 class="main-title">Project Selection</h1>
+
+    <header class="header">
+        <h1>My Projects</h1>
+        <div class="user-info">Hello, <span id="logged-in-username"></span></div>
+    </header>
+
+    <main class="main-content">
+        <div class="projects-header">
+            <h2>Your Projects</h2>
+            <button class="add-project-btn" id="add-project">
+                <i class='bx bx-plus'></i>
+                Add New Project
+            </button>
+        </div>
+
+ 
+        <div class="projects-grid" id="projectsGrid">
+            
+        </div>
+    </main>
+    <div class="modal" id="addProjectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Project</h2>
+                <button class="close-modal" id="closeModal">&times;</button>
+            </div>
+            <form id="addProjectForm">
+                <div class="form-group-add-project">
+                    <label for="projectName">Project Name</label>
+                    <input type="text" id="projectName" required>
+                </div>
+                <div class="form-group-add-project">
+                    <label for="projectDescription">Description</label>
+                    <textarea id="projectDescription" required></textarea>
+                </div>
+                <button type="submit" class="submit-btn">Create Project</button>
+            </form>
+        </div>
+    </div>
+    <div id="inputsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Project Inputs</h2>
+                <button class="close-modal" id="closeInputsModal">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <label for="mode-select">Select Input Mode:</label>
+                <select id="mode-select">
+                  <option value="manual" selected>Manual Input Mode</option>
+                  <option value="csv">CSV Upload Mode</option>
+                </select>
+            </div>
+            
+            <div class="input-buttons">
+                <button id="locationInputsBtn">Location</button>
+                <button id="batteryInputsBtn">Battery</button>
+                <button id="generatorInputsBtn">Generator</button>
+                <button id="solarPanelInputsBtn">Solar Panel</button>
+                <button id="windTurbineInputsBtn">Wind Turbine</button>
+		        <button id="addCsvBtn">Add CSV</button>
+            </div>
+            <form id="inputsForm">
+                <div id="locationInputs" class="form-group" style="display: none;">
+                    <p class="input-section-header">Location Inputs</p>
+                    <label for="location-latitude">Latitude</label>
+                    <input type="number" id="location-latitude" name="location-latitude">
+                    <label for="location-longitude">Longitude</label>
+                    <input type="number" id="location-longitude" name="location-longitude">
+                    <button type="submit" id="save-location-inputs" class="save-inputs-btn">Save Location Inputs</button>
+                </div>
+                <div id="batteryInputs" class="form-group" style="display: none;">
+                    <p class="input-section-header">Battery</p>
+                    <label for="hourly-charge-capacity">Charge capacity per hr (kW)</label>
+                    <input type="number" id="hourly-charge-capacity" name="hourly-charge-capacity">
+
+                    <label for="maximum-storage">Maximum storage (kW)</label>
+                    <input type="number" id="maximum-storage" name="maximum-storage">
+                    <!--<input type="checkbox" id="using-battery">-->
+                    <!--<label for="using-battery">Using a Battery?</label>-->
+                    <!--
+                    <div class="option-select">
+                        <p>Battery Efficiency</p>
+                        <select id="efficiency-select" name="efficiency-select">
+                            <option value="" disabled selected>Select Efficiency (Percentage)</option>
+                            <option value="High">90</option>
+                            <option value="Medium">85</option>
+                            <option value="Low">80</option>
+                        </select>
+                    </div>
+                    <div class="option-select">
+                        <p>Battery Type</p>
+                        <select id="battery-type-select" name="battery-type-select">
+                            <option value="" disabled selected>Select Type</option>
+                            <option value="Lithium-Ion">Lithium Ion</option>
+                            <option value="Lead-Acid">Lead-Acid</option>
+                        </select>
+                    </div>
+                    <label for="maximum-depth-of-discharge">Maximum Depth of Discharge (DoD)</label>
+                    <input type="number" id="maximum-depth-of-discharge" name="maximum-depth-of-discharge">
+                    <label for="battery-lifespan">Battery Lifespan</label>
+                    <input type="number" id="battery-lifespan" name="battery-lifespan">
+                    <label for="capitol-cost-battery">Capital Cost (CAPEX)</label>
+                    <input type="number" id="capitol-cost-battery" name="capitol-cost-battery">
+                    -->
+                    <!--<button type="submit" id="save-battery-inputs" class="save-inputs-btn">Save Battery Inputs</button>-->
+                </div>
+                <div id="generatorInputs" class="form-group" style="display: none;">
+                    <p class="input-section-header">Diesel Generator</p>
+                    <input type="checkbox" id="using-generator">
+                    <label for="using-generator">Using a Diesel Generator?</label>
+                    <div class="option-select">
+                        <p>Type of Generator</p>
+                        <select id="generator-type" name="generator-type">
+                            <option value="" disabled selected>Select Type</option>
+                            <option value="Type-1">Type 1</option>
+                            <option value="Type-2">Type 2</option>
+                        </select>
+                    </div>
+                    <div class="option-select">
+                        <p>Generator Efficiency</p>
+                        <select id="generator-efficiency" name="generator-efficiency">
+                            <option value="" disabled selected>Select Efficiency (Percentage)</option>
+                            <option value="High">35</option>
+                            <option value="Medium">30</option>
+                            <option value="Low">25</option>
+                        </select>
+                    </div>
+                    <div class="option-select">
+                        <p>Control Mode</p>
+                        <select id="control-mode" name="control-mode">
+                            <option value="" disabled selected>Control Mode</option>
+                            <option value="load-following">Load Following</option>
+                            <option value="cycle-charging">Cycle Charging</option>
+                        </select>
+                    </div>
+                    <label for="generator-capacity">Generator Capacity (kW)</label>
+                    <input type="number" id="generator-capacity" name="generator-capacity">
+                    <label for="capital-cost-generator">Capital Cost (CAPEX)</label>
+                    <input type="number" id="capital-cost-generator" name="capital-cost-generator">
+                    <label for="fuel-cost">Fuel Cost (Liters)</label>
+                    <input type="number" id="fuel-cost" name="fuel-cost">
+                    <label for="maintenance-cost-generator">Maintenance Cost (OPEX)</label>
+                    <input type="number" id="maintenance-cost-generator" name="maintenance-cost-generator">
+                    <label for="generator-lifetime">Generator Lifetime (years)</label>
+                    <input type="number" id="generator-lifetime" name="generator-lifetime">
+                    <!--<button type="submit" id="save-generator-inputs" class="save-inputs-btn">Save Generator Inputs</button>-->
+                </div>
+                <div id="solarPanelInputs" class="form-group" style="display: none;">
+                    <p class="input-section-header">Solar Panel</p>
+                    <!--
+                    <input type="checkbox" id="using-solar-panel">
+                    <label for="using-solar-panel">Using a Solar Panel?</label>
+                    <div class="option-select">
+                        <p>Solar Panel Efficiency</p>
+                        <select id="solar-panel-efficiency" name="solar-panel-efficiency">
+                            <option value="" disabled selected>Select Efficiency (Percentage)</option>
+                            <option value="High">15</option>
+                            <option value="Medium">12.5</option>
+                            <option value="Low">10</option>
+                        </select>
+                    </div>
+                    <label for="solar-array-size">Solar Array Size (kW)</label>
+                    <input type="number" id="solar-array-size" name="solar-array-size">
+                    -->
+                    <label for="array-wattage">Solar Array Wattage (kW)</label>
+                    <input type="number" id="array-wattage" name="array-wattage">
+
+                    <label for="wire-losses">Losses: wire</label>
+                    <input type="number" id="wire-losses" name="wire-losses" step="any">
+
+                    <label for="module-mismatch-losses">Losses: Module Mismatch</label>
+                    <input type="number" id="module-mismatch-losses" name="module-mismatch-losses" step="any">
+
+                    <label for="module-aging-losses">Losses: Module Aging</label>
+                    <input type="number" id="module-aging-losses" name="module-aging-losses" step="any">
+
+                    <label for="dust-dirt-losses">Losses: Dust/Dirt</label>
+                    <input type="number" id="dust-dirt-losses" name="dust-dirt-losses" step="any">
+
+                    <label for="converter-losses">Losses: Converter</label>
+                    <input type="number" id="converter-losses" name="converter-losses" step="any">
+
+                    <!--
+                    <label for="capital-cost-solar-panel">Capital Cost (CAPEX)</label>
+                    <input type="number" id="capital-cost-solar-panel" name="capital-cost-solar-panel">
+                    <label for="solar-panel-lifespan">Lifespan (years)</label>
+                    <input type="number" id="solar-panel-lifespan" name="solar-panel-lifespan">
+                    -->
+                    <!--<button type="submit" id="save-solar-panel-inputs" class="save-inputs-btn">Save Solar Panel Inputs</button>-->
+                </div>
+                <div id="windTurbineInputs" class="form-group" style="display: none;">
+                    <p class="input-section-header">Wind Turbine</p>
+                    <label for="wind-turbine-number">Number of turbines</label>
+                    <input type="number" id="wind-turbine-number" name="wind-turbine-number">
+                    <!--<button type="submit" id="save-wind-turbine-inputs"class="save-inputs-btn">Save Wind Turbine Inputs</button>-->
+                </div>
+		        <div id="addCsv" class="form-group" style="display: none;">
+  	    	        <div id="drop-area">
+    			        <p>Drag and drop your csv file here or click to select one</p>
+    			        <input type="file" id="fileInput" accept=".csv"/>
+    			        <label for="fileInput" id="file-label">Select a file</label>
+  	                </div>
+                    <!--button type = "button" to make it clear that this one is not supposed to submit the form.-->
+  	    	        <button type="button" id="save-csv" class="save-inputs-btn">Save CSV</button> 
+		        </div>
+                <hr>
+                <button type="submit" class="save-submit-btn">Run Simulation</button>
+                <button type="button" class="redirect-btn">View Project Graphs</button>
+            </form>
+        </div>
+    </div>
+    <div id="deleteConfirmationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Are you sure you want to delete this project?</h2>
+            </div>
+            <div class="modal-body">
+                <div class="modal-buttons">
+                    <button id="confirmDelete" class="delete-btn">Delete</button>
+                    <button id="cancelDelete" class="cancel-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="shareProjectModal" class="modal">
+        <div class="share-modal-content">
+            <div class="modal-header">
+                <h2>Share Project</h2>
+                <button class="close-modal" id="closeShareProjectModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="button-box">
+                    <div id="btn"></div>
+                    <button type="button" class="toggle-btn" id="shareFormBtn">Share</button>
+                    <button type="button" class="toggle-btn" id="removeUserFormBtn">Remove</button>
+                </div>
+                <div class="form-wrapper">
+                    <form id="shareProjectForm">
+                        <div class="share-form-group">
+                            <p>Enter the email address of the person you want to share the project with:</p>
+                            <input type="email" id="shareEmail" required>
+                        </div>
+                        <div class="option-select">
+                            <p>User Role</p>
+                            <select id="roleSelect" name="roleSelect">
+                                <option value="" disabled selected>Select Role</option>
+                                <option value="owner">Owner</option>
+                                <option value="editor">Editor</option>
+                                <option value="viewer">Viewer</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="share-submit-btn">Share Project</button>
+                    </form>
+                    <form id="removeUserForm">
+                        <div class="form-group">
+                            <p>Enter the email address of the person you want to remove from the project:</p>
+                            <input type="email" id="removeEmail" required>
+                        </div>
+                        <button type="submit" class="remove-user-btn">Remove User</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script type="module" src="../js-scripts/project-selection-display.js" defer></script>
+    <script type="module" src="../js-scripts/project-selection-user-authentication.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore-compat.js"></script>
+</body>
+</html>
