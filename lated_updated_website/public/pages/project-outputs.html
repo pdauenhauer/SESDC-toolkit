@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Dashboard - Microgrid Design Tool</title>
+    <link href="../css/project-selection.css" rel="stylesheet" type="text/css"/>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+    <nav>
+      <input type="checkbox" id="check">
+      <label for="check" class="check-btn">
+        <i class='bx bx-menu'></i>
+      </label>
+      <!--<div class="nav-left">
+        <img src="media/Logo-white.svg" alt="Logo" class="nav-logo" />
+        <label class="logo-nav">Microgrid Toolkit</label>
+      </div>-->
+      <ul>
+        <li><a href="../index.html">Home</a></li>
+        <li><a id="logout" href="about.html">About</a></li>
+        <li><a id="logout" href="contact.html">Contact</a></li>
+        <li><a class="active" href="#">Dashboard</a></li>
+        <li><a id="logout" href="login.html">Logout</a></li>
+      </ul>
+    </nav>
+
+    <div class="logo-container">
+      <img src="../media/Logo.svg" alt="Logo" class="logo">
+    </div>
+
+    <h1 class="main-title">Project Graphs</h1>
+
+    <header class="header">
+        <h1>Graphs</h1>
+        <div class="project-info">Viewing Project, <span id="project-name"></span></div>
+    </header>
+    <div class="plots-container" id="plotsContainer"></div>
+
+
+    
+    <script type="module" src="../js/project-outputs.js" defer></script>
+</body>
