@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Contact</title>
+  <link rel="stylesheet" href="../css/project-selection.css" />
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <style>
+    .contact-container {
+      padding-top: 120px;
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+      color: var(--green-start);
+    }
+
+    .contact-title {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--green-main);
+    }
+
+    .contact-info {
+      font-size: 1.2rem;
+      margin-top: 2rem;
+    }
+
+    .email-link {
+      color: var(--green-start);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    .email-link:hover {
+      color: var(--orange-accent);
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <input type="checkbox" id="check">
+    <label for="check" class="check-btn">
+      <i class='bx bx-menu'></i>
+    </label>
+    <label class="logo-nav">Microgrid Toolkit</label>
+    <ul>
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a class="active" href="contact.html">Contact</a></li>
+      <li><a href="login.html">Login</a></li>
+    </ul>
+  </nav>
+
+  <div class="contact-container">
+    <h1 class="contact-title">Get in Touch</h1>
+    <p class="contact-info">
+      Feel free to reach out to us via email:<br />
+      <a class="email-link" href="mailto:microgridteam@example.com">microgridteam@example.com</a>
+    </p>
+  </div>
+</body>
+</html>
