@@ -1,0 +1,235 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+    --black: #0A090C;
+    --green-start: #046153;
+    --blue-end: #409492;
+    --green-main: #037F6F;
+    --subheading: #4a5568;
+    --selection-green: #05B39C;
+    --yellow-accent: #EDD16E;
+    --orange-accent: #FFA947;
+    --white-main: #F7F9F1;
+    --gradient-bg: linear-gradient(135deg, var(--green-start), var(--green-main), var(--blue-end));
+    --gradient-yo: linear-gradient(var(--yellow-accent), var(--orange-accent))
+}
+  
+* {
+    margin: 0;
+    padding: 0;
+    text-decoration: none;
+    list-style: none;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+
+.logo-container {
+    padding-top: 100px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.logo {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+  
+.main-title {
+    font-size: 48px;
+    color: var(--green-main);
+    margin-bottom: 30px;
+    text-align: center;
+}
+  
+body {
+    background-color: var(--white-main);
+    min-height: 100vh;
+}
+  
+/* navbar */
+nav {
+    background: var(--gradient-bg);
+    height: 80px;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+  
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+}
+  
+.nav-logo {
+    height: 50px;
+    width: auto;
+    margin-right: 10px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+  
+.logo-nav {
+color: var(--white-main);
+font-size: 24px;
+font-weight: bold;
+line-height: 80px; 
+}
+
+label.logo-nav {
+    color: var(--white-main);
+    font-size: 35px;
+    line-height: 80px;
+    padding: 0 100px;
+    font-weight: bold;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+}
+  
+.nav-links a {
+    text-decoration: none;
+    color: #333;
+}
+
+nav ul {
+    float: right;
+    margin-right: 20px;
+}
+    
+nav ul li {
+    display: inline-block;
+    line-height: 80px;
+    margin: 0 5px;
+}
+    
+nav ul li a {
+    color: var(--white-main);
+    font-size: 17px;
+    text-decoration: none;
+    padding: 7px 13px;
+    border-radius: 3px;
+}
+    
+nav ul li a:hover {
+    background: var(--selection-green);
+    transition: .5s;
+}
+    
+a.active {
+    background: var(--selection-green);
+}
+    
+.check-btn {
+    font-size: 30px;
+    color: var(--white-main);
+    float: right;
+    line-height: 80px;
+    margin-right: 40px;
+    cursor: pointer;
+    display: none;
+}
+    
+#check {
+    display: none;
+}
+    
+@media (max-width: 952px) {
+    label.logo-nav {
+      font-size: 30px;
+      padding-left: 50px;
+    }
+  
+    nav ul li a {
+      font-size: 16px;
+    }
+}
+  
+@media (max-width: 858px) {
+    .check-btn {
+      display: block;
+    }
+  
+    ul {
+      position: fixed;
+      width: 100%;
+      height: 100vh;
+      background: var(--gradient-bg);
+      top: 80px;
+      left: -100%;
+      text-align: center;
+      transition: all .5s;
+    }
+  
+    nav ul li {
+      display: block;
+      margin: 50px 0;
+      line-height: 30px;
+    }
+  
+    nav ul li a {
+      font-size: 20px;
+    }
+  
+    a.active {
+      background: none;
+      color: white;
+    }
+  
+    #check:checked ~ ul {
+      left: 0;
+    }
+}
+
+
+.about-section {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin: 4rem auto;
+    max-width: 1000px;
+    padding: 0 1rem;
+}
+
+.about-section:nth-child(even) {
+    flex-direction: row-reverse;
+}
+
+.about-img {
+    flex: 1;
+    max-width: 400px;
+    height: 300px;
+    object-fit: cover;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.about-text {
+    flex: 2;
+    font-size: 1rem;
+    color: var(--green-start);
+    line-height: 1.6;
+}
+
+.about-container {
+    padding-top: 100px;
+}
+
+h2.about-heading {
+    text-align: center;
+    font-size: 2.5rem;
+    color: var(--green-main);
+    margin-bottom: 2rem;
+}
