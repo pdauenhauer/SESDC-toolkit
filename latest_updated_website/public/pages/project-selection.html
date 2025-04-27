@@ -109,11 +109,17 @@
                     <p class="input-section-header">Battery</p>
                     <input type="checkbox" id="using-battery">
                     <label for="using-battery">Using a Battery?</label>
+                        <!-- Battery Type Selector -->
+                    <label for="battery-type">Battery Type</label>
+                    <select id="battery-type" name="battery-type">
+                        <option value="lead-acid">Lead-Acid</option>
+                        <option value="lithium-ion">Lithium-Ion</option>
+                    </select>
                     <label for="charge-capacity">Charge Capacity Per Hour (kW)</label>
                     <input type="number" id="charge-capacity" name="charge-capacity">
                     <label for="maximum-storage">Maximum Storage</label>
                     <input type="number" id="maximum-storage" name="maximum-storage">
-                </div>
+               </div>
                 <div id="generatorInputs" class="form-group" style="display: none;">
                     <p class="input-section-header">Diesel Generator</p>
                     <input type="checkbox" id="using-generator">
@@ -177,6 +183,8 @@
                     <label for="using-wind-turbine">Using a Wind Turbine?</label>
                     <label for="num-turbines">Number of Turbines</label>
                     <input type="number" id="num-turbines" name="num-turbines">
+                    <label for="rated-power">Rated Power (Watts)</label>
+                    <input type="number" id="rated-power" name="rated-power">
                     <!--<label for="cut-in-speed">Cut-in Speed</label>
                     <input type="number" id="cut-in-speed" name="cut-in-speed">
                     <label for="cut-out-speed">Cut-out Speed</label>

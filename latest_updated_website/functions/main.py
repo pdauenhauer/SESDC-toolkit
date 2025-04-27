@@ -72,7 +72,8 @@ def csv_processing(req: https_fn.Request) -> https_fn.Response:
 
         using_wind_turbine = data.get('usingWindTurbine')
         num_turbines = data.get('numTurbines')
-        wind_inputs = {"num_turbines": num_turbines}
+        rated_power = data.get('ratedPower')
+        wind_inputs = {"num_turbines": num_turbines, "rated_power": rated_power}
 
         print(f"User ID: {userId}, Project ID: {projectId}")
         
@@ -286,8 +287,9 @@ def run_simulation(userId, projectId, battery_inputs, solar_inputs, wind_inputs,
     print("Load graphed.")
 
     numTurbines = wind_inputs['num_turbines']
+    ratedPower = wind_inputs['rated_power']
     # Calculate hourly wind energy - returns an array with all the wind energy generated
-    hourly_wind_energy = calculate_hourly_wind_energy(df, numTurbines)
+    hourly_wind_energy = calculate_hourly_wind_energy(df, numTurbines, ratedPower)
     # Add hourly wind energy to the dataframe
     df['Hourly_Wind_Energy(Wh)'] = hourly_wind_energy
 

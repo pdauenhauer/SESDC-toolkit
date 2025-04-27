@@ -22,7 +22,7 @@ coef = panel_coef[2]
 CUT_IN_SPEED = 0.00000000001  # in m/s
 RATED_SPEED = 2.5  # in m/s
 CUT_OUT_SPEED = 25.0  # in m/s
-RATED_POWER = 2500  # in W
+#RATED_POWER = 2500  # in W
 
 # Diesel losses dictionary
 diesel_losses = {
@@ -118,22 +118,22 @@ def net_energy_for_graph(solar_power, load_values, wind_values, diesel_values, t
 
 
 # Function to calculate power output based on wind speed, returns WATTS?
-def calculate_power_output(wind_speed):
+def calculate_power_output(wind_speed, rated_power):
     if wind_speed < CUT_IN_SPEED or wind_speed > CUT_OUT_SPEED:
         return 0
     elif wind_speed < RATED_SPEED:
         # Power output increases with the cube of wind speed up to the rated wind speed
-        return RATED_POWER * ((wind_speed - CUT_IN_SPEED) / (RATED_SPEED - CUT_IN_SPEED)) ** 3
+        return rated_power * ((wind_speed - CUT_IN_SPEED) / (RATED_SPEED - CUT_IN_SPEED)) ** 3
     else:
         # Power output is constant at the rated power above the rated wind speed
-        return RATED_POWER
+        return rated_power
 
 # Function to calculate hourly wind energy
-def calculate_hourly_wind_energy(data, num_turbine):
+def calculate_hourly_wind_energy(data, num_turbine, rated_power):
     hourly_energy = []
     for index, row in data.iterrows():
         wind_speed = row['Wind_speed(m/s)']
-        energy_output = calculate_power_output(wind_speed) * num_turbine
+        energy_output = calculate_power_output(wind_speed, rated_power) * num_turbine
         hourly_energy.append(energy_output)
     return hourly_energy
 

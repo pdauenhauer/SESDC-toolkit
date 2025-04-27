@@ -723,3 +723,22 @@ a.active {
 #addCsv {
   text-align: center;
 }
+
+#battery-type {
+  width: 100%;
+  padding: 10px 12px;
+  margin: 10px 0 20px 0;
+  border: 2px solid #60a561; /* green border (asparagus) */
+  border-radius: 5px;
+  background-color: #fdfdfd;
+  color: #333;
+  font-size: 16px;
+  appearance: none; /* removes default OS styling */
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+#battery-type:focus {
+  border-color: #e56399; /* pink border on focus */
+  box-shadow: 0 0 5px rgba(229, 99, 153, 0.5); /* subtle glow */
+  outline: none;
+}

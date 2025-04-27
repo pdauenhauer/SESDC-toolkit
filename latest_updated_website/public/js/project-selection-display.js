@@ -133,7 +133,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                         
                         // Wind Turbine parameters
                         usingWindTurbine: windTurbineInputs.usingWindTurbine,
-                        numTurbines: windTurbineInputs.numTurbines
+                        numTurbines: windTurbineInputs.numTurbines,
+                        ratedPower: windTurbineInputs.ratedPower //changed
                     })
                 });
     
@@ -941,7 +942,8 @@ document.getElementById('save-csv').addEventListener('click', async (e) => {
 
     const windTurbineInputs = {
         usingWindTurbine: document.getElementById('using-wind-turbine').checked,
-        numTurbines: parseFloat(document.getElementById('num-turbines').value) || null
+        numTurbines: parseFloat(document.getElementById('num-turbines').value) || null,
+        ratedPower: parseFloat(document.getElementById('rated-power').value) || null
     };
 
     try {
@@ -998,7 +1000,8 @@ document.getElementById('save-manual-inputs').addEventListener('click', async (e
 
     const windTurbineInputs = {
         usingWindTurbine: document.getElementById('using-wind-turbine').checked,
-        numTurbines: parseFloat(document.getElementById('num-turbines').value) || null
+        numTurbines: parseFloat(document.getElementById('num-turbines').value) || null//,
+        //ratedPower: parseFloat(document.getElementById('rated-power').value) || null
     };
 
     try {
