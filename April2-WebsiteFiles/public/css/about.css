@@ -190,3 +190,13 @@ h2.about-heading {
     color: var(--green-main);
     margin-bottom: 2rem;
 }
+
+/* --- Footer --- */
+.footer {
+    flex-shrink: 0;
+    background-color: var(--green-start);
+    color: var(--white-main);
+    text-align: center;
+    padding: 1rem 0;
+    width: 100%;
+  }

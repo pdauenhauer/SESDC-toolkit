@@ -192,13 +192,24 @@ a.active {
   padding: 0;
 }
 
-.hero-image img {
+/* .hero-image img {
   width: 60%;
   height: auto;
-  justify-content: center;
-  align-items: center;
-}
+  display: block;
+  margin: 0 auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+} */
 
+.graph-image {
+  width: 100%;
+  max-width: 800px; 
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
 
 /* --- Overview Section --- */
 .overview-section {

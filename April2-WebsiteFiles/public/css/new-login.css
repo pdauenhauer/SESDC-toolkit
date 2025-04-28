@@ -36,6 +36,11 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+main {
+  flex: 1;
+}
+
+
 body {
   background: var(--white-main);
   display: flex;
@@ -51,9 +56,26 @@ nav {
   height: 80px;
   width: 100%;
   position: fixed;
-  top: 0;          
-  left: 0;         
+  top: 0;
+  left: 0;
   z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+}
+
+.nav-logo {
+  height: 50px;
+  width: auto;
+  margin-right: 10px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 
 label.logo-nav {
@@ -263,4 +285,14 @@ a.active {
   font-size: 1rem;
   opacity: 1;
   animation: fadeOut 5s forwards;
+}
+
+/* --- Footer --- */
+.footer {
+  flex-shrink: 0;
+  background-color: var(--green-start);
+  color: var(--white-main);
+  text-align: center;
+  padding: 1rem 0;
+  width: 100%;
 }
