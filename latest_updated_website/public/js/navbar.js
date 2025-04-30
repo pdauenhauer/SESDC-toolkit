@@ -1,0 +1,81 @@
+import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+
+/**
+ * Determines the correct base URL for relative paths based on current location
+ */
+function getBaseUrl() {
+  const path = window.location.pathname;
+  return path.includes('/pages/') ? '..' : '.';
+}
+
+function getCurrentPage() {
+  const path = window.location.pathname;
+  const pageName = path.split('/').pop();
+  return !pageName ? 'index.html' : pageName;
+}
+
+function updateNavLinks() {
+  const baseUrl = getBaseUrl();
+  const currentPage = getCurrentPage();
+
+  function isActive(pageName) {
+    return currentPage === pageName ? 'class="active"' : '';
+  }
+
+  const loggedOutNav = `
+    <li><a ${isActive('index.html')} href="${baseUrl}/index.html">Home</a></li>
+    <li><a ${isActive('about.html')} href="${baseUrl}/pages/about.html">About</a></li>
+    <li><a ${isActive('help.html')} href="${baseUrl}/pages/help.html">Help</a></li>
+    <li><a ${isActive('contact.html')} href="${baseUrl}/pages/contact.html">Contact</a></li>
+    <li><a ${isActive('login.html')} href="${baseUrl}/pages/login.html">Login</a></li>
+  `;
+
+  const loggedInNav = `
+    <li><a ${isActive('index.html')} href="${baseUrl}/index.html">Home</a></li>
+    <li><a ${isActive('project-selection.html')} href="${baseUrl}/pages/project-selection.html">Projects</a></li>
+    <li><a ${isActive('about.html')} href="${baseUrl}/pages/about.html">About</a></li>
+    <li><a ${isActive('help.html')} href="${baseUrl}/pages/help.html">Help</a></li>
+    <li><a ${isActive('contact.html')} href="${baseUrl}/pages/contact.html">Contact</a></li>
+    <li><a ${isActive('login.html')} id="logout" href="#">Logout</a></li>
+  `;
+
+  return { loggedOutNav, loggedInNav };
+}
+
+function attachLogoutListener(auth) {
+  const logoutLink = document.getElementById("logout");
+  if (logoutLink) {
+    logoutLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      signOut(auth).then(() => {
+        console.log("Signed out successfully");
+        localStorage.clear();
+        window.location.href = `${getBaseUrl()}/pages/login.html`;
+      }).catch((error) => {
+        console.error("Logout error:", error);
+      });
+    });
+  }
+}
+
+function setupNavbar(app) {
+  const auth = getAuth(app);
+  const navbar = document.getElementById("navbar");
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!navbar) {
+      console.error("Navbar element not found!");
+      return;
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      if (!navbar) return;
+      const { loggedOutNav, loggedInNav } = updateNavLinks();
+      navbar.innerHTML = user ? loggedInNav : loggedOutNav;
+
+      if (user) attachLogoutListener(auth);
+    });
+  });
+}
+
+export { setupNavbar };

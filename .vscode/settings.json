@@ -1,3 +1,4 @@
 {
-    "liveServer.settings.port": 5501
+    "liveServer.settings.port": 5501,
+    "livePreview.defaultPreviewPath": "/Users/juni/Documents/GitHub/SESDC-toolkit/latest_updated_website/public/pages/project-outputs.html"
 }
