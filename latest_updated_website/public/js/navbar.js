@@ -1,8 +1,9 @@
 import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+import { app } from '../js/firebase-init.js';
 
-/**
- * Determines the correct base URL for relative paths based on current location
- */
+const auth = getAuth(app);
+const navbar = document.getElementById("navbar");
+
 function getBaseUrl() {
   const path = window.location.pathname;
   return path.includes('/pages/') ? '..' : '.';
@@ -11,7 +12,7 @@ function getBaseUrl() {
 function getCurrentPage() {
   const path = window.location.pathname;
   const pageName = path.split('/').pop();
-  return !pageName ? 'index.html' : pageName;
+  return (!pageName || pageName === '') ? 'index.html' : pageName;
 }
 
 function updateNavLinks() {
@@ -42,7 +43,26 @@ function updateNavLinks() {
   return { loggedOutNav, loggedInNav };
 }
 
-function attachLogoutListener(auth) {
+document.addEventListener('DOMContentLoaded', () => {
+  if (!navbar) {
+    console.error("Navbar element not found!");
+    return;
+  }
+
+  onAuthStateChanged(auth, (user) => {
+    if (!navbar) return;
+
+    const { loggedOutNav, loggedInNav } = updateNavLinks();
+    navbar.innerHTML = user ? loggedInNav : loggedOutNav;
+
+    if (user) {
+      attachLogoutListener();
+      startInactivityLogoutTimer(); // 🔒 add this line
+    }
+  });
+});
+
+function attachLogoutListener() {
   const logoutLink = document.getElementById("logout");
   if (logoutLink) {
     logoutLink.addEventListener("click", (e) => {
@@ -58,24 +78,29 @@ function attachLogoutListener(auth) {
   }
 }
 
-function setupNavbar(app) {
-  const auth = getAuth(app);
-  const navbar = document.getElementById("navbar");
+// === Inactivity Timer for Auto Logout ===
+function startInactivityLogoutTimer() {
+  const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 minutes
+  let timer;
 
-  document.addEventListener('DOMContentLoaded', () => {
-    if (!navbar) {
-      console.error("Navbar element not found!");
-      return;
-    }
-
-    onAuthStateChanged(auth, (user) => {
-      if (!navbar) return;
-      const { loggedOutNav, loggedInNav } = updateNavLinks();
-      navbar.innerHTML = user ? loggedInNav : loggedOutNav;
-
-      if (user) attachLogoutListener(auth);
+  function logoutUser() {
+    signOut(auth).then(() => {
+      console.log("Logged out due to inactivity.");
+      localStorage.clear();
+      window.location.href = `${getBaseUrl()}/pages/login.html`;
+    }).catch((error) => {
+      console.error("Auto-logout error:", error);
     });
-  });
-}
+  }
 
-export { setupNavbar };
+  function resetTimer() {
+    clearTimeout(timer);
+    timer = setTimeout(logoutUser, INACTIVITY_LIMIT);
+  }
+
+  ['mousemove', 'keydown', 'click', 'touchstart'].forEach(event => {
+    window.addEventListener(event, resetTimer);
+  });
+
+  resetTimer(); // Initial timer start
+}
