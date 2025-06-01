@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Guide</title>
+  <link rel="stylesheet" href="../css/userGuide.css" />
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="icon" type="image/png" href="/April2-WebsiteFiles/public/media/favicon.png">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+  <nav>
+    <input type="checkbox" id="check">
+    <label for="check" class="check-btn">
+      <i class='bx bx-menu'></i>
+    </label>
+
+    <div class="nav-left">
+      <img src="../media/Logo-white.svg" alt="Logo" class="nav-logo" />
+      <label class="logo-nav">Microgrid Toolkit</label>
+    </div>
+
+    <ul>
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a class="active" href="#">User Guide</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li><a href="login.html">Login</a></li>
+    </ul>
+  </nav>
+
+  <!--added code for nav bar-->
+  <script type="module" src="../js/navbar.js"></script>
+
+  <!--side nav bar-->
+  <div class="sidebar" id="sidebar">
+    <a href="#section1" class="nav-link has-sub"><i class='bx bx-chevron-right arrow'></i> Introduction</a>
+    <div class="sub-links">
+      <a href="#section1a" class="nav-link">Purpose</a>
+      <a href="#section1b" class="nav-link">Who it’s for</a>
+      <a href="#section1c" class="nav-link">Benefits of the Tool</a>
+      <a href="#section1d" class="nav-link">Accessing the Tool</a>
+      <a href="#section1e" class="nav-link">Supported Browsers</a>
+      <a href="#section1f" class="nav-link">Mobile/Desktop Compatibility</a>
+    </div>
+    <a href="#section2" class="nav-link has-sub"><i class='bx bx-chevron-right arrow'></i> Getting Started</a>
+    <div class="sub-links">
+      <a href="#section2a" class="nav-link">Creating an Account & Logging in</a>
+      <a href="#section2b" class="nav-link">Navigating Dashboard</a>
+      <a href="#section2c" class="nav-link">Starting a New Project</a>
+    </div>
+    <a href="#section3" class="nav-link has-sub"><i class='bx bx-chevron-right arrow'></i> Configuring a Microgrid</a>
+    <div class="sub-links">
+      <a href="#section3a" class="nav-link">Defining energy loads</a>
+      <a href="#section3b" class="nav-link">Selecting energy sources</a>
+      <a href="#section3c" class="nav-link">Location and environmental data</a>
+      <a href="#section3d" class="nav-link">Simulation settings</a>
+    </div>
+    <a href="#section4" class="nav-link has-sub"><i class='bx bx-chevron-right arrow'></i> Simulation</a>
+    <div class="sub-links">
+      <a href="#section4a" class="nav-link">How to start</a>
+      <a href="#section4b" class="nav-link">Returning after changes</a>
+    </div>
+    <a href="#section5" class="nav-link has-sub"><i class='bx bx-chevron-right arrow'></i> Analysis</a>
+    <div class="sub-links">
+      <a href="#section5a" class="nav-link">Visual outputs</a>
+      <a href="#section5b" class="nav-link">Energy Balance</a>
+      <a href="#section5c" class="nav-link">Reliability metrics</a>
+    </div>
+    <a href="#section6" class="nav-link has-sub"><i class='bx bx-chevron-right arrow'></i> Cost & Economic Analysis</a>
+    <a href="#section7" class="nav-link has-sub"><i class='bx bx-chevron-right arrow'></i> Saving and Exporting</a>
+    <div class="sub-links">
+      <a href="#section7a" class="nav-link">Saving project progress</a>
+      <a href="#section7b" class="nav-link">Exporting to PDF/CSV</a>
+    </div>
+    <a href="#section8" class="nav-link has-sub"><i class='bx bx-chevron-right arrow'></i> Example Project</a>
+    <a href="#section9" class="nav-link has-sub"><i class='bx bx-chevron-right arrow'></i> Troubleshooting & FAQ</a>
+    <div class="sub-links">
+      <a href="#section9a" class="nav-link">Common errors</a>
+      <a href="#section9b" class="nav-link">Reporting bugs or feedback</a>
+      <a href="#section9c" class="nav-link">Contact/support link</a>
+    </div>
+  </div>
+
+  <!-- CONTENT BEGINS -->
+  <div class="main-content">
+    <h1 id="page-title">Microgrid Toolkit User Guide</h1>
+    
+    <!-- INTRODUCTION -->
+    <h2 id="section1"> Introduction </h2>
+    <p>Welcome to the Microgrid Design Tool User Guide. This guide will walk you through everything you need to know to get started—from accessing the tool and creating your first project, to configuring system settings, running simulations, and analyzing results. Whether you're a first-time user or looking to deepen your understanding, this guide is designed to support you at every step.</p>
+
+    <h3 id="section1a"> Purpose </h3>
+    <p>The microgrid design tool empowers users to simulate and evaluate custom off-grid energy systems based on real-world scenarios. It allows for detailed configuration of electrical loads, energy sources, and supplemental power options to generate cost, performance, and sustainability insights.</p>
+
+    <h3 id="section1c"> Who it’s for</h3>
+    <p>This tool is designed for users with an interest in renewable energy planning, including non-engineers, community leaders, students, and project developers. No prior technical background is required—our interface is built to be accessible and intuitive for anyone passionate about clean energy solutions.</p>
+
+    <h3 id="section1d"> Benefits of the Tool </h3>
+    <ul>
+      <li><strong>Custom Design:</strong> Build microgrid systems tailored to specific locations and energy needs</li>
+      <li><strong>Real-Time Simulation:</strong> Evaluate system behavior across different seasons and conditions</li>
+      <li><strong>Financial Insights:</strong> Receive automatic cost breakdowns and economic impact projections</li>
+      <li><strong>Scenario Comparison:</strong> Save and duplicate designs for iterative planning or presentations</li>
+      <li><strong>Sustainability Focus:</strong> Model diesel supplementation, emissions, and renewable percentages</li>
+    </ul>
+
+    <h3 id="section1e"> Accessing the Tool </h3>
+    <p>The tool is accessible online at <a href="https://sesdc-toolkit.com/" target="_blank">https://sesdc-toolkit.com/</a>. No download is required. Users must create an account to begin designing.</p>
+
+    <h3 id="section1f"> Supported Browsers </h3>
+    <ul>
+      <li>Google Chrome</li>
+      <li>Mozilla Firefox</li>
+      <li>Microsoft Edge</li>
+      <li>Safari</li>
+    </ul>
+
+    <h3 id="section1g"> Mobile/Desktop Compatibility</h3>
+    <p>The tool is fully optimized for desktop browsers. A streamlined mobile version is available, though we recommend using a desktop or laptop for detailed system configuration and analysis features.</p>
+
+
+    <!-- GETTING STARTED -->
+    <h2 id="section2"> Getting Started</h2>
+    <p>Before diving into microgrid configurations and simulations, it’s important to get set up with the tool. This section will guide you through the basics—creating an account, navigating the dashboard, and starting your first project. Whether you're a new or returning user, these steps ensure you can make the most of the platform from the very beginning.</p>
+
+    <h3 id="section2a">Creating an Account & Logging in</h3>
+
+    <h4>Steps to Sign Up</h4>
+    <p>To begin using the Microgrid Design Tool, go to the login page and select “Create Account.” You’ll be asked to enter your name, email address, and a secure password. Once you submit the form, a verification email will be sent to your inbox.</p>
+
+    <h4>Email Verification</h4>
+    <p>Click the link in the verification email to activate your account. If you don’t see the email, check your spam or junk folder.</p>
+
+    <h4>Logging in & Password Resets</h4>
+    <p>After verifying your email, return to the login page and enter your credentials to access the tool. If you forget your password, click “Forgot Password?” and follow the instructions in the reset email to create a new password.</p>
+
+    <h4>Deleting Your Account</h4>
+    <p>If you wish to permanently delete your account, go to the Account Settings section from your dashboard. At the bottom of the settings page, click “Delete Account” and confirm your choice. This action is irreversible and will remove all saved projects and user data associated with your account.</p>
+
+    <h3 id="section2b">Navigating Dashboard</h3>
+
+    <h4>Overview</h4>
+    <p>Once logged in, the dashboard serves as your main hub. Here you can start new projects, manage saved ones, and access tutorials or example walkthroughs.</p>
+
+    <h4>Key Icons + Their Functions</h4>
+    <ul>
+      <li><strong> New Project</strong> – Start designing a new microgrid</li>
+      <li><strong> Edit</strong> – Modify an existing project</li>
+      <li><strong> Duplicate</strong> – Make a copy of a project for comparison or reuse</li>
+      <li><strong> Delete</strong> – Remove a project permanently</li>
+    </ul>
+
+    <h3 id="section2c">Starting a New Project</h3>
+
+    <h4>Creating a Project</h4>
+    <p>Click the “New Project” button to begin. You’ll be prompted to enter a name and an optional description before starting configuration.</p>
+
+    <h4>Naming and Saving Projects</h4>
+    <p>Choose a clear, descriptive name to stay organized. The tool autosaves regularly, but you can also save manually using the save button in the toolbar.</p>
+
+    <h4>Duplicating or Deleting Projects</h4>
+    <p>To duplicate a project, click the copy icon in the dashboard. This is useful for testing different design scenarios. To delete a project, click the trash icon and confirm when prompted—this action is permanent.</p>
+
+    <!-- CONFIGURING A MICROGRID -->
+    <h2 id="section3">Configuring a Microgrid</h2>
+
+    <h3 id="section3a">Defining energy loads</h3>
+    <h3 id="section3b">Selecting energy sources</h3>
+    <h3 id="section3c">Set location and environmental data</h3>
+    <h3 id="section3d">Simulation settings (e.g., load growth assumptions)</h3>
+
+    <!-- SIMULATION -->
+    <h2 id="section4">Simulation</h2>
+
+    <h3 id="section4a">How to start</h3>
+    <h3 id="section4b">Returning after changes</h3>
+
+
+    <!-- ANALYSIS -->
+    <h2 id="section5">Analysis</h2>
+    <h3 id="section5a">Visual Outputs</h3>
+    <h3 id="section5b">Energy Balances</h3>
+    <h3 id="section5c">Reliability Metrics</h3>
+
+    <!-- COST & ECONOMIC ANALYSIS -->
+    <h2 id="section6">Cost & Economic Analysis</h2>
+    <p>Details TBD</p>
+
+    <!-- SAVING AND EXPORTING -->
+    <h2 id="section7">Saving and Exporting</h2>
+
+    <h3 id="section7a">Saving project progress</h3>
+    <h3 id="section7b">Exporting to PDF/CSV</h3> 
+
+    <!-- EXAMPLE PROJECT -->
+    <h2 id="section8">Example Project</h2>
+    <p>Stay tuned for a step-by-step walkthroughs</p>
+
+    <h2 id="section9">Troubleshooting & FAQ</h2>
+    <h3 id="section9a">Common Errors</h3>
+    <h3 id="section9b">Reporting bugs or feedback</h3>
+    <p>
+      If you encounter any bugs or have suggestions on how we can improve the Microgrid Toolkit, please visit our
+      <a href="https://sesdc-toolkit.com/contact" target="_blank" rel="noopener"> <!-- URL may need to be updated-->
+        contact Form
+      </a>
+      and fill out the details. You can also click the “Contact” button in the navbar at any time to open the same form. We appreciate your input and review every submission.
+    </p>
+    <h3 id="section9c">Contact Support</h3>
+    <p>
+      For any other questions or assistance, please go to
+      <a href="https://sesdc-toolkit.com/support-form" target="_blank" rel="noopener">
+        our Support Page
+      </a>
+      and complete the form. Alternatively, you can click the “Contact” button in the navbar above to access the form. A member of our team will get back to you soon.
+    </p>
+  </div>
+  
+  
+
+  <!-- For Highlighting current section-->
+  <!-- Replace the old ScrollSpy <script> block with this: -->
+  <script>
+    // 1. Capture all <h2> and <h3> elements inside .main-content
+    const sections = document.querySelectorAll('.main-content h2, .main-content h3');
+    // 2. Capture all sidebar links (top‐level and sub‐links)
+    const navLinks = document.querySelectorAll('.sidebar .nav-link');
+
+    window.addEventListener('scroll', () => {
+      let currentId = '';
+
+      // 3. Determine which section is currently in viewport
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop - 120;
+        if (window.scrollY >= sectionTop) {
+          currentId = section.getAttribute('id');
+        }
+      });
+
+      // 4. First, clear all active‐style classes and collapse any open sub‐menus
+      navLinks.forEach(link => {
+        link.classList.remove('active-section', 'active-subsection');
+        // If it's a top‐level nav link that has a sub‐menu, collapse it by default
+        if (link.classList.contains('has-sub')) {
+          link.classList.remove('open');
+          const submenu = link.nextElementSibling;
+          if (submenu && submenu.classList.contains('sub-links')) {
+            submenu.style.display = 'none';
+          }
+        }
+      });
+
+      // 5. Now re‐apply “active” classes based on the currentId
+      navLinks.forEach(link => {
+        if (link.getAttribute('href') === '#' + currentId) {
+          const parentSubLinks = link.closest('.sub-links');
+
+          if (parentSubLinks) {
+            // 5a. This link is a sub‐link (inside .sub-links)
+            link.classList.add('active-subsection');
+
+            // 5b. Also “open” its parent top‐level section so the sub-links are visible
+            const parentSectionLink = parentSubLinks.previousElementSibling;
+            if (parentSectionLink && parentSectionLink.classList.contains('has-sub')) {
+              // Add active‐section to the parent
+              parentSectionLink.classList.add('active-section', 'open');
+              parentSubLinks.style.display = 'flex';
+            }
+          } else {
+            // 5c. This link is a top‐level section (no .sub-links around it)
+            link.classList.add('active-section');
+            // If it has sub‐links, open them
+            const submenu = link.nextElementSibling;
+            if (submenu && submenu.classList.contains('sub-links')) {
+              link.classList.add('open');
+              submenu.style.display = 'flex';
+            }
+          }
+        }
+      });
+    });
+
+    // 6. Accordion behavior (unchanged)
+    document.querySelectorAll('.sidebar .nav-link.has-sub').forEach(link => {
+      link.addEventListener('click', function (e) {
+        const submenu = this.nextElementSibling; // the .sub-links
+
+        if (submenu && submenu.classList.contains('sub-links')) {
+          e.preventDefault(); // prevent default anchor jump
+
+          // Close any other open sections
+          document.querySelectorAll('.nav-link.has-sub.open').forEach(other => {
+            if (other !== this) {
+              other.classList.remove('open');
+              const otherMenu = other.nextElementSibling;
+              if (otherMenu && otherMenu.classList.contains('sub-links')) {
+                otherMenu.style.display = 'none';
+              }
+            }
+          });
+
+          // Toggle this one
+          this.classList.toggle('open');
+          submenu.style.display = (submenu.style.display === 'flex') ? 'none' : 'flex';
+        }
+        // If it has no .sub-links, allow default jump‐to‐anchor
+      });
+    });
+  </script>
+
+  
+  
+    
+
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="social-icons">
+      <a href="https://www.facebook.com/KilowattsforHumanity/" target="_blank"><i class='bx bxl-facebook'></i></a>
+      <a href="https://www.instagram.com/kilowattsforhumanity/" target="_blank"><i class='bx bxl-instagram'></i></a>
+      <a href="https://www.linkedin.com/company/kilowatts-for-humanity/posts/?feedView=all" target="_blank"><i class='bx bxl-linkedin'></i></a>
+      <a href="https://github.com/pdauenhauer/SESDC-toolkit" target="_blank"><i class='bx bxl-github'></i></a>
+    </div>
+    <div class="footer-links">
+      <a href="../index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="userGuide.html">User Guide</a>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 SESDC. All rights reserved</p>
+    </div>
+  </footer>
+</body>
+</html>

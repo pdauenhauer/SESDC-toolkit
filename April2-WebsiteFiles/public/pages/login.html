@@ -2,10 +2,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width">
-  <title>Microgrid Design Tool</title>
+  <title>Login</title>
   <link href="../css/new-login.css" rel="stylesheet" type="text/css"/>
   <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-  <link rel="icon" href="/media/favicon.ico" type="image/x-icon">
+  <link rel="icon" type="image/png" href="/April2-WebsiteFiles/public/media/favicon.png">
 </head>
 <body>
   <nav>
@@ -22,68 +22,85 @@
     <ul>
       <li><a href="../index.html">Home</a></li>
       <li><a href="about.html">About</a></li>
+      <li><a href="userGuide.html">User Guide</a></li>
       <li><a href="contact.html">Contact</a></li>
       <li><a class="active" href="#">Login</a></li>
     </ul>
   </nav>
-  
-  <div class="logo-container">
-    <img src="../media/Logo.svg" alt="Logo" class="logo">
-  </div>
 
-  <div class="wrapper">
-    <!-- Login Form -->
-    <div id="loginForm" class="form-container visible">
-        <h1>Login</h1>
-        <form id="login-form">
-          <div id="account-login-message" class="messageDiv" style="display: none;"></div>
+  <main>
+    <div class="logo-container">
+      <img src="../media/Logo.svg" alt="Logo" class="logo">
+    </div>
+
+    <div class="wrapper">
+      <!-- Login Form -->
+      <div id="loginForm" class="form-container visible">
+          <h1>Login</h1>
+          <form id="login-form">
+            <div id="account-login-message" class="messageDiv" style="display: none;"></div>
+            <div class="input-box">
+              <input id="loginEmail" type="text" placeholder="Email" required>
+              <i class='bx bxs-user'></i>
+            </div>
+            <div class="input-box">
+              <input id="loginPassword" type="password" placeholder="Password" required>
+              <i class='bx bxs-lock-alt'></i>
+            </div>
+            <button id="login" type="submit" class="btn">Login</button>
+          </form>
+          <div class="register">
+            <p>Don't have an account? <a href="#" class="toggle-form">Register</a></p>
+          </div>
+      </div>
+
+      <!-- Register Form -->
+      <div id="registerForm" class="form-container hidden">
+        <h1>Create an Account</h1>
+        <form id="signup-form">
+          <div id="account-creation-message" class="messageDiv" style="display: none;"></div>
           <div class="input-box">
-            <input id="loginEmail" type="text" placeholder="Email" required>
+            <input id="enterEmail" type="text" placeholder="Email" required>
+            <i class='bx bxs-envelope'></i>
+          </div>
+          <div class="input-box">
+            <input id="enterUsername" type="text" placeholder="Username" required>
             <i class='bx bxs-user'></i>
           </div>
           <div class="input-box">
-            <input id="loginPassword" type="password" placeholder="Password" required>
+            <input id="enterPassword" type="password" placeholder="Password" required>
             <i class='bx bxs-lock-alt'></i>
           </div>
-          <button id="login" type="submit" class="btn">Login</button>
+          <button id="register" type="submit" class="btn">Register</button>
         </form>
         <div class="register">
-          <p>Don't have an account? <a href="#" class="toggle-form">Register</a></p>
+          <p>Already have an account? <a href="#" class="toggle-form">Login</a></p>
         </div>
-    </div>
-
-    <!-- Register Form -->
-    <div id="registerForm" class="form-container hidden">
-      <h1>Create an Account</h1>
-      <form id="signup-form">
-        <div id="account-creation-message" class="messageDiv" style="display: none;"></div>
-        <div class="input-box">
-          <input id="enterEmail" type="text" placeholder="Email" required>
-          <i class='bx bxs-envelope'></i>
-        </div>
-        <div class="input-box">
-          <input id="enterUsername" type="text" placeholder="Username" required>
-          <i class='bx bxs-user'></i>
-        </div>
-        <div class="input-box">
-          <input id="enterPassword" type="password" placeholder="Password" required>
-          <i class='bx bxs-lock-alt'></i>
-        </div>
-        <button id="register" type="submit" class="btn">Register</button>
-      </form>
-      <div class="register">
-        <p>Already have an account? <a href="#" class="toggle-form">Login</a></p>
       </div>
     </div>
-  </div>
-  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore-compat.js"></script>
-  <script type="module" src="../js-scripts/new-login.js" defer></script>
-
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore-compat.js"></script>
+    <script type="module" src="../js-scripts/new-login.js" defer></script>
+  </main>
   <!-- Footer -->
- <!-- <footer class="footer">
-    <p>&copy; 2025 SESDC. All rights reserved.</p>
-  </footer> -->
+  <footer class="footer">
+    <div class="social-icons">
+      <a href="https://www.facebook.com/KilowattsforHumanity/" target="_blank"><i class='bx bxl-facebook'></i></a>
+      <a href="https://www.instagram.com/kilowattsforhumanity/" target="_blank"><i class='bx bxl-instagram'></i></a>
+      <a href="https://www.linkedin.com/company/kilowatts-for-humanity/posts/?feedView=all" target="_blank"><i class='bx bxl-linkedin'></i></a>
+      <a href="https://github.com/pdauenhauer/SESDC-toolkit" target="_blank"><i class='bx bxl-github'></i></a>
+    </div>
+    <div class="footer-links">
+      <a href="../index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="userGuide.html">User Guide</a>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 SESDC. All rights reserved</p>
+    </div>
+  </footer>
+
 </body>
 </html> 
