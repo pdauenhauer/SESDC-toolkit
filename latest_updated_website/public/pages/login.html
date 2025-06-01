@@ -14,7 +14,6 @@
       <i class='bx bx-menu'></i>
     </label>
     <label class="logo-nav">Microgrid Toolkit</label>
-    <!--Testing Nav BAR---->
     <ul id="navbar">
   </nav>
 
@@ -35,6 +34,10 @@
           <div class="input-box">
             <input id="loginPassword" type="password" placeholder="Password" required>
             <i class='bx bxs-lock-alt'></i>
+          </div>
+          <!-- ADDED: Forgot password link -->
+          <div class="forgot-password">
+            <a href="#" id="forgotPasswordLink">Forgot Password?</a>
           </div>
           <button id="login" type="submit" class="btn">Login</button>
         </form>
@@ -66,8 +69,24 @@
         <p>Already have an account? <a href="#" class="toggle-form">Login</a></p>
       </div>
     </div>
+
+     <!-- Forgot Password Form -->
+     <div id="forgotPasswordForm" class="form-container hidden">
+      <h1>Reset Password</h1>
+      <form id="reset-form">
+        <div id="reset-message" class="messageDiv" style="display: none;"></div>
+        <div class="input-box">
+          <input id="resetEmail" type="email" placeholder="Email" required>
+          <i class='bx bxs-envelope'></i>
+        </div>
+        <button id="resetPassword" type="submit" class="btn">Send Reset Email</button>
+      </form>
+      <div class="register">
+        <p><a href="#" class="back-to-login">Back to Login</a></p>
+      </div>
+    </div>
   </div>
-  <!--added code for nav bar-->
+
   <script type="module" src="../js/navbar.js"></script>
 
   <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>

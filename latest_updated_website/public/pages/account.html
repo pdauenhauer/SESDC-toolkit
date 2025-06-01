@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Account Management</title>
+  <link href="../css/new-login.css" rel="stylesheet" type="text/css"/>
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="icon" href="/media/favicon.ico" type="image/x-icon">
+</head>
+<body>
+  <nav>
+    <input type="checkbox" id="check">
+    <label for="check" class="check-btn">
+      <i class='bx bx-menu'></i>
+    </label>
+    <label class="logo-nav">Microgrid Toolkit</label>
+    <!--Testing Nav BAR---->
+    <ul id="navbar">
+  </nav>
+
+
+  <div class="wrapper">
+    <!-- Account Management Form -->
+    <div id="accountManagement" class="form-container visible">
+      <h1>Account Management</h1>
+
+      <div id="account-management-message" class="messageDiv" style="display: none;"></div>
+
+      <div class="button-group">
+        <button id="updatePasswordBtn" class="btn secondary-btn">Update Password</button>
+        <div id="updatePasswordSection" class="hidden">
+          <div class="input-box">
+            <input id="newPassword" type="password" placeholder="Enter new password" required>
+          </div>
+          <div class="confirmation-buttons">
+            <button id="confirmUpdatePasswordBtn" class="btn secondary-btn">Confirm Update</button>
+            <button id="cancelUpdatePasswordBtn" class="btn secondary-btn">Cancel</button>
+          </div>
+        </div>
+
+        <button id="deleteAccountBtn" class="btn danger-btn">Delete Account</button>
+      </div>
+
+      <!-- Delete Confirmation Section -->
+      <div id="deleteConfirmation" class="hidden">
+        <p>Are you sure you want to delete your account? This action cannot be undone.</p>
+        <div class="input-box">
+          <input id="deletePassword" type="password" placeholder="Enter your password to confirm" required>
+          <i class='bx bxs-lock-alt'></i>
+        </div>
+        <div class="confirmation-buttons">
+          <button id="confirmDeleteBtn" class="btn danger-btn">Confirm Delete</button>
+          <button id="cancelDeleteBtn" class="btn secondary-btn">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+<!--added code for nav bar-->
+<script type="module" src="../js/navbar.js"></script>
+<script type="module" src="../js/account.js" defer></script>

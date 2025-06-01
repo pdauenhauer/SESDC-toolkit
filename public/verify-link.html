@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Your Email</title>
+  <link href="../css/style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+  <h1>Email Verification</h1>
+  <p id="status-message">Verifying your email...</p>
+
+  <script type="module">
+    import { getAuth, isSignInWithEmailLink, signInWithEmailLink } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+    import { app } from './firebase-init.js';
+
+    const auth = getAuth(app);
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      const currentUrl = window.location.href;
+      const statusMessage = document.getElementById('status-message');
+
+      if (isSignInWithEmailLink(auth, currentUrl)) {
+        let email = window.localStorage.getItem('emailForSignIn');
+        if (!email) {
+          email = window.prompt('Please provide your email for confirmation');
+          if (!email) {
+            statusMessage.textContent = "Email is required to complete sign-in.";
+            return;
+          }
+        }
+
+        try {
+          const result = await signInWithEmailLink(auth, email, currentUrl);
+          console.log("User signed in with email link:", result.user);
+          window.localStorage.removeItem('emailForSignIn');
+          statusMessage.textContent = "Sign-in successful! Redirecting...";
+          window.location.href = "login.html";
+        } catch (error) {
+          console.error("Email link sign-in failed:", error);
+          statusMessage.textContent = "Error signing in: " + error.message;
+        }
+      } else {
+        statusMessage.textContent = "Invalid or expired sign-in link.";
+      }
+    });
+  </script>
+</body>
+</html>

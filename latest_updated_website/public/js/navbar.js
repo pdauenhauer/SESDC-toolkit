@@ -37,6 +37,7 @@ function updateNavLinks() {
     <li><a ${isActive('about.html')} href="${baseUrl}/pages/about.html">About</a></li>
     <li><a ${isActive('help.html')} href="${baseUrl}/pages/help.html">Help</a></li>
     <li><a ${isActive('contact.html')} href="${baseUrl}/pages/contact.html">Contact</a></li>
+    <li><a ${isActive('account.html')} href="${baseUrl}/pages/account.html">Account</a></li>
     <li><a ${isActive('login.html')} id="logout" href="#">Logout</a></li>
   `;
 
@@ -53,11 +54,34 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!navbar) return;
 
     const { loggedOutNav, loggedInNav } = updateNavLinks();
-    navbar.innerHTML = user ? loggedInNav : loggedOutNav;
 
-    if (user) {
+    // Only show logged-in nav if user exists AND email is verified
+    if (user && user.emailVerified) {
+      navbar.innerHTML = loggedInNav;
       attachLogoutListener();
-      startInactivityLogoutTimer(); // 🔒 add this line
+      startInactivityLogoutTimer();
+    } else {
+      // If user exists but email is not verified, sign them out
+      if (user && !user.emailVerified) {
+        // Don't sign out on login page to avoid redirect loops
+        const currentPage = getCurrentPage();
+        if (currentPage !== 'login.html') {
+          signOut(auth).then(() => {
+            console.log("Signed out unverified user");
+            localStorage.clear();
+
+            // Only redirect to login if not already there
+            if (currentPage !== 'login.html') {
+              window.location.href = `${getBaseUrl()}/pages/login.html`;
+            }
+          }).catch((error) => {
+            console.error("Sign out error:", error);
+          });
+        }
+      }
+
+      // Always show logged-out nav if user is not verified
+      navbar.innerHTML = loggedOutNav;
     }
   });
 });
