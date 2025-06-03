@@ -1,11 +1,12 @@
 <!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Account Management</title>
-  <link href="../css/new-login.css" rel="stylesheet" type="text/css"/>
   <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
   <link rel="icon" href="/media/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="../css/account.css" />
 </head>
 <body>
   <nav>
@@ -13,50 +14,72 @@
     <label for="check" class="check-btn">
       <i class='bx bx-menu'></i>
     </label>
-    <label class="logo-nav">Microgrid Toolkit</label>
-    <!--Testing Nav BAR---->
+
+    <div class="nav-left">
+      <img src="../media/Logo-white.svg" alt="Logo" class="nav-logo" />
+      <label class="logo-nav">Microgrid Toolkit</label>
+    </div>
+
     <ul id="navbar">
+      <!-- Navigation items will be populated by navbar.js -->
+    </ul>
   </nav>
 
+  <!-- Main content wrapper -->
+  <div class="main-content">
+    <div class="wrapper">
+      <!-- Account Management Form -->
+      <div id="accountManagement" class="form-container visible">
+        <h1>Account Management</h1>
 
-  <div class="wrapper">
-    <!-- Account Management Form -->
-    <div id="accountManagement" class="form-container visible">
-      <h1>Account Management</h1>
+        <div id="account-management-message" class="messageDiv" style="display: none;"></div>
 
-      <div id="account-management-message" class="messageDiv" style="display: none;"></div>
+        <div class="button-group">
+          <button id="updatePasswordBtn" class="btn secondary-btn">Update Password</button>
+          <div id="updatePasswordSection" class="hidden">
+            <div class="input-box">
+              <input id="newPassword" type="password" placeholder="Enter new password" required>
+            </div>
+            <div class="confirmation-buttons">
+              <button id="confirmUpdatePasswordBtn" class="btn secondary-btn">Confirm Update</button>
+              <button id="cancelUpdatePasswordBtn" class="btn secondary-btn">Cancel</button>
+            </div>
+          </div>
 
-      <div class="button-group">
-        <button id="updatePasswordBtn" class="btn secondary-btn">Update Password</button>
-        <div id="updatePasswordSection" class="hidden">
+          <button id="deleteAccountBtn" class="btn danger-btn">Delete Account</button>
+        </div>
+
+        <!-- Delete Confirmation Section -->
+        <div id="deleteConfirmation" class="hidden">
+          <p>Are you sure you want to delete your account? This action cannot be undone.</p>
           <div class="input-box">
-            <input id="newPassword" type="password" placeholder="Enter new password" required>
+            <input id="deletePassword" type="password" placeholder="Enter your password to confirm" required>
+            <i class='bx bxs-lock-alt'></i>
           </div>
           <div class="confirmation-buttons">
-            <button id="confirmUpdatePasswordBtn" class="btn secondary-btn">Confirm Update</button>
-            <button id="cancelUpdatePasswordBtn" class="btn secondary-btn">Cancel</button>
+            <button id="confirmDeleteBtn" class="btn danger-btn">Confirm Delete</button>
+            <button id="cancelDeleteBtn" class="btn secondary-btn">Cancel</button>
           </div>
-        </div>
-
-        <button id="deleteAccountBtn" class="btn danger-btn">Delete Account</button>
-      </div>
-
-      <!-- Delete Confirmation Section -->
-      <div id="deleteConfirmation" class="hidden">
-        <p>Are you sure you want to delete your account? This action cannot be undone.</p>
-        <div class="input-box">
-          <input id="deletePassword" type="password" placeholder="Enter your password to confirm" required>
-          <i class='bx bxs-lock-alt'></i>
-        </div>
-        <div class="confirmation-buttons">
-          <button id="confirmDeleteBtn" class="btn danger-btn">Confirm Delete</button>
-          <button id="cancelDeleteBtn" class="btn secondary-btn">Cancel</button>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="social-icons">
+      <a href="https://www.facebook.com/KilowattsforHumanity/" target="_blank"><i class='bx bxl-facebook'></i></a>
+      <a href="https://www.instagram.com/kilowattsforhumanity/" target="_blank"><i class='bx bxl-instagram'></i></a>
+      <a href="https://www.linkedin.com/company/kilowatts-for-humanity/posts/?feedView=all" target="_blank"><i class='bx bxl-linkedin'></i></a>
+      <a href="https://github.com/pdauenhauer/SESDC-toolkit" target="_blank"><i class='bx bxl-github'></i></a>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 SESDC. All rights reserved</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script type="module" src="../js/navbar.js"></script>
+  <script type="module" src="../js/account.js" defer></script>
 </body>
-<!--added code for nav bar-->
-<script type="module" src="../js/navbar.js"></script>
-<script type="module" src="../js/account.js" defer></script>
+</html>

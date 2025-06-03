@@ -26,8 +26,8 @@ function updateNavLinks() {
   const loggedOutNav = `
     <li><a ${isActive('index.html')} href="${baseUrl}/index.html">Home</a></li>
     <li><a ${isActive('about.html')} href="${baseUrl}/pages/about.html">About</a></li>
-    <li><a ${isActive('help.html')} href="${baseUrl}/pages/help.html">Help</a></li>
     <li><a ${isActive('contact.html')} href="${baseUrl}/pages/contact.html">Contact</a></li>
+    <li><a ${isActive('userGuide.html')} href="${baseUrl}/pages/userGuide.html">User Guide</a></li>
     <li><a ${isActive('login.html')} href="${baseUrl}/pages/login.html">Login</a></li>
   `;
 
@@ -35,9 +35,9 @@ function updateNavLinks() {
     <li><a ${isActive('index.html')} href="${baseUrl}/index.html">Home</a></li>
     <li><a ${isActive('project-selection.html')} href="${baseUrl}/pages/project-selection.html">Projects</a></li>
     <li><a ${isActive('about.html')} href="${baseUrl}/pages/about.html">About</a></li>
-    <li><a ${isActive('help.html')} href="${baseUrl}/pages/help.html">Help</a></li>
     <li><a ${isActive('contact.html')} href="${baseUrl}/pages/contact.html">Contact</a></li>
     <li><a ${isActive('account.html')} href="${baseUrl}/pages/account.html">Account</a></li>
+    <li><a ${isActive('userGuide.html')} href="${baseUrl}/pages/userGuide.html">User Guide</a></li>
     <li><a ${isActive('login.html')} id="logout" href="#">Logout</a></li>
   `;
 
