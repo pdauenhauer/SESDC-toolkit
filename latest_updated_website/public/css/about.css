@@ -84,14 +84,6 @@ nav {
     line-height: 80px;
 }
 
-label.logo-nav {
-    color: var(--white-main);
-    font-size: 35px;
-    line-height: 80px;
-    padding: 0 100px;
-    font-weight: bold;
-}
-
 .nav-links {
     list-style: none;
     display: flex;

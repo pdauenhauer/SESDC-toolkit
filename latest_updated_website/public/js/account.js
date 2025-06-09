@@ -96,7 +96,7 @@ async function deleteUserFiles(uid) {
     try {
       const finalCheck = await listAll(rootFolderRef);
       if (finalCheck.items.length === 0 && finalCheck.prefixes.length === 0) {
-        console.log(`✅ Fully verified deletion of folder ${uid}/`);
+        console.log(`Fully verified deletion of folder ${uid}/`);
       } else {
         console.warn(`⚠️ Folder ${uid}/ still has leftover files or folders:`);
         finalCheck.items.forEach(item => console.warn(`• ${item.fullPath}`));
