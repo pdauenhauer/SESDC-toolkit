@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Dashboard - Microgrid Design Tool</title>
+    <link href="../css/project-selection.css" rel="stylesheet" type="text/css"/>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+    <nav>
+      <input type="checkbox" id="check">
+      <label for="check" class="check-btn">
+        <i class='bx bx-menu'></i>
+      </label>
+      <!--<div class="nav-left">
+        <img src="media/Logo-white.svg" alt="Logo" class="nav-logo" />
+        <label class="logo-nav">Microgrid Toolkit</label>
+      </div>-->
+     <ul id="navbar">
+    </nav>
+
+    <div class="logo-container">
+      <img src="../media/Logo.svg" alt="Logo" class="logo">
+    </div>
+
+    <h1 class="main-title">Project Graphs</h1>
+
+    <header class="header">
+        <h1>Graphs</h1>
+        <div class="project-info">Viewing Project, <span id="project-name"></span></div>
+    </header>
+    <div class="plots-container" id="plotsContainer"></div>
+
+    <footer class="footer">
+      <div class="social-icons">
+        <a href="https://www.facebook.com/KilowattsforHumanity/" target="_blank"><i class='bx bxl-facebook'></i></a>
+        <a href="https://www.instagram.com/kilowattsforhumanity/" target="_blank"><i class='bx bxl-instagram'></i></a>
+        <a href="https://www.linkedin.com/company/kilowatts-for-humanity/posts/?feedView=all" target="_blank"><i class='bx bxl-linkedin'></i></a>
+        <a href="https://github.com/pdauenhauer/SESDC-toolkit" target="_blank"><i class='bx bxl-github'></i></a>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 SESDC. All rights reserved</p>
+      </div>
+    </footer>
+
+    <script type="module" src="../js/navbar.js"></script>
+    <script type="module" src="../js/project-outputs.js" defer></script>
+</body>

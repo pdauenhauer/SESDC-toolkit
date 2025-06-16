@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Dashboard - Microgrid Design Tool</title>
+    <link href="../css/project-selection.css" rel="stylesheet" type="text/css"/>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="icon" href="/media/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <nav>
+      <input type="checkbox" id="check">
+      <label for="check" class="check-btn">
+        <i class='bx bx-menu'></i>
+      </label>
+
+      <div class="nav-left">
+          <img src="../media/Logo-white.svg" alt="Logo" class="nav-logo" />
+          <label class="logo-nav">Microgrid Toolkit</label>
+      </div>
+
+        <ul id="navbar">
+    </nav>
+
+    <div class="logo-container">
+      <img src="../media/Logo.svg" alt="Logo" class="logo">
+    </div>
+    <h1 class="main-title">Project Selection</h1>
+
+    <header class="header">
+        <h1>My Projects</h1>
+        <div class="user-info">Hello, <span id="logged-in-username"></span></div>
+    </header>
+
+    <main class="main-content">
+        <div class="projects-header">
+            <button class="add-project-btn" id="add-project">
+                <i class='bx bx-plus'></i>
+                Add New Project
+            </button>
+        </div>
+
+ 
+        <div class="projects-grid" id="projectsGrid">
+            
+        </div>
+    </main>
+    <div class="modal" id="addProjectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Project</h2>
+                <button class="close-modal" id="closeModal">&times;</button>
+            </div>
+            <form id="addProjectForm">
+                <div class="form-group-add-project">
+                    <label for="projectName">Project Name</label>
+                    <input type="text" id="projectName" required>
+                </div>
+                <div class="form-group-add-project">
+                    <label for="projectDescription">Description</label>
+                    <textarea id="projectDescription" required></textarea>
+                </div>
+                <button type="submit" class="submit-btn">Create Project</button>
+            </form>
+        </div>
+    </div>
+    <div id="inputsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Project Inputs</h2>
+                <button class="close-modal" id="closeInputsModal">&times;</button>
+            </div>
+            <div class="input-buttons" id="manualInputButtons">
+                <button id="locationInputsBtn">Location</button>
+                <button id="batteryInputsBtn">Battery</button>
+                <button id="generatorInputsBtn">Generator</button>
+                <button id="solarPanelInputsBtn">Solar Panel</button>
+                <button id="windTurbineInputsBtn">Wind Turbine</button>
+                <button id="loadInputsContainerBtn">Add Loads</button>
+            </div>
+            <form id="inputsForm">
+                <div id="locationInputs" class="form-group" style="display: none;">
+                    <p class="input-section-header">Location Inputs</p>
+                    <div id="map"></div>
+                    <label for="location-latitude">Latitude</label>
+                    <input type="number" id="location-latitude" name="location-latitude">
+                    <label for="location-longitude">Longitude</label>
+                    <input type="number" id="location-longitude" name="location-longitude">
+                    <label for="location-inflation">Inflation Rate (%)</label>
+                    <input type="number" id="location-inflation" name="location-inflation" value="3">
+                </div>
+                <div id="batteryInputs" class="form-group" style="display: none;">
+                    <p class="input-section-header">Battery</p>
+                    <input type="checkbox" id="using-battery">
+                    <label for="using-battery">Using a Battery?</label>
+                    <label for="battery-type">Battery Type</label>
+                    <select id="battery-type" name="battery-type">
+                        <option value="lead-acid">Lead-Acid</option>
+                        <option value="lithium-ion">Lithium-Ion</option>
+                    </select>
+                    <label for="maximum-storage">Maximum Storage (kWh)</label>
+                    <input type="number" id="maximum-storage" name="maximum-storage">
+                    <label for="charge-capacity">Charge Capacity (kW)</label>
+                    <input type="number" id="charge-capacity" name="charge-capacity">
+                    <label for="battery-capex">Battery Capital Expenditure ($)</label>
+                    <input type="number" id="battery-capex" name="battery-capex">
+                    <label for="battery-opex">Battery Operating Cost (%)</label>
+                    <input type="number" id="battery-opex" name="battery-opex">
+                    <label for="battery-replacement">Battery Replacement Cost (%)</label>
+                    <input type="number" id="battery-replacement" name="battery-replacement">
+                    <label for="battery-lifespan">Battery Lifespan (Years)</label>
+                    <input type="number" id="battery-lifespan" name="battery-lifespan">
+                </div>
+                <div id="generatorInputs" class="form-group" style="display: none;">
+                    <p class="input-section-header">Diesel Generator</p>
+                    <input type="checkbox" id="using-generator">
+                    <label for="using-generator">Using a Diesel Generator?</label>
+                    <label for="diesel-capacity">Capacity (kW)</label>
+                    <input type="number" id="diesel-capacity" name="diesel-capacity">
+                    <label for="generator-capex">Generator Capital Expenditure ($)</label>
+                    <input type="number" id="generator-capex" name="generator-capex">
+                    <label for="generator-opex">Generator Operating Cost (%)</label>
+                    <input type="number" id="generator-opex" name="generator-opex">
+                    <label for="generator-replacement">Generator Replacement Cost (%)</label>
+                    <input type="number" id="generator-replacement" name="generator-replacement">
+                    <label for="generator-lifespan">Generator Lifespan (Years)</label>
+                    <input type="number" id="generator-lifespan" name="generator-lifespan">
+                </div>
+                <div id="solarPanelInputs" class="form-group" style="display: none;">
+                    <p class="input-section-header">Solar Panel</p>
+                    <input type="checkbox" id="using-solar-panel">
+                    <label for="using-solar-panel">Using a Solar Panel?</label>
+                    <label for="solar-array-size">Solar Array Size (kW)</label>
+                    <input type="number" id="solar-array-size" name="solar-array-size">
+                    <label for="wire-losses">Wire Losses (Percent)</label>
+                    <input type="number" id="wire-losses" name="wire-losses" value="10">
+                    <label for="module-mismatch">Module Mismatch (Percent)</label>
+                    <input type="number" id="module-mismatch" name="module-mismatch" value="10">
+                    <label for="module-aging">Module Aging (Percent)</label>
+                    <input type="number" id="module-aging" name="module-aging" value="8">
+                    <label for="dust-dirt">Dust and Dirt (Percent)</label>
+                    <input type="number" id="dust-dirt" name="dust-dirt" value="11">
+                    <label for="converter">Converter (Percent)</label>
+                    <input type="number" id="converter" name="converter" value="5">
+                    <label for="solar-capex">Solar Panel Capital Expenditure ($)</label>
+                    <input type="number" id="solar-capex" name="solar-capex">
+                    <label for="solar-opex">Solar Panel Operating Cost (%)</label>
+                    <input type="number" id="solar-opex" name="solar-opex">
+                    <label for="solar-replacement">Solar Panel Replacement Cost (%)</label>
+                    <input type="number" id="solar-replacement" name="solar-replacement">
+                    <label for="solar-lifespan">Solar Panel Lifespan (Years)</label>
+                    <input type="number" id="solar-lifespan" name="solar-lifespan">
+                </div>
+                <div id="windTurbineInputs" class="form-group" style="display: none;">
+                    <p class="input-section-header">Wind Turbine</p>
+                    <input type="checkbox" id="using-wind-turbine">
+                    <label for="using-wind-turbine">Using a Wind Turbine?</label>
+                    <label for="name-plate-capacity">Nameplate Capacity (kW)</label>
+                    <input type="number" id="name-plate-capacity" name="name-plate-capacity">
+                    <label for="rated-power">Rated Power (kW)</label>
+                    <input type="number" id="rated-power" name="rated-power">
+                    <label for="cut-in-speed">Cut-in Speed (m/s)</label>
+                    <input type="number" value=0.00000000001 id="cut-in-speed" name="cut-in-speed">
+                    <label for="rated-speed">Rated Speed (m/s)</label>
+                    <input type="number" value=2.5 id="rated-speed" name="rated-speed">
+                    <label for="cut-out-speed">Cut-out Speed (m/s)</label>
+                    <input type="number" value=25.0 id="cut-out-speed" name="cut-out-speed">
+                    <label for="wind-capex">Wind Turbine Capital Expenditure ($)</label>
+                    <input type="number" id="wind-capex" name="wind-capex">
+                    <label for="wind-opex">Wind Turbine Operating Cost (%)</label>
+                    <input type="number" id="wind-opex" name="wind-opex">
+                    <label for="wind-replacement">Wind Turbine Replacement Cost (%)</label>
+                    <input type="number" id="wind-replacement" name="wind-replacement">
+                    <label for="wind-lifespan">Wind Turbine Lifespan (Years)</label>
+                    <input type="number" id="wind-lifespan" name="wind-lifespan">
+                </div>
+                <div id="loadInputsContainer" class="form-group" style="display: none;">
+                    <p>Enter load values for each hour of the day:</p>
+                    <div id="hourlyLoadInputs"></div>
+                </div>
+                <button type="submit" id="save-manual-inputs" class="save-inputs-btn">Save Manual Inputs</button>
+                <hr>
+                <button type="submit" class="save-submit-btn">Run Simulation</button>
+                <button type="button" class="redirect-btn" style="display: none;">View Project Graphs</button>
+            </form>
+        </div>
+    </div>
+    <div id="deleteConfirmationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Are you sure you want to delete this project?</h2>
+            </div>
+            <div class="modal-body">
+                <div class="modal-buttons">
+                    <button id="confirmDelete" class="delete-btn">Delete</button>
+                    <button id="cancelDelete" class="cancel-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="shareProjectModal" class="modal">
+        <div class="share-modal-content">
+            <div class="modal-header">
+                <h2>Share Project</h2>
+                <button class="close-modal" id="closeShareProjectModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="button-box">
+                    <div id="btn"></div>
+                    <button type="button" class="toggle-btn" id="shareFormBtn">Share</button>
+                    <button type="button" class="toggle-btn" id="removeUserFormBtn">Remove</button>
+                </div>
+                <div class="form-wrapper">
+                    <form id="shareProjectForm">
+                        <div class="share-form-group">
+                            <p>Enter the email address of the person you want to share the project with:</p>
+                            <input type="email" id="shareEmail" required>
+                        </div>
+                        <div class="option-select">
+                            <p>User Role</p>
+                            <select id="roleSelect" name="roleSelect">
+                                <option value="" disabled selected>Select Role</option>
+                                <option value="owner">Owner</option>
+                                <option value="editor">Editor</option>
+                                <option value="viewer">Viewer</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="share-submit-btn">Share Project</button>
+                    </form>
+                    <form id="removeUserForm">
+                        <div class="form-group">
+                            <p>Enter the email address of the person you want to remove from the project:</p>
+                            <input type="email" id="removeEmail" required>
+                        </div>
+                        <button type="submit" class="remove-user-btn">Remove User</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer class="footer">
+        <div class="social-icons">
+          <a href="https://www.facebook.com/KilowattsforHumanity/" target="_blank"><i class='bx bxl-facebook'></i></a>
+          <a href="https://www.instagram.com/kilowattsforhumanity/" target="_blank"><i class='bx bxl-instagram'></i></a>
+          <a href="https://www.linkedin.com/company/kilowatts-for-humanity/posts/?feedView=all" target="_blank"><i class='bx bxl-linkedin'></i></a>
+          <a href="https://github.com/pdauenhauer/SESDC-toolkit" target="_blank"><i class='bx bxl-github'></i></a>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2025 SESDC. All rights reserved</p>
+        </div>
+      </footer>
+    <script type="module" src="../js/navbar.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script type="module" src="../js/project-selection-display.js" defer></script>
+    <script type="module" src="../js/project-selection-user-authentication.js" defer></script>
+    <script type="module" src="../js/mapbox-init.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore-compat.js"></script>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Microgrid Toolkit</title>
+  <link rel="stylesheet" href="css/homepage.css" />
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="icon" type="image/png" href="media/favicon.png">
+</head>
+
+<body class="min-h-screen flex flex-col">
+  <nav>
+    <input type="checkbox" id="check">
+    <label for="check" class="check-btn">
+      <i class='bx bx-menu'></i>
+    </label>
+
+    <div class="nav-left">
+      <img src="media/Logo-white.svg" alt="Logo" class="nav-logo" />
+      <label class="logo-nav">Microgrid Toolkit</label>
+    </div>
+    <ul id="navbar">
+  </nav>
+  
+  <main class="content-wrapper">
+    <section class="hero-section">
+      <div class="content-box">
+        <div class="hero-image">
+          <img
+            src="media/graph.png"
+            alt="Graph Example"
+            class="graph-image"
+          />
+        </div>
+
+        <div class="left-content">
+          <h1>Welcome to the SESDC Microgrid Toolkit</h1>
+          <h3>Design, simulate, and plan your microgrid with ease.</h3>
+          <button class="design-tool-button" onclick="window.location.href='pages/login.html'">
+            Open Design Tool
+          </button>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="overview-section">
+      <p>
+        Understanding Our Project: Learn why we created this tool and how it benefits users.
+        In addition to answering any questions you may have.
+      </p>
+      <button class="get-started" onclick="window.location.href='pages/help.html'">
+        Learn More!
+      </button>
+      
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="social-icons">
+      <a href="https://www.facebook.com/KilowattsforHumanity/" target="_blank"><i class='bx bxl-facebook'></i></a>
+      <a href="https://www.instagram.com/kilowattsforhumanity/" target="_blank"><i class='bx bxl-instagram'></i></a>
+      <a href="https://www.linkedin.com/company/kilowatts-for-humanity/posts/?feedView=all" target="_blank"><i class='bx bxl-linkedin'></i></a>
+      <a href="https://github.com/pdauenhauer/SESDC-toolkit" target="_blank"><i class='bx bxl-github'></i></a>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 SESDC. All rights reserved</p>
+    </div>
+  </footer>
+
+  <script type="module" src="js/navbar.js"></script>
+</body>
+</html>
