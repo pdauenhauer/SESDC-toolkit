@@ -191,7 +191,7 @@ def fetch_solar_data_function(req: https_fn.Request) -> https_fn.Response:
             status=500
         )
 
-def fetch_solar_data(load_inputs, location_inputs, battery_inputs, generator_inputs, solar_inputs, wind_inputs, userId, projectId, api_key="TC1RGLjNIwUJrOGGyPvg4Fgq182jznjbbeIfZT5f", year="2022", interval="30"):
+def fetch_solar_data(load_inputs, location_inputs, battery_inputs, generator_inputs, solar_inputs, wind_inputs, userId, projectId, api_key="5gZjfefi1adVzrZPYNirDhSk24BQcDEaYyWnxPdy", year="2022", interval="30"):
     url = "https://developer.nrel.gov/api/nsrdb/v2/solar/nsrdb-msg-v1-0-0-download.csv"
 
     latitude = location_inputs['latitude']
@@ -209,8 +209,8 @@ def fetch_solar_data(load_inputs, location_inputs, battery_inputs, generator_inp
         "utc": "false",  # Local time instead of UTC
         "leap_day": "false",  # Exclude leap day
         "interval": interval,  # Data resolution interval
-        "full_name": "Josh Baron",  # Your full name
-        "email": "jbaron@seattleu.edu",  # Your email address
+        "full_name": "Peter Dauenhauer",  # Your full name
+        "email": "peter.dauenhauer@gmail.com",  # Your email address
         # "mailing_list": "false"  # Don't add to the mailing list
     }
 
