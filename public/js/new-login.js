@@ -35,7 +35,7 @@ function showMessage(message, divId) {
 // Sign up form submission
 document.addEventListener('DOMContentLoaded', () => {
     const signupForm = document.getElementById('signup-form');
-    signupForm.addEventListener("submit", (e) => {
+    signupForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         if (registerForm.classList.contains('visible')) {
             const email = signupForm['enterEmail'].value;
@@ -43,44 +43,59 @@ document.addEventListener('DOMContentLoaded', () => {
             const username = signupForm['enterUsername'].value;
             const numprojects = 0;
 
-            createUserWithEmailAndPassword(auth, email, password).then(cred => {
+            try {
+                console.log('🔥 Starting user registration...');
+                
+                // Step 1: Create the user account
+                const cred = await createUserWithEmailAndPassword(auth, email, password);
                 const user = cred.user;
+                console.log('✅ User account created:', user.uid);
+
+                // Step 2: Prepare user data
                 const userData = {
                     username: username,
                     email: email,
                     numprojects: numprojects,
+                    projectids: []  // Don't forget this field!
                 };
-                createFolder(user.uid);
+                console.log('📄 User data prepared:', userData);
 
-                // Send email verification
-                sendEmailVerification(user)
-                    .then(() => {
-                        showMessage('Account created! Please check your email to verify your account. Then log in!', 'account-creation-message');
-                        auth.signOut(); // Sign out the user after sending verification email
-                    })
-                    .catch((error) => {
-                        console.error("Error sending verification email:", error);
-                        showMessage('Account created, but failed to send verification email.', 'account-creation-message', true);
-                    });
-
+                // Step 3: Save user document to Firestore WHILE USER IS STILL AUTHENTICATED
                 const usersRef = doc(db, "users", user.uid);
-                setDoc(usersRef, userData).then(() => {
-                    setTimeout(() => {
+                await setDoc(usersRef, userData);
+                console.log('✅ User document saved to Firestore');
+
+                // Step 4: Create storage folder
+                await createFolder(user.uid);
+                console.log('✅ Storage folder created');
+
+                // Step 5: Send email verification
+                await sendEmailVerification(user);
+                console.log('✅ Verification email sent');
+                
+                // Step 6: NOW we can sign out (after data is saved)
+                await auth.signOut();
+                console.log('✅ User signed out after data save');
+
+                // Step 7: Show success message and switch to login form
+                showMessage('Account created! Please check your email to verify your account. Then log in!', 'account-creation-message');
+                
+                setTimeout(() => {
                     showForm(loginForm, registerForm);
-                    }, 3000);
-                })
-                .catch((error) => {
-                    console.error("error writing document", error);
-                });
-            })
-            .catch((error) => {
+                }, 3000);
+
+            } catch (error) {
+                console.error('❌ Registration error:', error);
+                
                 const errorCode = error.code;
                 if (errorCode === 'auth/email-already-in-use') {
                     showMessage('Email already Exists', 'account-creation-message', true);
+                } else if (errorCode === 'permission-denied') {
+                    showMessage('Permission denied. Please check your Firebase security rules.', 'account-creation-message', true);
                 } else {
-                    showMessage('Unable to Create User', 'account-creation-message', true);
-                }           
-            });
+                    showMessage('Unable to Create User: ' + error.message, 'account-creation-message', true);
+                }
+            }
         }
     });
 });

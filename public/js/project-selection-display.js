@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         // https://us-central1-sesdc-function-test.cloudfunctions.net/fetch_solar_data_function
         // https://fetch-solar-data-function-2e75hqar4q-uc.a.run.app
         // https://us-central1-sesdc-function-test.cloudfunctions.net/fetch_solar_data_function
-        const simulationResponse = await fetch('https://fetch-solar-data-function-2e75hqar4q-uc.a.run.app', {
+        const simulationResponse = await fetch('https://fetch-solar-data-function-efucnne2ja-uc.a.run.app', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -223,7 +223,8 @@ async function loadProjects() {
         
         projects = [];
 
-        if (!projectIds || projectIds.length === 0) {
+        if (!projectIds || !Array.isArray(projectIds) || projectIds.length === 0) {
+            console.log("No projects found for this user.");
             return;
         }
 

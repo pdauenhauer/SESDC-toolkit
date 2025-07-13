@@ -30,14 +30,3 @@ onAuthStateChanged(auth, (user) => {
         console.log("UserId not found in local storage");
     }
 });
-
-const logoutButton = document.getElementById('logout');
-logoutButton.addEventListener("click", () => {
-    localStorage.removeItem('loggedInUserId');
-    signOut(auth).then(() => {
-        window.location.href = 'login.html';
-    })
-    .catch((error) => {
-        console.error('Error Signing Out', error);
-    })
-})
