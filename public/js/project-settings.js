@@ -101,8 +101,10 @@ class ProjectSettings {
         
         // Update map if coordinates exist
         if (this.currentSettings.latitude && this.currentSettings.longitude && this.settingsMap) {
-            this.settingsMap.setCenter([this.currentSettings.longitude, this.currentSettings.latitude]);
-            this.settingsMarker.setLngLat([this.currentSettings.longitude, this.currentSettings.latitude]);
+            window.loadSettingsMapCoordinates(
+                this.currentSettings.latitude,
+                this.currentSettings.longitude
+            )
         }
     }
 
