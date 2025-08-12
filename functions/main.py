@@ -171,12 +171,6 @@ def fetch_solar_data_function(req: https_fn.Request) -> https_fn.Response:
             "replacement_cost": wind_replacement
         }
 
-        print("wind inputs:", wind_inputs)
-        print("solar inputs:", solar_inputs)
-        print("battery inputs:", battery_inputs)
-        print("generator inputs:", generator_inputs)
-        print("location inputs:", location_inputs)
-        print("load inputs:", load_inputs)
         
         fetch_solar_data(load_inputs, location_inputs, battery_inputs, generator_inputs, solar_inputs, wind_inputs, userId, projectId)
         
@@ -270,7 +264,7 @@ def fetch_solar_data(load_inputs, location_inputs, battery_inputs, generator_inp
         print(f"Error: {response.status_code}")
         print(response.text)
 
-def run_simulation(userId, projectId, location_inputs, battery_inputs, generator_inputs, solar_inputs, wind_inputs, df):
+def run_simulation(userId, projectId, location_inputs, battery_inputs, generator_inputs, solar_inputs, wind_inputs, financial_inputs, df):
 
     #Initialize Energy Storage System
     chargeCapacity = battery_inputs['charge_capacity']

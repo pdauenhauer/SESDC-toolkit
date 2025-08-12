@@ -41,12 +41,9 @@
                 Add New Project
             </button>
         </div>
-
- 
-        <div class="projects-grid" id="projectsGrid">
-            
-        </div>
+        <div class="projects-grid" id="projectsGrid"></div>
     </main>
+
     <div class="modal" id="addProjectModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -66,127 +63,268 @@
             </form>
         </div>
     </div>
+
     <div id="inputsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Project Inputs</h2>
-                <button class="close-modal" id="closeInputsModal">&times;</button>
+                <h2 id="modalTitle">Project Inputs</h2>
+                <div class="modal-header-buttons">
+                    <button class="settings-btn" id="projectSettingsBtn" title="Project Settings">
+                        <i class='bx bx-cog'></i>
+                    </button>
+                    <button class="back-btn" id="backToInputsBtn" style="display: none;" title="Back to Inputs">
+                        <i class="bx bx-arrow-back"></i>
+                    </button>
+                    <button class="close-modal" id="closeInputsModal">&times;</button>
+                </div>
             </div>
-            <div class="input-buttons" id="manualInputButtons">
-                <button id="locationInputsBtn">Location</button>
-                <button id="batteryInputsBtn">Battery</button>
-                <button id="generatorInputsBtn">Generator</button>
-                <button id="solarPanelInputsBtn">Solar Panel</button>
-                <button id="windTurbineInputsBtn">Wind Turbine</button>
-                <button id="loadInputsContainerBtn">Add Loads</button>
+
+            <div id="projectInputsContent">
+                <div class="input-buttons" id="manualInputButtons">
+                    <button id="locationInputsBtn">Location</button>
+                    <button id="batteryInputsBtn">Battery</button>
+                    <button id="generatorInputsBtn">Generator</button>
+                    <button id="solarPanelInputsBtn">Solar Panel</button>
+                    <button id="windTurbineInputsBtn">Wind Turbine</button>
+                    <button id="loadInputsContainerBtn">Add Loads</button>
+                </div>
+                
+                <form id="inputsForm">
+                    <div id="locationInputs" class="form-group" style="display: none;">
+                        <p class="input-section-header">Location Inputs</p>
+                        <div id="map"></div>
+                        <label for="location-latitude">Latitude</label>
+                        <input type="number" id="location-latitude" name="location-latitude">
+                        <label for="location-longitude">Longitude</label>
+                        <input type="number" id="location-longitude" name="location-longitude">
+                        <label for="location-inflation">Inflation Rate (%)</label>
+                        <input type="number" id="location-inflation" name="location-inflation" value="3">
+                    </div>
+
+                    <div id="batteryInputs" class="form-group" style="display: none;">
+                        <p class="input-section-header">Battery</p>
+                        <input type="checkbox" id="using-battery">
+                        <label for="using-battery">Using a Battery?</label>
+                        <label for="battery-type">Battery Type</label>
+                        <select id="battery-type" name="battery-type">
+                            <option value="lead-acid">Lead-Acid</option>
+                            <option value="lithium-ion">Lithium-Ion</option>
+                        </select>
+                        <label for="maximum-storage">Maximum Storage (kWh)</label>
+                        <input type="number" id="maximum-storage" name="maximum-storage">
+                        <label for="charge-capacity">Charge Capacity (kW)</label>
+                        <input type="number" id="charge-capacity" name="charge-capacity">
+                        <label for="battery-capex">Battery Capital Expenditure ($)</label>
+                        <input type="number" id="battery-capex" name="battery-capex">
+                        <label for="battery-opex">Battery Operating Cost (%)</label>
+                        <div class="dual-input-group">
+                            <label class="dual-input-label">Battery Operating Cost</label>
+                            <div class="dual-input-container">
+                                <div class="input-wrapper">
+                                    <label for="battery-opex-percent">Percentage (%)</label>
+                                    <input type="number" id="battery-opex-percent" name="battery-opex-percent" 
+                                        class="percent-input" data-capex="battery-capex" data-dollar="battery-opex-dollar"
+                                        step="0.01" min="0" max="100">
+                                </div>
+                                <div class="input-wrapper">
+                                    <label for="battery-opex-dollar">Dollar Amount ($)</label>
+                                    <input type="number" id="battery-opex-dollar" name="battery-opex-dollar" 
+                                        class="dollar-input" data-capex="battery-capex" data-percent="battery-opex-percent"
+                                        step="0.01" min="0">
+                                </div>
+                            </div>
+                            <small class="dual-input-help">Enter either percentage or dollar amount - the other will auto-calculate</small>
+                            <div class="missing-capex-warning" id="battery-opex-warning" style="display: none;">
+                                <small class="warning-text">⚠️ Enter Capital Expenditure first to calculate percentage</small>
+                            </div>
+                        </div>
+                        <div class="dual-input-group">
+                            <label class="dual-input-label">Battery Replacement Cost</label>
+                            <div class="dual-input-container">
+                                <div class="input-wrapper">
+                                    <label for="battery-replacement-percent">Percentage (%)</label>
+                                    <input type="number" id="battery-replacement-percent" name="battery-replacement-percent" 
+                                        class="percent-input" data-capex="battery-capex" data-dollar="battery-replacement-dollar"
+                                        step="0.01" min="0" max="100">
+                                </div>
+                                <div class="input-wrapper">
+                                    <label for="battery-replacement-dollar">Dollar Amount ($)</label>
+                                    <input type="number" id="battery-replacement-dollar" name="battery-replacement-dollar" 
+                                        class="dollar-input" data-capex="battery-capex" data-percent="battery-replacement-percent"
+                                        step="0.01" min="0">
+                                </div>
+                            </div>
+                            <small class="dual-input-help">Enter either percentage or dollar amount - the other will auto-calculate</small>
+                            <div class="missing-capex-warning" id="battery-replacement-warning" style="display: none;">
+                                <small class="warning-text">⚠️ Enter Capital Expenditure first to calculate percentage</small>
+                            </div>
+                        </div>
+                        <label for="battery-lifespan">Battery Lifespan (Years)</label>
+                        <input type="number" id="battery-lifespan" name="battery-lifespan">
+                    </div>
+
+                    <div id="generatorInputs" class="form-group" style="display: none;">
+                        <p class="input-section-header">Diesel Generator</p>
+                        <input type="checkbox" id="using-generator">
+                        <label for="using-generator">Using a Diesel Generator?</label>
+                        <label for="diesel-capacity">Capacity (kW)</label>
+                        <input type="number" id="diesel-capacity" name="diesel-capacity">
+                        <label for="generator-capex">Generator Capital Expenditure ($)</label>
+                        <input type="number" id="generator-capex" name="generator-capex">
+                        <div class="dual-input-group">
+                            <label class="dual-input-label">Generator Operating Cost</label>
+                            <div class="dual-input-container">
+                                <div class="input-wrapper">
+                                    <label for="generator-opex-percent">Percentage (%)</label>
+                                    <input type="number" id="generator-opex-percent" name="generator-opex-percent" 
+                                        class="percent-input" data-capex="generator-capex" data-dollar="generator-opex-dollar"
+                                        step="0.01" min="0" max="100">
+                                </div>
+                                <div class="input-wrapper">
+                                    <label for="generator-opex-dollar">Dollar Amount ($)</label>
+                                    <input type="number" id="generator-opex-dollar" name="generator-opex-dollar" 
+                                        class="dollar-input" data-capex="generator-capex" data-percent="generator-opex-percent"
+                                        step="0.01" min="0">
+                                </div>
+                            </div>
+                            <small class="dual-input-help">Enter either percentage or dollar amount - the other will auto-calculate</small>
+                            <div class="missing-capex-warning" id="generator-opex-warning" style="display: none;">
+                                <small class="warning-text">⚠️ Enter Capital Expenditure first to calculate percentage</small>
+                            </div>
+                        </div>
+                        <div class="dual-input-group">
+                            <label class="dual-input-label">Generator Replacement Cost</label>
+                            <div class="dual-input-container">
+                                <div class="input-wrapper">
+                                    <label for="generator-replacement-percent">Percentage (%)</label>
+                                    <input type="number" id="generator-replacement-percent" name="generator-replacement-percent" 
+                                        class="percent-input" data-capex="generator-capex" data-dollar="generator-replacement-dollar"
+                                        step="0.01" min="0" max="100">
+                                </div>
+                                <div class="input-wrapper">
+                                    <label for="generator-replacement-dollar">Dollar Amount ($)</label>
+                                    <input type="number" id="generator-replacement-dollar" name="generator-replacement-dollar" 
+                                        class="dollar-input" data-capex="generator-capex" data-percent="generator-replacement-percent"
+                                        step="0.01" min="0">
+                                </div>
+                            </div>
+                            <small class="dual-input-help">Enter either percentage or dollar amount - the other will auto-calculate</small>
+                            <div class="missing-capex-warning" id="generator-replacement-warning" style="display: none;">
+                                <small class="warning-text">⚠️ Enter Capital Expenditure first to calculate percentage</small>
+                            </div>
+                        </div>
+                        <label for="generator-lifespan">Generator Lifespan (Years)</label>
+                        <input type="number" id="generator-lifespan" name="generator-lifespan">
+                    </div>
+
+                    <div id="solarPanelInputs" class="form-group" style="display: none;">
+                        <p class="input-section-header">Solar Panel</p>
+                        <input type="checkbox" id="using-solar-panel">
+                        <label for="using-solar-panel">Using a Solar Panel?</label>
+                        <label for="solar-array-size">Solar Array Size (kW)</label>
+                        <input type="number" id="solar-array-size" name="solar-array-size">
+                        <label for="wire-losses">Wire Losses (Percent)</label>
+                        <input type="number" id="wire-losses" name="wire-losses" value="10">
+                        <label for="module-mismatch">Module Mismatch (Percent)</label>
+                        <input type="number" id="module-mismatch" name="module-mismatch" value="10">
+                        <label for="module-aging">Module Aging (Percent)</label>
+                        <input type="number" id="module-aging" name="module-aging" value="8">
+                        <label for="dust-dirt">Dust and Dirt (Percent)</label>
+                        <input type="number" id="dust-dirt" name="dust-dirt" value="11">
+                        <label for="converter">Converter (Percent)</label>
+                        <input type="number" id="converter" name="converter" value="5">
+                        <label for="solar-capex">Solar Panel Capital Expenditure ($)</label>
+                        <input type="number" id="solar-capex" name="solar-capex">
+                        <label for="solar-opex">Solar Panel Operating Cost (%)</label>
+                        <input type="number" id="solar-opex" name="solar-opex">
+                        <label for="solar-replacement">Solar Panel Replacement Cost (%)</label>
+                        <input type="number" id="solar-replacement" name="solar-replacement">
+                        <label for="solar-lifespan">Solar Panel Lifespan (Years)</label>
+                        <input type="number" id="solar-lifespan" name="solar-lifespan">
+                    </div>
+
+                    <div id="windTurbineInputs" class="form-group" style="display: none;">
+                        <p class="input-section-header">Wind Turbine</p>
+                        <input type="checkbox" id="using-wind-turbine">
+                        <label for="using-wind-turbine">Using a Wind Turbine?</label>
+                        <label for="name-plate-capacity">Nameplate Capacity (kW)</label>
+                        <input type="number" id="name-plate-capacity" name="name-plate-capacity">
+                        <label for="rated-power">Rated Power (kW)</label>
+                        <input type="number" id="rated-power" name="rated-power">
+                        <label for="cut-in-speed">Cut-in Speed (m/s)</label>
+                        <input type="number" value=0.00000000001 id="cut-in-speed" name="cut-in-speed">
+                        <label for="rated-speed">Rated Speed (m/s)</label>
+                        <input type="number" value=2.5 id="rated-speed" name="rated-speed">
+                        <label for="cut-out-speed">Cut-out Speed (m/s)</label>
+                        <input type="number" value=25.0 id="cut-out-speed" name="cut-out-speed">
+                        <label for="wind-capex">Wind Turbine Capital Expenditure ($)</label>
+                        <input type="number" id="wind-capex" name="wind-capex">
+                        <label for="wind-opex">Wind Turbine Operating Cost (%)</label>
+                        <input type="number" id="wind-opex" name="wind-opex">
+                        <label for="wind-replacement">Wind Turbine Replacement Cost (%)</label>
+                        <input type="number" id="wind-replacement" name="wind-replacement">
+                        <label for="wind-lifespan">Wind Turbine Lifespan (Years)</label>
+                        <input type="number" id="wind-lifespan" name="wind-lifespan">
+                    </div>
+
+                    <div id="loadInputsContainer" class="form-group" style="display: none;">
+                        <p>Enter load values for each hour of the day:</p>
+                        <div id="hourlyLoadInputs"></div>
+                    </div>
+
+                    <button type="submit" id="save-manual-inputs" class="save-inputs-btn">Save Manual Inputs</button>
+                    <hr>
+                    <button type="submit" class="save-submit-btn">Run Simulation</button>
+                    <button type="button" class="redirect-btn" style="display: none;">View Project Graphs</button>
+                </form>
             </div>
-            <form id="inputsForm">
-                <div id="locationInputs" class="form-group" style="display: none;">
-                    <p class="input-section-header">Location Inputs</p>
-                    <div id="map"></div>
-                    <label for="location-latitude">Latitude</label>
-                    <input type="number" id="location-latitude" name="location-latitude">
-                    <label for="location-longitude">Longitude</label>
-                    <input type="number" id="location-longitude" name="location-longitude">
-                    <label for="location-inflation">Inflation Rate (%)</label>
-                    <input type="number" id="location-inflation" name="location-inflation" value="3">
+
+            <div id="projectSettingsContent" style="display: none;">
+                <div class="settings-sections">
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">Economic Parameters</h3>
+                        <div class="settings-grid">
+                            <div class="form-group">
+                                <label for="labor-cost">Labor Cost ($/hour)</label>
+                                <input type="number" id="labor-cost" name="labor-cost" step="0.01" placeholder="25.00">
+                                <small class="input-help">Hourly labor rate for installation and maintenance</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="project-inflation-rate">Project Inflation Rate (%)</label>
+                                <input type="number" id="project-inflation-rate" name="project-inflation-rate" step="0.01" value="3.0" min="0" max="10">
+                                <small class="input-help">Annual inflation rate for project costs</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="land-leasing-cost">Land Leasing Cost ($/year)</label>
+                                <input type="number" id="land-leasing-cost" name="land-leasing-cost" step="0.01" placeholder="1000.00">
+                                <small class="input-help">Annual cost for land lease or rental</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="licensing-cost">Licensing & Permits ($)</label>
+                                <input type="number" id="licensing-cost" name="licensing-cost" step="0.01" placeholder="5000.00">
+                                <small class="input-help">One-time cost for permits and licensing</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="other-capital-costs">Other Capital Costs ($)</label>
+                                <input type="number" id="other-capital-costs" name="other-capital-costs" step="0.01" placeholder="10000.00">
+                                <small class="input-help">Additional capital expenditures not covered above</small>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div id="batteryInputs" class="form-group" style="display: none;">
-                    <p class="input-section-header">Battery</p>
-                    <input type="checkbox" id="using-battery">
-                    <label for="using-battery">Using a Battery?</label>
-                    <label for="battery-type">Battery Type</label>
-                    <select id="battery-type" name="battery-type">
-                        <option value="lead-acid">Lead-Acid</option>
-                        <option value="lithium-ion">Lithium-Ion</option>
-                    </select>
-                    <label for="maximum-storage">Maximum Storage (kWh)</label>
-                    <input type="number" id="maximum-storage" name="maximum-storage">
-                    <label for="charge-capacity">Charge Capacity (kW)</label>
-                    <input type="number" id="charge-capacity" name="charge-capacity">
-                    <label for="battery-capex">Battery Capital Expenditure ($)</label>
-                    <input type="number" id="battery-capex" name="battery-capex">
-                    <label for="battery-opex">Battery Operating Cost (%)</label>
-                    <input type="number" id="battery-opex" name="battery-opex">
-                    <label for="battery-replacement">Battery Replacement Cost (%)</label>
-                    <input type="number" id="battery-replacement" name="battery-replacement">
-                    <label for="battery-lifespan">Battery Lifespan (Years)</label>
-                    <input type="number" id="battery-lifespan" name="battery-lifespan">
+
+                <div class="settings-actions">
+                    <button type="button" class="reset-settings-btn">Reset to Defaults</button>
+                    <button type="button" class="save-settings-btn">Save Settings</button>
                 </div>
-                <div id="generatorInputs" class="form-group" style="display: none;">
-                    <p class="input-section-header">Diesel Generator</p>
-                    <input type="checkbox" id="using-generator">
-                    <label for="using-generator">Using a Diesel Generator?</label>
-                    <label for="diesel-capacity">Capacity (kW)</label>
-                    <input type="number" id="diesel-capacity" name="diesel-capacity">
-                    <label for="generator-capex">Generator Capital Expenditure ($)</label>
-                    <input type="number" id="generator-capex" name="generator-capex">
-                    <label for="generator-opex">Generator Operating Cost (%)</label>
-                    <input type="number" id="generator-opex" name="generator-opex">
-                    <label for="generator-replacement">Generator Replacement Cost (%)</label>
-                    <input type="number" id="generator-replacement" name="generator-replacement">
-                    <label for="generator-lifespan">Generator Lifespan (Years)</label>
-                    <input type="number" id="generator-lifespan" name="generator-lifespan">
-                </div>
-                <div id="solarPanelInputs" class="form-group" style="display: none;">
-                    <p class="input-section-header">Solar Panel</p>
-                    <input type="checkbox" id="using-solar-panel">
-                    <label for="using-solar-panel">Using a Solar Panel?</label>
-                    <label for="solar-array-size">Solar Array Size (kW)</label>
-                    <input type="number" id="solar-array-size" name="solar-array-size">
-                    <label for="wire-losses">Wire Losses (Percent)</label>
-                    <input type="number" id="wire-losses" name="wire-losses" value="10">
-                    <label for="module-mismatch">Module Mismatch (Percent)</label>
-                    <input type="number" id="module-mismatch" name="module-mismatch" value="10">
-                    <label for="module-aging">Module Aging (Percent)</label>
-                    <input type="number" id="module-aging" name="module-aging" value="8">
-                    <label for="dust-dirt">Dust and Dirt (Percent)</label>
-                    <input type="number" id="dust-dirt" name="dust-dirt" value="11">
-                    <label for="converter">Converter (Percent)</label>
-                    <input type="number" id="converter" name="converter" value="5">
-                    <label for="solar-capex">Solar Panel Capital Expenditure ($)</label>
-                    <input type="number" id="solar-capex" name="solar-capex">
-                    <label for="solar-opex">Solar Panel Operating Cost (%)</label>
-                    <input type="number" id="solar-opex" name="solar-opex">
-                    <label for="solar-replacement">Solar Panel Replacement Cost (%)</label>
-                    <input type="number" id="solar-replacement" name="solar-replacement">
-                    <label for="solar-lifespan">Solar Panel Lifespan (Years)</label>
-                    <input type="number" id="solar-lifespan" name="solar-lifespan">
-                </div>
-                <div id="windTurbineInputs" class="form-group" style="display: none;">
-                    <p class="input-section-header">Wind Turbine</p>
-                    <input type="checkbox" id="using-wind-turbine">
-                    <label for="using-wind-turbine">Using a Wind Turbine?</label>
-                    <label for="name-plate-capacity">Nameplate Capacity (kW)</label>
-                    <input type="number" id="name-plate-capacity" name="name-plate-capacity">
-                    <label for="rated-power">Rated Power (kW)</label>
-                    <input type="number" id="rated-power" name="rated-power">
-                    <label for="cut-in-speed">Cut-in Speed (m/s)</label>
-                    <input type="number" value=0.00000000001 id="cut-in-speed" name="cut-in-speed">
-                    <label for="rated-speed">Rated Speed (m/s)</label>
-                    <input type="number" value=2.5 id="rated-speed" name="rated-speed">
-                    <label for="cut-out-speed">Cut-out Speed (m/s)</label>
-                    <input type="number" value=25.0 id="cut-out-speed" name="cut-out-speed">
-                    <label for="wind-capex">Wind Turbine Capital Expenditure ($)</label>
-                    <input type="number" id="wind-capex" name="wind-capex">
-                    <label for="wind-opex">Wind Turbine Operating Cost (%)</label>
-                    <input type="number" id="wind-opex" name="wind-opex">
-                    <label for="wind-replacement">Wind Turbine Replacement Cost (%)</label>
-                    <input type="number" id="wind-replacement" name="wind-replacement">
-                    <label for="wind-lifespan">Wind Turbine Lifespan (Years)</label>
-                    <input type="number" id="wind-lifespan" name="wind-lifespan">
-                </div>
-                <div id="loadInputsContainer" class="form-group" style="display: none;">
-                    <p>Enter load values for each hour of the day:</p>
-                    <div id="hourlyLoadInputs"></div>
-                </div>
-                <button type="submit" id="save-manual-inputs" class="save-inputs-btn">Save Manual Inputs</button>
-                <hr>
-                <button type="submit" class="save-submit-btn">Run Simulation</button>
-                <button type="button" class="redirect-btn" style="display: none;">View Project Graphs</button>
-            </form>
+            </div>
         </div>
     </div>
+
     <div id="deleteConfirmationModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -200,6 +338,7 @@
             </div>
         </div>
     </div>
+
     <div id="shareProjectModal" class="modal">
         <div class="share-modal-content">
             <div class="modal-header">
@@ -240,6 +379,7 @@
             </div>
         </div>
     </div>
+
     <footer class="footer">
         <div class="social-icons">
           <a href="https://www.facebook.com/KilowattsforHumanity/" target="_blank"><i class='bx bxl-facebook'></i></a>
@@ -250,14 +390,17 @@
         <div class="footer-bottom">
           <p>&copy; 2025 SESDC. All rights reserved</p>
         </div>
-      </footer>
-    <script type="module" src="../js/navbar.js"></script>
+    </footer>
 
+    <script type="module" src="../js/navbar.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script type="module" src="../js/project-selection-display.js" defer></script>
     <script type="module" src="../js/project-selection-user-authentication.js" defer></script>
     <script type="module" src="../js/mapbox-init.js" defer></script>
     <script type="module" src="../js/firebase-init.js" defer></script>
+    <script type="module" src="../js/project-settings.js" defer></script>
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <script type="module" src="../js/project-settings.js" defer></script>
+    <script type="module" src="../js/dual-input.js" defer></script>
 </body>
 </html>
