@@ -775,10 +775,13 @@ document.getElementById('save-manual-inputs').addEventListener('click', async (e
     const userId = localStorage.getItem('loggedInUserId');
     const projectId = document.getElementById('inputsModal').getAttribute('data-project-id');
 
+    const projectSettings = new ProjectSettings();
+    projectSettings.loadFromLocalStorage(projectId);
+
     const locationInputs = {
-        latitude: parseFloat(document.getElementById('location-latitude').value) || null,
-        longitude: parseFloat(document.getElementById('location-longitude').value) || null,
-        inflation: parseFloat(document.getElementById('location-inflation').value) || null
+        latitude: projectSettings.currentSettings.latitude,
+        longitude: projectSettings.currentSettings.longitude,
+        inflation: projectSettings.currentSettings.inflation || 3.0
     };
 
     const batteryInputs = {

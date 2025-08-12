@@ -1570,3 +1570,7 @@ a.active {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
 }
+
+.form-group.full-width {
+    grid-column: 1 / -1; 
+}

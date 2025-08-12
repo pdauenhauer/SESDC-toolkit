@@ -81,7 +81,6 @@
 
             <div id="projectInputsContent">
                 <div class="input-buttons" id="manualInputButtons">
-                    <button id="locationInputsBtn">Location</button>
                     <button id="batteryInputsBtn">Battery</button>
                     <button id="generatorInputsBtn">Generator</button>
                     <button id="solarPanelInputsBtn">Solar Panel</button>
@@ -90,32 +89,7 @@
                 </div>
                 
                 <form id="inputsForm">
-                    <!-- Enhanced Location Inputs -->
-                    <div id="locationInputs" class="form-group" style="display: none;">
-                        <p class="input-section-header">Location Inputs</p>
-                        
-                        <div id="map"></div>
-                        
-                        <div class="standard-input-wrapper">
-                            <label for="location-latitude" class="required">Latitude</label>
-                            <input type="number" id="location-latitude" name="location-latitude" step="any" placeholder="Enter latitude">
-                            <small class="input-help">Geographic latitude coordinate</small>
-                        </div>
-                        
-                        <div class="standard-input-wrapper">
-                            <label for="location-longitude" class="required">Longitude</label>
-                            <input type="number" id="location-longitude" name="location-longitude" step="any" placeholder="Enter longitude">
-                            <small class="input-help">Geographic longitude coordinate</small>
-                        </div>
-                        
-                        <div class="standard-input-wrapper">
-                            <label for="location-inflation">Inflation Rate (%)</label>
-                            <input type="number" id="location-inflation" name="location-inflation" value="3" min="0" max="10" step="0.1">
-                            <small class="input-help">Annual inflation rate for economic calculations</small>
-                        </div>
-                    </div>
-
-                    <!-- Enhanced Battery Inputs -->
+                    <!-- Battery Inputs -->
                     <div id="batteryInputs" class="form-group" style="display: none;">
                         <p class="input-section-header">Battery Storage System</p>
                         
@@ -154,7 +128,6 @@
                             <small class="input-help">Initial investment cost for battery system</small>
                         </div>
                         
-                        <!-- Dual Input Groups remain the same but inherit consistent styling -->
                         <div class="dual-input-group">
                             <label class="dual-input-label">Battery Operating Cost</label>
                             <div class="dual-input-container">
@@ -206,7 +179,7 @@
                         </div>
                     </div>
 
-                    <!-- Enhanced Generator Inputs -->
+                    <!-- Generator Inputs -->
                     <div id="generatorInputs" class="form-group" style="display: none;">
                         <p class="input-section-header">Diesel Generator</p>
                         
@@ -227,7 +200,6 @@
                             <small class="input-help">Initial investment cost for generator system</small>
                         </div>
                         
-                        <!-- Dual Input Groups for Generator -->
                         <div class="dual-input-group">
                             <label class="dual-input-label">Generator Operating Cost</label>
                             <div class="dual-input-container">
@@ -279,7 +251,7 @@
                         </div>
                     </div>
 
-                    <!-- Enhanced Solar Panel Inputs -->
+                    <!-- Solar Panel Inputs -->
                     <div id="solarPanelInputs" class="form-group" style="display: none;">
                         <p class="input-section-header">Solar Panel System</p>
                         
@@ -338,7 +310,6 @@
                             <small class="input-help">Initial investment cost for solar system</small>
                         </div>
                         
-                        <!-- Dual Input Groups for Solar -->
                         <div class="dual-input-group">
                             <label class="dual-input-label">Solar Panel Operating Cost</label>
                             <div class="dual-input-container">
@@ -389,7 +360,7 @@
                             <small class="input-help">Expected operational lifetime in years</small>
                         </div>
                     </div>
-                    <!-- Enhanced Wind Turbine Inputs -->
+                    <!-- Wind Turbine Inputs -->
                     <div id="windTurbineInputs" class="form-group" style="display: none;">
                         <p class="input-section-header">Wind Turbine System</p>
                         
@@ -442,7 +413,6 @@
                             <small class="input-help">Initial investment cost for wind turbine system</small>
                         </div>
                         
-                        <!-- Dual Input Groups for Wind -->
                         <div class="dual-input-group">
                             <label class="dual-input-label">Wind Turbine Operating Cost</label>
                             <div class="dual-input-container">
@@ -494,7 +464,7 @@
                         </div>
                     </div>
 
-                    <!-- Enhanced Load Inputs -->
+                    <!-- Load Inputs -->
                     <div id="loadInputsContainer" class="form-group" style="display: none;">
                         <p class="input-section-header">Hourly Load Profile</p>
                         
@@ -506,7 +476,6 @@
                         <div id="hourlyLoadInputs"></div>
                     </div>
 
-                    <!-- Enhanced Form Action Buttons -->
                     <div class="form-section">
                         <button type="button" id="save-manual-inputs" class="save-inputs-btn">
                             Save Manual Inputs
@@ -558,6 +527,28 @@
                                 <label for="other-capital-costs">Other Capital Costs ($)</label>
                                 <input type="number" id="other-capital-costs" name="other-capital-costs" step="0.01" placeholder="10000.00">
                                 <small class="input-help">Additional capital expenditures not covered above</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">Location Parameters</h3>
+                        <div class="settings-grid">
+                            <div class="form-group full-width">
+                                <label>Project Location</label>
+                                <div id="settings-map" style="width: 100%; height: 250px; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 10px;"></div>
+                                <small class="input-help">Click on the map or drag the marker to set coordinates</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="settings-location-latitude">Latitude</label>
+                                <input type="number" id="settings-location-latitude" name="settings-location-latitude" step="any" placeholder="Enter Latitude">
+                                <small class="input-help">Geographic latitude coordinate of the project</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="settings-location-longitude">Longitude</label>
+                                <input type="number" id="settings-location-longitude" name="settings-location-longitude" step="any" placeholder="Enter Longitude">
+                                <small class="input-help">Geographic longitude coordinate of the project</small>
                             </div>
                         </div>
                     </div>

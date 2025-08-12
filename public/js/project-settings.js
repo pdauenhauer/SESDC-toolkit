@@ -9,14 +9,12 @@ class ProjectSettings {
             landLeasingCost: 1000.00,
             licensingCost: 5000.00,
             otherCapitalCosts: 10000.00,
-            discountRate: 5.0,
-            projectLifetime: 20,
-            constructionPeriod: 6,
-            currency: 'USD',
-            taxRate: 25.0
+            latitude: null,
+            longitude: null,
         };
         this.currentSettings = { ...this.defaultSettings };
         this.initializeEventListeners();
+        this.initializeSettingsMap();
     }
 
     initializeEventListeners() {
@@ -93,27 +91,33 @@ class ProjectSettings {
         document.getElementById('land-leasing-cost').value = this.currentSettings.landLeasingCost;
         document.getElementById('licensing-cost').value = this.currentSettings.licensingCost;
         document.getElementById('other-capital-costs').value = this.currentSettings.otherCapitalCosts;
-        document.getElementById('discount-rate').value = this.currentSettings.discountRate;
-        document.getElementById('project-lifetime').value = this.currentSettings.projectLifetime;
-        document.getElementById('construction-period').value = this.currentSettings.constructionPeriod;
-        document.getElementById('currency').value = this.currentSettings.currency;
-        document.getElementById('tax-rate').value = this.currentSettings.taxRate;
+
+        if (document.getElementById('settings-location-latitude')) {
+            document.getElementById('settings-location-latitude').value = this.currentSettings.latitude || '';
+        }
+        if (document.getElementById('settings-location-longitude')) {
+            document.getElementById('settings-location-longitude').value = this.currentSettings.longitude || '';
+        }
+        
+        // Update map if coordinates exist
+        if (this.currentSettings.latitude && this.currentSettings.longitude && this.settingsMap) {
+            this.settingsMap.setCenter([this.currentSettings.longitude, this.currentSettings.latitude]);
+            this.settingsMarker.setLngLat([this.currentSettings.longitude, this.currentSettings.latitude]);
+        }
     }
 
     saveSettings() {
         try {
             // Collect settings from form
             const newSettings = {
-                laborCost: parseFloat(document.getElementById('labor-cost').value) || this.defaultSettings.laborCost,
                 projectInflationRate: parseFloat(document.getElementById('project-inflation-rate').value) || this.defaultSettings.projectInflationRate,
                 landLeasingCost: parseFloat(document.getElementById('land-leasing-cost').value) || this.defaultSettings.landLeasingCost,
                 licensingCost: parseFloat(document.getElementById('licensing-cost').value) || this.defaultSettings.licensingCost,
                 otherCapitalCosts: parseFloat(document.getElementById('other-capital-costs').value) || this.defaultSettings.otherCapitalCosts,
-                discountRate: parseFloat(document.getElementById('discount-rate').value) || this.defaultSettings.discountRate,
-                projectLifetime: parseInt(document.getElementById('project-lifetime').value) || this.defaultSettings.projectLifetime,
-                constructionPeriod: parseInt(document.getElementById('construction-period').value) || this.defaultSettings.constructionPeriod,
-                currency: document.getElementById('currency').value || this.defaultSettings.currency,
-                taxRate: parseFloat(document.getElementById('tax-rate').value) || this.defaultSettings.taxRate
+                laborCost: parseInt(document.getElementById('labor-cost').value) || this.defaultSettings.laborCost,
+
+                latitude: document.parseFloat(document.getElementById('settings-location-latitude').value) || null,
+                longitude: parseFloat(document.getElementById('settings-location-longitude').value) || null,
             };
 
             // Validate settings
@@ -146,29 +150,13 @@ class ProjectSettings {
             return false;
         }
         
-        if (settings.discountRate < 0 || settings.discountRate > 15) {
-            this.showMessage('Discount rate must be between 0% and 15%', 'error');
-            return false;
-        }
-        
         if (settings.projectLifetime < 1 || settings.projectLifetime > 50) {
             this.showMessage('Project lifetime must be between 1 and 50 years', 'error');
             return false;
         }
         
-        if (settings.constructionPeriod < 1 || settings.constructionPeriod > 36) {
-            this.showMessage('Construction period must be between 1 and 36 months', 'error');
-            return false;
-        }
-        
-        if (settings.taxRate < 0 || settings.taxRate > 50) {
-            this.showMessage('Tax rate must be between 0% and 50%', 'error');
-            return false;
-        }
-        
         // Validate that costs are non-negative
-        if (settings.laborCost < 0 || settings.landLeasingCost < 0 || 
-            settings.licensingCost < 0 || settings.otherCapitalCosts < 0) {
+        if (settings.landLeasingCost < 0 || settings.licensingCost < 0 || settings.otherCapitalCosts < 0) {
             this.showMessage('All cost values must be non-negative', 'error');
             return false;
         }
@@ -217,9 +205,9 @@ class ProjectSettings {
     addInputValidationListeners() {
         // Add real-time validation for numeric inputs
         const numericInputs = [
-            'labor-cost', 'project-inflation-rate', 'land-leasing-cost',
-            'licensing-cost', 'other-capital-costs', 'discount-rate',
-            'project-lifetime', 'construction-period', 'tax-rate'
+            'project-inflation-rate', 'land-leasing-cost',
+            'licensing-cost', 'other-capital-costs',
+            'labor-cost'
         ];
 
         numericInputs.forEach(inputId => {
