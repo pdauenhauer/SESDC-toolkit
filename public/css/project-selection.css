@@ -1574,3 +1574,243 @@ a.active {
 .form-group.full-width {
     grid-column: 1 / -1; 
 }
+
+.minimal-style {
+    padding: 0.75rem;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+}
+
+.minimal-style:hover {
+    border-color: var(--green-main, #008000);
+    box-shadow: 0 2px 8px rgba(0, 128, 0, 0.1);
+}
+
+/* For a card-like style, add this class to custom-checkbox-label */
+.card-style {
+    border-radius: 16px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid #f3f4f6;
+}
+
+.card-style:hover {
+    box-shadow: 0 8px 25px rgba(0, 128, 0, 0.15);
+}
+
+/* ===== COMPONENT-SPECIFIC COLORS (OPTIONAL) ===== */
+
+/* Battery - Blue accent */
+.custom-checkbox-container.battery .custom-checkbox-input:checked + .custom-checkbox-label .custom-checkbox {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+/* Generator - Orange accent */
+.custom-checkbox-container.generator .custom-checkbox-input:checked + .custom-checkbox-label .custom-checkbox {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+/* Solar - Yellow accent */
+.custom-checkbox-container.solar .custom-checkbox-input:checked + .custom-checkbox-label .custom-checkbox {
+    background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
+}
+
+/* Wind - Cyan accent */
+.custom-checkbox-container.wind .custom-checkbox-input:checked + .custom-checkbox-label .custom-checkbox {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+}
+
+.custom-checkbox-container {
+    margin: 1.5rem 0;
+    position: relative;
+}
+
+/* Hide the default checkbox */
+.custom-checkbox-input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+/* Label container */
+.custom-checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    cursor: pointer;
+    padding: 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.custom-checkbox-label::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(0, 128, 0, 0.05) 0%, rgba(5, 179, 156, 0.05) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 0;
+}
+
+/* Hover effect */
+.custom-checkbox-label:hover {
+    border-color: var(--green-main, #008000);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 128, 0, 0.15);
+}
+
+.custom-checkbox-label:hover::before {
+    opacity: 1;
+}
+
+/* The custom checkbox square */
+.custom-checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: 2px solid #d1d5db;
+    border-radius: 6px;
+    background: #ffffff;
+    margin-right: 1rem;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+/* Checkbox icon (checkmark) */
+.custom-checkbox-icon {
+    font-size: 16px;
+    color: #ffffff;
+    opacity: 0;
+    transform: scale(0.3);
+    transition: all 0.2s ease;
+}
+
+/* Text container */
+.custom-checkbox-text {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
+}
+
+/* Primary text styling */
+.primary-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+    transition: color 0.3s ease;
+}
+
+/* Secondary text styling */
+.secondary-text {
+    font-size: 0.9rem;
+    color: #6b7280;
+    font-weight: 400;
+    transition: color 0.3s ease;
+}
+
+/* ===== CHECKED STATE STYLES ===== */
+
+/* When checkbox is checked */
+.custom-checkbox-input:checked + .custom-checkbox-label {
+    border-color: var(--green-main, #008000);
+    background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+    box-shadow: 0 4px 20px rgba(0, 128, 0, 0.1);
+}
+
+.custom-checkbox-input:checked + .custom-checkbox-label::before {
+    opacity: 1;
+}
+
+.custom-checkbox-input:checked + .custom-checkbox-label .custom-checkbox {
+    background: linear-gradient(135deg, var(--green-main, #008000) 0%, var(--selection-green, #05B39C) 100%);
+    border-color: var(--green-main, #008000);
+    transform: scale(1.1);
+}
+
+.custom-checkbox-input:checked + .custom-checkbox-label .custom-checkbox-icon {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.custom-checkbox-input:checked + .custom-checkbox-label .primary-text {
+    color: var(--green-start, #0d5016);
+}
+
+.custom-checkbox-input:checked + .custom-checkbox-label .secondary-text {
+    color: var(--green-main, #008000);
+}
+
+/* ===== FOCUS STATES FOR ACCESSIBILITY ===== */
+
+.custom-checkbox-input:focus + .custom-checkbox-label {
+    outline: 2px solid var(--green-main, #008000);
+    outline-offset: 2px;
+}
+
+/* ===== DISABLED STATE ===== */
+
+.custom-checkbox-input:disabled + .custom-checkbox-label {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+
+@media (max-width: 768px) {
+    .custom-checkbox-label {
+        padding: 0.75rem;
+    }
+    
+    .custom-checkbox {
+        width: 20px;
+        height: 20px;
+        margin-right: 0.75rem;
+    }
+    
+    .custom-checkbox-icon {
+        font-size: 14px;
+    }
+    
+    .primary-text {
+        font-size: 1rem;
+    }
+    
+    .secondary-text {
+        font-size: 0.85rem;
+    }
+}
+
+/* ===== ANIMATION VARIATIONS ===== */
+
+/* Pulse animation on check */
+@keyframes checkPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 128, 0, 0.5);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(0, 128, 0, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 128, 0, 0);
+    }
+}
+
+.custom-checkbox-input:checked + .custom-checkbox-label .custom-checkbox {
+    animation: checkPulse 0.6s ease-out;
+}

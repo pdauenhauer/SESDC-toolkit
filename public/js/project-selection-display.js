@@ -895,3 +895,35 @@ document.getElementById('loadInputsContainerBtn').addEventListener('click', func
         hourlyLoadInputs.appendChild(inputGroup);
     }
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxInputs = document.querySelectorAll('.custom-checkbox-input');
+    
+    checkboxInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            const label = this.nextElementSibling;
+            
+            if (this.checked) {
+                // Add a temporary class for extra animation
+                label.classList.add('just-checked');
+                setTimeout(() => {
+                    label.classList.remove('just-checked');
+                }, 600);
+                
+                // Optional: Add haptic feedback on mobile
+                if (navigator.vibrate) {
+                    navigator.vibrate(50);
+                }
+            }
+        });
+        
+        // Add keyboard navigation enhancement
+        input.addEventListener('keydown', function(e) {
+            if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                this.checked = !this.checked;
+                this.dispatchEvent(new Event('change'));
+            }
+        });
+    });
+});
