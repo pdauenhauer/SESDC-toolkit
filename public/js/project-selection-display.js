@@ -368,8 +368,13 @@ async function deleteFolder(folderRef) {
 
 function openInputsModal(projectId) {
     const modal = document.getElementById('inputsModal');
-    modal.classList.add('active');
     modal.setAttribute('data-project-id', projectId);
+    modal.classList.add('active');
+    
+    // Load project settings from Firebase when modal opens
+    if (window.projectSettings) {
+        window.projectSettings.setProjectId(projectId).catch(console.error);
+    }
 }
 
 function closeInputsModal() {
@@ -528,30 +533,6 @@ document.getElementById('shareProjectForm').addEventListener('submit', async(e) 
         console.error('Error sharing project:', error);
     }
 })
-
-/*
-async function checkUserProjectRole(projectId) {
-    const userId = localStorage.getItem('loggedInUserId');
-    const projectRef = doc(db, 'users', userId, 'projects', projectId);
-    const projectDoc = await getDoc(projectRef);
-    
-    if (projectDoc.exists()) {
-        const projectData = projectDoc.data();
-        const isEditor = projectData.projectEditors.includes(userId);
-        const isViewer = projectData.projectViewers.includes(userId);
-        const isOwner = projectData.projectOwner === userId;
-
-        if (isOwner) {
-            return isOwner;
-        } else if (isEditor) {
-            return isEditor;
-        } else if (isViewer) {
-            return isViewer;
-        }
-    }
-    return null;
-}
-*/
 
 async function syncProjectChanges(projectId, changes) {
     try {
@@ -775,8 +756,21 @@ document.getElementById('save-manual-inputs').addEventListener('click', async (e
     const userId = localStorage.getItem('loggedInUserId');
     const projectId = document.getElementById('inputsModal').getAttribute('data-project-id');
 
-    const projectSettings = new ProjectSettings();
-    projectSettings.loadFromLocalStorage(projectId);
+    // Use the global ProjectSettings instance if available
+    let projectSettings;
+    if (window.projectSettings) {
+        projectSettings = window.projectSettings;
+        await projectSettings.setProjectId(projectId);
+    } else {
+        console.warn('ProjectSettings not yet available, using defaults');
+        projectSettings = {
+            currentSettings: {
+                latitude: null,
+                longitude: null,
+                inflation: 3.0
+            }
+        };
+    }
 
     const locationInputs = {
         latitude: projectSettings.currentSettings.latitude,
@@ -784,58 +778,78 @@ document.getElementById('save-manual-inputs').addEventListener('click', async (e
         inflation: projectSettings.currentSettings.inflation || 3.0
     };
 
+    // Battery inputs - corrected for dual-input system
     const batteryInputs = {
-        usingBattery: document.getElementById('using-battery').checked,
-        chargeCapacity: parseFloat(document.getElementById('charge-capacity').value) || null,
-        maximumStorage: parseFloat(document.getElementById('maximum-storage').value) || null,
-        batteryType: document.getElementById('battery-type').value || null,
-        capex: parseFloat(document.getElementById('battery-capex').value) || null,
-        opex: parseFloat(document.getElementById('battery-opex').value) || null,
-        replacement: parseFloat(document.getElementById('battery-replacement').value) || null,
-        lifespan: parseFloat(document.getElementById('battery-lifespan').value) || null
+        usingBattery: document.getElementById('using-battery')?.checked || false,
+        chargeCapacity: parseFloat(document.getElementById('charge-capacity')?.value) || null,
+        maximumStorage: parseFloat(document.getElementById('maximum-storage')?.value) || null,
+        batteryType: document.getElementById('battery-type')?.value || null,
+        capex: parseFloat(document.getElementById('battery-capex')?.value) || null,
+        // For dual inputs, use dollar amounts (or calculate from percentage)
+        opex: parseFloat(document.getElementById('battery-opex-dollar')?.value) || 
+              (parseFloat(document.getElementById('battery-opex-percent')?.value) * parseFloat(document.getElementById('battery-capex')?.value) / 100) || null,
+        replacement: parseFloat(document.getElementById('battery-replacement-dollar')?.value) || 
+                    (parseFloat(document.getElementById('battery-replacement-percent')?.value) * parseFloat(document.getElementById('battery-capex')?.value) / 100) || null,
+        lifespan: parseFloat(document.getElementById('battery-lifespan')?.value) || null
     };
 
+    // Generator inputs - corrected for dual-input system
     const generatorInputs = {
-        usingGenerator: document.getElementById('using-generator').checked,
-        capacity: parseFloat(document.getElementById('diesel-capacity').value) || null,
-        capex: parseFloat(document.getElementById('generator-capex').value) || null,
-        opex: parseFloat(document.getElementById('generator-opex').value) || null,
-        replacement: parseFloat(document.getElementById('generator-replacement').value) || null,
-        lifespan: parseFloat(document.getElementById('generator-lifespan').value) || null
+        usingGenerator: document.getElementById('using-generator')?.checked || false,
+        capacity: parseFloat(document.getElementById('diesel-capacity')?.value) || null,
+        capex: parseFloat(document.getElementById('generator-capex')?.value) || null,
+        // For dual inputs, use dollar amounts (or calculate from percentage)
+        opex: parseFloat(document.getElementById('generator-opex-dollar')?.value) || 
+              (parseFloat(document.getElementById('generator-opex-percent')?.value) * parseFloat(document.getElementById('generator-capex')?.value) / 100) || null,
+        replacement: parseFloat(document.getElementById('generator-replacement-dollar')?.value) || 
+                    (parseFloat(document.getElementById('generator-replacement-percent')?.value) * parseFloat(document.getElementById('generator-capex')?.value) / 100) || null,
+        lifespan: parseFloat(document.getElementById('generator-lifespan')?.value) || null
     };
 
+    // Solar panel inputs - corrected for dual-input system
     const solarPanelInputs = {
-        usingSolarPanel: document.getElementById('using-solar-panel').checked,
-        solarArraySize: parseFloat(document.getElementById('solar-array-size').value) || null,
-        wireLosses: parseFloat(document.getElementById('wire-losses').value) || 10,
-        moduleMismatch: parseFloat(document.getElementById('module-mismatch').value) || 10,
-        moduleAging: parseFloat(document.getElementById('module-aging').value) || 8,
-        dustDirt: parseFloat(document.getElementById('dust-dirt').value) || 11,
-        converter: parseFloat(document.getElementById('converter').value) || 5,
-        capex: parseFloat(document.getElementById('solar-capex').value) || null,
-        opex: parseFloat(document.getElementById('solar-opex').value) || null,
-        replacement: parseFloat(document.getElementById('solar-replacement').value) || null,
-        lifespan: parseFloat(document.getElementById('solar-lifespan').value) || null
+        usingSolarPanel: document.getElementById('using-solar-panel')?.checked || false,
+        solarArraySize: parseFloat(document.getElementById('solar-array-size')?.value) || null,
+        wireLosses: parseFloat(document.getElementById('wire-losses')?.value) || 10,
+        moduleMismatch: parseFloat(document.getElementById('module-mismatch')?.value) || 10,
+        moduleAging: parseFloat(document.getElementById('module-aging')?.value) || 8,
+        dustDirt: parseFloat(document.getElementById('dust-dirt')?.value) || 11,
+        converter: parseFloat(document.getElementById('converter')?.value) || 5,
+        capex: parseFloat(document.getElementById('solar-capex')?.value) || null,
+        // For dual inputs, use dollar amounts (or calculate from percentage)
+        opex: parseFloat(document.getElementById('solar-opex-dollar')?.value) || 
+              (parseFloat(document.getElementById('solar-opex-percent')?.value) * parseFloat(document.getElementById('solar-capex')?.value) / 100) || null,
+        replacement: parseFloat(document.getElementById('solar-replacement-dollar')?.value) || 
+                    (parseFloat(document.getElementById('solar-replacement-percent')?.value) * parseFloat(document.getElementById('solar-capex')?.value) / 100) || null,
+        lifespan: parseFloat(document.getElementById('solar-lifespan')?.value) || null
     };
 
+    // Wind turbine inputs - corrected for dual-input system
     const windTurbineInputs = {
-        usingWindTurbine: document.getElementById('using-wind-turbine').checked,
-        namePlateCapacity: parseFloat(document.getElementById('name-plate-capacity').value) || null,
-        ratedPower: parseFloat(document.getElementById('rated-power').value) || null,
-        cutInSpeed: parseFloat(document.getElementById('cut-in-speed').value) || null,
-        ratedSpeed: parseFloat(document.getElementById('rated-speed').value) || null,
-        cutOutSpeed: parseFloat(document.getElementById('cut-out-speed').value) || null,
-        capex: parseFloat(document.getElementById('wind-capex').value) || null,
-        opex: parseFloat(document.getElementById('wind-opex').value) || null,
-        replacement: parseFloat(document.getElementById('wind-replacement').value) || null,
-        lifespan: parseFloat(document.getElementById('wind-lifespan').value) || null
+        usingWindTurbine: document.getElementById('using-wind-turbine')?.checked || false,
+        namePlateCapacity: parseFloat(document.getElementById('name-plate-capacity')?.value) || null,
+        ratedPower: parseFloat(document.getElementById('rated-power')?.value) || null,
+        cutInSpeed: parseFloat(document.getElementById('cut-in-speed')?.value) || null,
+        ratedSpeed: parseFloat(document.getElementById('rated-speed')?.value) || null,
+        cutOutSpeed: parseFloat(document.getElementById('cut-out-speed')?.value) || null,
+        capex: parseFloat(document.getElementById('wind-capex')?.value) || null,
+        // For dual inputs, use dollar amounts (or calculate from percentage)
+        opex: parseFloat(document.getElementById('wind-opex-dollar')?.value) || 
+              (parseFloat(document.getElementById('wind-opex-percent')?.value) * parseFloat(document.getElementById('wind-capex')?.value) / 100) || null,
+        replacement: parseFloat(document.getElementById('wind-replacement-dollar')?.value) || 
+                    (parseFloat(document.getElementById('wind-replacement-percent')?.value) * parseFloat(document.getElementById('wind-capex')?.value) / 100) || null,
+        lifespan: parseFloat(document.getElementById('wind-lifespan')?.value) || null
     };
 
+    // Load inputs - collect hourly load data
     const loadInputs = [];
     for (let i = 0; i < 24; i++) {
-        const loadInput = parseFloat(document.getElementById(`hour-${i}`).value) || null;
-        if (loadInput !== null) {
-            loadInputs.push(loadInput);
+        const element = document.getElementById(`hour-${i}`);
+        if (element && element.value) {
+            const loadValue = parseFloat(element.value);
+            if (!isNaN(loadValue)) {
+                loadInputs.push(loadValue);
+            }
         }
     }
 
@@ -848,7 +862,9 @@ document.getElementById('save-manual-inputs').addEventListener('click', async (e
             solarPanelInputs,
             windTurbineInputs,
             loadInputs,
-            addedLocationData: true 
+            projectSettings: projectSettings.currentSettings,
+            addedLocationData: true, 
+            lastModified: new Date().toISOString()
         });
 
         alert('All manual inputs have been saved successfully!');
@@ -927,3 +943,31 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+function safeGetElementValue(elementId, defaultValue = null) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        return element.value;
+    }
+    console.warn(`Element with ID '${elementId}' not found, using default value: ${defaultValue}`);
+    return defaultValue;
+}
+
+// Helper function to safely get checkbox state
+function safeGetCheckboxState(elementId, defaultValue = false) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        return element.checked;
+    }
+    console.warn(`Checkbox with ID '${elementId}' not found, using default value: ${defaultValue}`);
+    return defaultValue;
+}
+
+// Helper function to safely parse numeric values
+function safeParseFloat(value, defaultValue = null) {
+    if (value === null || value === undefined || value === '') {
+        return defaultValue;
+    }
+    const parsed = parseFloat(value);
+    return isNaN(parsed) ? defaultValue : parsed;
+}

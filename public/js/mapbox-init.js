@@ -2,7 +2,10 @@ mapboxgl.accessToken = 'pk.eyJ1IjoicGRhdWVuaGF1ZXIiLCJhIjoiY21jZmZ5cHRtMDhiOTJsc
 
 let settingsMap = null;
 let settingsMarker = null;
+let inputsMap = null;
+let inputsMarker = null;
 
+// Initialize the settings map (for project settings modal)
 function initializeSettingsMap() {
     const mapContainer = document.getElementById('settings-map');
     const latInput = document.getElementById('settings-location-latitude');
@@ -42,6 +45,56 @@ function initializeSettingsMap() {
     }    
 }
 
+// Initialize the inputs map (for project inputs modal)
+function initializeInputsMap() {
+    const mapContainer = document.getElementById('map');
+    const latInput = document.getElementById('location-latitude');
+    const lonInput = document.getElementById('location-longitude');
+    
+    if (mapContainer && latInput && lonInput && !inputsMap) {
+        inputsMap = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: [0, 0], 
+            zoom: 4,
+            attributionControl: false
+        });
+
+        inputsMarker = new mapboxgl.Marker({ draggable: true })
+            .setLngLat([0, 0])
+            .addTo(inputsMap);
+
+        // Map click event
+        inputsMap.on('click', (e) => {
+            const { lng, lat } = e.lngLat;
+            inputsMarker.setLngLat([lng, lat]);
+            latInput.value = lat.toFixed(6);
+            lonInput.value = lng.toFixed(6);
+        });
+
+        // Marker drag event
+        inputsMarker.on('dragend', () => {
+            const { lng, lat } = inputsMarker.getLngLat();
+            latInput.value = lat.toFixed(6);
+            lonInput.value = lng.toFixed(6);
+        });
+
+        // Input change events
+        latInput.addEventListener('input', updateInputsMap);
+        lonInput.addEventListener('input', updateInputsMap);
+
+        // Resize map when modal becomes visible
+        const modal = document.getElementById('inputsModal');
+        if (modal) {
+            modal.addEventListener('transitionend', () => {
+                if (modal.classList.contains('active') && inputsMap) {
+                    inputsMap.resize();
+                }
+            });
+        }
+    }
+}
+
 function updateSettingsMap() {
     const latInput = document.getElementById('settings-location-latitude');
     const lonInput = document.getElementById('settings-location-longitude');
@@ -57,10 +110,32 @@ function updateSettingsMap() {
     }
 }
 
+function updateInputsMap() {
+    const latInput = document.getElementById('location-latitude');
+    const lonInput = document.getElementById('location-longitude');
+    
+    if (latInput && lonInput && inputsMap) {
+        const latitude = parseFloat(latInput.value);
+        const longitude = parseFloat(lonInput.value);
+
+        if (!isNaN(latitude) && !isNaN(longitude)) {
+            inputsMap.setCenter([longitude, latitude]);
+            inputsMarker.setLngLat([longitude, latitude]);
+        }
+    }
+}
+
 function loadSettingsMapCoordinates(latitude, longitude) {
     if (settingsMap && settingsMarker && !isNaN(latitude) && !isNaN(longitude)) {
         settingsMap.setCenter([longitude, latitude]);
         settingsMarker.setLngLat([longitude, latitude]);
+    }
+}
+
+function loadInputsMapCoordinates(latitude, longitude) {
+    if (inputsMap && inputsMarker && !isNaN(latitude) && !isNaN(longitude)) {
+        inputsMap.setCenter([longitude, latitude]);
+        inputsMarker.setLngLat([longitude, latitude]);
     }
 }
 
@@ -98,55 +173,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 100);
 });
 
+// Export functions to window for global access
 window.initializeSettingsMap = initializeSettingsMap;
+window.initializeInputsMap = initializeInputsMap;
 window.loadSettingsMapCoordinates = loadSettingsMapCoordinates;
+window.loadInputsMapCoordinates = loadInputsMapCoordinates;
 window.updateSettingsMap = updateSettingsMap;
-
-/*
-const map = new mapboxgl.Map({
-    container: 'map',
-    style: 'mapbox://styles/mapbox/streets-v11',
-    center: [0, 0], 
-    zoom: 4,
-    attributionControl: false
-});
-
-const marker = new mapboxgl.Marker({ draggable: true })
-    .setLngLat([0, 0])
-    .addTo(map);
-
-map.on('click', (e) => {
-    const { lng, lat } = e.lngLat;
-    marker.setLngLat([lng, lat]);
-
-    document.getElementById('location-latitude').value = lat.toFixed(6);
-    document.getElementById('location-longitude').value = lng.toFixed(6);
-});
-
-marker.on('dragend', () => {
-    const { lng, lat } = marker.getLngLat();
-
-    document.getElementById('location-latitude').value = lat.toFixed(6);
-    document.getElementById('location-longitude').value = lng.toFixed(6);
-});
-
-function updateMap() {
-    const latitude = parseFloat(document.getElementById('location-latitude').value);
-    const longitude = parseFloat(document.getElementById('location-longitude').value);
-
-    if (!isNaN(latitude) && !isNaN(longitude)) {
-        map.setCenter([longitude, latitude]);
-        marker.setLngLat([longitude, latitude]);
-    } 
-}
-
-const modal = document.getElementById('inputsModal');
-modal.addEventListener('transitionend', () => {
-    if (modal.classList.contains('active')) {
-        map.resize();
-    }
-});
-
-document.getElementById('location-latitude').addEventListener('input', updateMap);
-document.getElementById('location-longitude').addEventListener('input', updateMap);
-*/
+window.updateInputsMap = updateInputsMap;

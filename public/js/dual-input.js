@@ -1,5 +1,3 @@
-// dual-input-handler.js - Handle dual input system with auto-calculation
-
 class DualInputHandler {
     constructor() {
         this.isCalculating = false; // Prevent infinite loops
@@ -9,6 +7,9 @@ class DualInputHandler {
     initializeEventListeners() {
         // Listen for changes on all percent and dollar inputs
         document.addEventListener('input', (e) => {
+            // Add null check for e.target
+            if (!e.target || !e.target.classList) return;
+            
             if (e.target.classList.contains('percent-input')) {
                 this.handlePercentInput(e.target);
             } else if (e.target.classList.contains('dollar-input')) {
@@ -20,6 +21,9 @@ class DualInputHandler {
 
         // Listen for focus to add visual indicators
         document.addEventListener('focus', (e) => {
+            // Add null check for e.target
+            if (!e.target || !e.target.classList) return;
+            
             if (e.target.classList.contains('percent-input') || e.target.classList.contains('dollar-input')) {
                 this.addFocusIndicator(e.target);
             }
@@ -27,6 +31,9 @@ class DualInputHandler {
 
         // Listen for blur to remove visual indicators
         document.addEventListener('blur', (e) => {
+            // Add null check for e.target
+            if (!e.target || !e.target.classList) return;
+            
             if (e.target.classList.contains('percent-input') || e.target.classList.contains('dollar-input')) {
                 this.removeFocusIndicator(e.target);
             }
@@ -174,10 +181,12 @@ class DualInputHandler {
     }
 
     clearStateClasses(input) {
+        if (!input || !input.classList) return;
         input.classList.remove('auto-calculated', 'manual-entry', 'needs-capex', 'just-calculated');
     }
 
     addFocusIndicator(input) {
+        if (!input) return;
         const wrapper = input.closest('.input-wrapper');
         if (wrapper) {
             wrapper.style.transform = 'scale(1.02)';
@@ -186,6 +195,7 @@ class DualInputHandler {
     }
 
     removeFocusIndicator(input) {
+        if (!input) return;
         const wrapper = input.closest('.input-wrapper');
         if (wrapper) {
             wrapper.style.transform = 'scale(1)';
@@ -225,22 +235,29 @@ class DualInputHandler {
         dualInputGroups.forEach(group => {
             const percentInput = group.querySelector('.percent-input');
             const dollarInput = group.querySelector('.dollar-input');
-            const capexInput = document.getElementById(percentInput.dataset.capex);
+            
+            if (!percentInput || !dollarInput) return;
+            
+            const capexInputId = percentInput.dataset.capex;
+            const capexInput = document.getElementById(capexInputId);
             
             // Check if CAPEX is missing but values are entered
-            if ((percentInput.value || dollarInput.value) && (!capexInput.value || capexInput.value <= 0)) {
-                const fieldName = group.querySelector('.dual-input-label').textContent;
+            if ((percentInput.value || dollarInput.value) && (!capexInput || !capexInput.value || capexInput.value <= 0)) {
+                const labelElement = group.querySelector('.dual-input-label');
+                const fieldName = labelElement ? labelElement.textContent : 'Unknown field';
                 errors.push(`${fieldName}: Capital Expenditure must be entered first`);
             }
             
             // Check for negative values
             if (parseFloat(percentInput.value) < 0) {
-                const fieldName = group.querySelector('.dual-input-label').textContent;
+                const labelElement = group.querySelector('.dual-input-label');
+                const fieldName = labelElement ? labelElement.textContent : 'Unknown field';
                 errors.push(`${fieldName}: Percentage cannot be negative`);
             }
             
             if (parseFloat(dollarInput.value) < 0) {
-                const fieldName = group.querySelector('.dual-input-label').textContent;
+                const labelElement = group.querySelector('.dual-input-label');
+                const fieldName = labelElement ? labelElement.textContent : 'Unknown field';
                 errors.push(`${fieldName}: Dollar amount cannot be negative`);
             }
         });
