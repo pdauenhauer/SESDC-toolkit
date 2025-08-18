@@ -707,7 +707,11 @@ document.querySelectorAll('#loadInputButtons button').forEach(button => {
         const inputs = document.getElementById(inputsId);
 
         document.querySelectorAll('.form-group').forEach(section => {
-            section.style.display = 'none';
+            // Don't hide form groups that are inside settings content
+            const isInSettings = section.closest('#projectSettingsContent');
+            if (!isInSettings) {
+                section.style.display = 'none';
+            }
         });
 
         if (inputs) {
@@ -734,7 +738,11 @@ document.querySelectorAll('.input-buttons button').forEach(button => {
         const inputs = document.getElementById(inputsId);
         
         document.querySelectorAll('.form-group').forEach(section => {
-            section.style.display = 'none';
+        // Don't hide form groups that are inside settings content
+            const isInSettings = section.closest('#projectSettingsContent');
+            if (!isInSettings) {
+                section.style.display = 'none';
+            }
         });
 
         if (inputs) {

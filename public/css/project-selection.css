@@ -714,11 +714,6 @@ a.active {
   text-align: center;
 }
 
-#map {
-  width: 100%;
-  height: 200px;
-}
-
 #hourlyLoadInputs {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
