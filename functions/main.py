@@ -80,11 +80,9 @@ def fetch_solar_data_function(req: https_fn.Request) -> https_fn.Response:
 
         latitude = data.get('latitude')
         longitude = data.get('longitude')
-        inflation_rate = data.get('inflation')
         location_inputs = {
             "latitude": latitude,
             "longitude": longitude,
-            "inflation_rate": inflation_rate
         }
 
         using_battery = data.get('usingBattery')
@@ -170,9 +168,22 @@ def fetch_solar_data_function(req: https_fn.Request) -> https_fn.Response:
             "lifespan": wind_lifespan,
             "replacement_cost": wind_replacement
         }
-
         
-        fetch_solar_data(load_inputs, location_inputs, battery_inputs, generator_inputs, solar_inputs, wind_inputs, userId, projectId)
+        inflation = data.get('inflation', 3.0)
+        laborCost = data.get('laborCost', 0)
+        landLeasingCost = data.get('landLeasingCost', 0)
+        licensingCost = data.get('licensingCost', 0)
+        otherCapex = data.get('otherCapex', 0)
+
+        financial_inputs = {
+            "inflation": inflation,
+            "labor_cost": laborCost,
+            "land_leasing_cost": landLeasingCost,
+            "licensing_cost": licensingCost,
+            "other_capex": otherCapex
+        }
+
+        fetch_solar_data(load_inputs, location_inputs, battery_inputs, generator_inputs, solar_inputs, wind_inputs, financial_inputs, userId, projectId)
         
         return https_fn.Response(
             "Data fetched successfully",
@@ -185,7 +196,7 @@ def fetch_solar_data_function(req: https_fn.Request) -> https_fn.Response:
             status=500
         )
 
-def fetch_solar_data(load_inputs, location_inputs, battery_inputs, generator_inputs, solar_inputs, wind_inputs, userId, projectId, api_key="5gZjfefi1adVzrZPYNirDhSk24BQcDEaYyWnxPdy", year="2022", interval="30"):
+def fetch_solar_data(load_inputs, location_inputs, battery_inputs, generator_inputs, solar_inputs, wind_inputs, financial_inputs, userId, projectId, api_key="5gZjfefi1adVzrZPYNirDhSk24BQcDEaYyWnxPdy", year="2022", interval="30"):
     url = "https://developer.nrel.gov/api/nsrdb/v2/solar/nsrdb-msg-v1-0-0-download.csv"
 
     latitude = location_inputs['latitude']
@@ -259,7 +270,7 @@ def fetch_solar_data(load_inputs, location_inputs, battery_inputs, generator_inp
         else:
             print(f"Failed to upload CSV file to {cloud_storage_path}")
         
-        run_simulation(userId, projectId, location_inputs, battery_inputs, generator_inputs, solar_inputs, wind_inputs, new_df)
+        run_simulation(userId, projectId, location_inputs, battery_inputs, generator_inputs, solar_inputs, wind_inputs, financial_inputs, new_df)
     else:
         print(f"Error: {response.status_code}")
         print(response.text)

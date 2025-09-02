@@ -24,6 +24,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         const solarPanelInputs = data.solarPanelInputs || {};
         const windTurbineInputs = data.windTurbineInputs || {};
         const loadInputs = data.loadInputs || [];
+        const projectSettings = data.projectSettings || {};
+
+        const submitBtn = document.querySelector('.save-submit-btn');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Running Simulation...';
+        submitBtn.disabled = true;
 
         // /fetch_solar_data_function
         // http://127.0.0.1:5001/sesdc-function-test/us-central1/fetch_solar_data_function
@@ -42,9 +48,15 @@ document.addEventListener('DOMContentLoaded', async function() {
                 // Load parameters
                 loadInputs: loadInputs,
                 // Location parameters
-                latitude: locationInputs.latitude,
-                longitude: locationInputs.longitude,
-                inflation: locationInputs.inflation,
+                latitude: projectSettings.latitude,
+                longitude: projectSettings.longitude,
+
+                // Financial parameters
+                laborCost: projectSettings.laborCost || 0,
+                landLeasingCost: projectSettings.landLeasingCost || 0,
+                licensingCost: projectSettings.licensingCost || 0,
+                otherCapex: projectSettings.otherCapitalCosts || 0,
+                inflation: projectSettings.inflation || 3.0,
                     
                 // Battery parameters
                 usingBattery: batteryInputs.usingBattery || false,
@@ -147,6 +159,7 @@ document.getElementById('addProjectForm').addEventListener('submit', async (even
         projectOwner: userId,
         projectEditors: [],
         projectViewers: [],
+        simulationRan: false,
     };
 
     await setDoc(newProjectRef, newProject);
@@ -366,7 +379,7 @@ async function deleteFolder(folderRef) {
     }
 }
 
-function openInputsModal(projectId) {
+async function openInputsModal(projectId) {
     const modal = document.getElementById('inputsModal');
     modal.setAttribute('data-project-id', projectId);
     modal.classList.add('active');
@@ -374,6 +387,27 @@ function openInputsModal(projectId) {
     // Load project settings from Firebase when modal opens
     if (window.projectSettings) {
         window.projectSettings.setProjectId(projectId).catch(console.error);
+    }
+
+    try {
+        const userId = localStorage.getItem('loggedInUserId');
+        const projectRef = doc(db, 'users', userId, 'projects', projectId);
+        const projectDoc = await getDoc(projectRef);
+
+        if (projectDoc.exists()) {
+            const projectData = projectDoc.data();
+            const redirectButton = document.querySelector('.redirect-btn');
+
+            if (projectData.simulationRan === true) {
+                redirectButton.style.display = 'block';
+            } else {
+                redirectButton.style.display = 'none';
+            }
+        }
+    } catch (error) {
+        console.error('Error checking simulation status:', error);
+        const redirectButton = document.querySelector('.redirect-btn');
+        redirectButton.style.display = 'none';
     }
 }
 
@@ -385,7 +419,7 @@ function closeInputsModal() {
 function attachSimulationListeners() {
     const simulationButtons = document.querySelectorAll('.simulation');
     simulationButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', async function() {
             const projectCard = this.closest('.project-card');
             const projectId = projectCard.getAttribute('data-project-id');
             openInputsModal(projectId);
@@ -780,12 +814,6 @@ document.getElementById('save-manual-inputs').addEventListener('click', async (e
         };
     }
 
-    const locationInputs = {
-        latitude: projectSettings.currentSettings.latitude,
-        longitude: projectSettings.currentSettings.longitude,
-        inflation: projectSettings.currentSettings.inflation || 3.0
-    };
-
     // Battery inputs - corrected for dual-input system
     const batteryInputs = {
         usingBattery: document.getElementById('using-battery')?.checked || false,
@@ -864,7 +892,6 @@ document.getElementById('save-manual-inputs').addEventListener('click', async (e
     try {
         const projectRef = doc(db, 'users', userId, 'projects', projectId);
         await updateDoc(projectRef, {
-            locationInputs,
             batteryInputs,
             generatorInputs,
             solarPanelInputs,
