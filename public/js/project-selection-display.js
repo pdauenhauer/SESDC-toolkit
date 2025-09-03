@@ -111,6 +111,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         await updateDoc(projectRef, {
             simulationRan: true
         });
+
+        submitBtn.textContent = originalText;
     });
     
     document.getElementById('closeInputsModal').addEventListener('click', () => {
