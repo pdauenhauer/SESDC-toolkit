@@ -303,3 +303,36 @@ def plot20year(days, load_serviced, userId, projectId):
     blob.upload_from_file(plot_stream, content_type='image/png')
     print(f"Net energy plot saved successfully to {blob_path}")
     return blob_path  # Return the path to the saved plot 
+
+def plot_20yr_financials(years, battery, generator, solar, wind, userId, projectId):
+    """
+    Plot the financial expenses over 20 years for each technology.
+    """
+    width = 0.7
+    fig, ax = plt.subplots(figsize=(14, 7))
+
+    p1 = ax.bar(years, battery, width, label='Battery', color='blue')
+    p2 = ax.bar(years, generator, width, bottom=battery, label='Generator', color='orange')
+    p3 = ax.bar(years, solar, width, bottom=battery + generator, label='Solar', color='green')
+    p4 = ax.bar(years, wind, width, bottom=battery + generator + solar, label='Wind', color='red')
+
+    total_yearly = battery + generator + solar + wind
+    cumulative = np.cumsum(total_yearly)
+    ax.plot(years, cumulative, color='black', label='Cumulative Total', linewidth=2)
+
+    ax.set_xlabel('Year')
+    ax.set_ylabel('Yearly Expenses ($)')
+    ax.set_title('Yearly and Cumulative Financial Expenses (20 Years)')
+    ax.legend(loc='upper left')
+    plt.tight_layout()
+
+    plot_stream = io.BytesIO()
+    plt.savefig(plot_stream, format='png')
+    plt.close()
+    plot_stream.seek(0)
+
+    blob_path = f"{userId}/{projectId}/financial_expenses.png"
+    blob = bucket.blob(blob_path)
+    blob.upload_from_file(plot_stream, content_type='image/png')
+    print(f"20 year financial expenses plot saved successfully to {blob_path}")
+    return blob_path  # Return the path to the saved plot

@@ -20,7 +20,8 @@ from calculations import (
     calculate_hourly_wind_energy, calculate_power_output, 
     calculate_hourly_diesel_energy, diesel_losses,
     calc_daily_load_serviced, calc_load_not_serviced, calc_daily_energy,
-    predict20years
+    predict20years,
+    calculate_20_year_expenses
 )
 from graph import (
     generate_power_graph, 
@@ -31,7 +32,8 @@ from graph import (
     plot_generic, 
     plot_net_energy, 
     plot_battery_soc, 
-    plot20year
+    plot20year,
+    plot_20yr_financials
 )
 
 import pandas as pd
@@ -445,7 +447,41 @@ def run_simulation(userId, projectId, location_inputs, battery_inputs, generator
 
     load_serviced_20years_path = plot20year(daily20years, load_serviced20, userId, projectId)
     
+    years = np.arange(20)
+    battery_expenses = calculate_20_year_expenses(
+        financial_inputs['inflation'],
+        battery_inputs['capex'],
+        battery_inputs['opex'],
+        battery_inputs['replacement_cost'],
+        battery_inputs['lifespan']
+    )
+
+    generator_expenses = calculate_20_year_expenses(
+        financial_inputs['inflation'],
+        generator_inputs['capex'],
+        generator_inputs['opex'],
+        generator_inputs['replacement_cost'],
+        generator_inputs['lifespan']
+    )
     
+    solar_expenses = calculate_20_year_expenses(
+        financial_inputs['inflation'],
+        solar_inputs['capex'],
+        solar_inputs['opex'],
+        solar_inputs['replacement_cost'],
+        solar_inputs['lifespan']
+    )
+    
+    wind_expenses = calculate_20_year_expenses(
+        financial_inputs['inflation'],
+        wind_inputs['capex'],
+        wind_inputs['opex'],
+        wind_inputs['replacement_cost'],
+        wind_inputs['lifespan']
+    )
+    
+    financial_expenses_plot_path = plot_20yr_financials(years, battery_expenses, generator_expenses, solar_expenses, wind_expenses, userId, projectId)
+
     return {
         "message": "Graph generated!",
         "solar_plot_url": solar_plot_path,
@@ -455,5 +491,6 @@ def run_simulation(userId, projectId, location_inputs, battery_inputs, generator
         "diesel_plot_url": diesel_plot_path,
         "net_plot_url": net_bat_plot_path,
         #"net_kw_url": net_kw_path,
-        "load_serviced_20years_url": load_serviced_20years_path
+        "load_serviced_20years_url": load_serviced_20years_path,
+        "financial_expenses_plot_url": financial_expenses_plot_path
     }

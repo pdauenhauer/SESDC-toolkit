@@ -245,3 +245,16 @@ def predict20years(load):
 
     return load20
 
+def calculate_20_year_expenses(inflation_rate, capex, opex, replacement_cost, lifespan, years=20):
+    """
+    Calculate the total expenses over 20 years considering inflation.
+    """
+    expenses = np.zeros(years)
+    expenses[0] = capex  # Initial investment at year 0
+    for year in range(years):
+        expenses[year] += opex  # OPEX every year
+        # Add replacement cost at the correct years (not year 0)
+        if lifespan and year > 0 and year % lifespan == 0:
+            inflated_replacement = replacement_cost * ((1 + inflation_rate) ** year)
+            expenses[year] += inflated_replacement
+    return expenses
