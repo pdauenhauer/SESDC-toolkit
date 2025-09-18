@@ -12,6 +12,7 @@ class ProjectSettings {
             landLeasingCost: 1000.00,
             licensingCost: 5000.00,
             otherCapitalCosts: 10000.00,
+            energyPrice: 0.15,
             latitude: null,
             longitude: null,
         };
@@ -101,6 +102,7 @@ class ProjectSettings {
             'licensing-cost': this.currentSettings.licensingCost,
             'other-capital-costs': this.currentSettings.otherCapitalCosts,
             'labor-cost': this.currentSettings.laborCost,
+            'energy-price': this.currentSettings.energyPrice,
             'settings-location-latitude': this.currentSettings.latitude,
             'settings-location-longitude': this.currentSettings.longitude
         };
@@ -130,6 +132,7 @@ class ProjectSettings {
                 licensingCost: parseFloat(document.getElementById('licensing-cost')?.value) || this.defaultSettings.licensingCost,
                 otherCapitalCosts: parseFloat(document.getElementById('other-capital-costs')?.value) || this.defaultSettings.otherCapitalCosts,
                 laborCost: parseFloat(document.getElementById('labor-cost')?.value) || this.defaultSettings.laborCost,
+                energyPrice: parseFloat(document.getElementById('energy-price')?.value) || this.defaultSettings.energyPrice,
                 latitude: parseFloat(document.getElementById('settings-location-latitude')?.value) || null,
                 longitude: parseFloat(document.getElementById('settings-location-longitude')?.value) || null,
             };
@@ -296,7 +299,7 @@ class ProjectSettings {
         const numericInputs = [
             'project-inflation-rate', 'land-leasing-cost',
             'licensing-cost', 'other-capital-costs',
-            'labor-cost'
+            'labor-cost', 'energy-price'
         ];
 
         numericInputs.forEach(inputId => {

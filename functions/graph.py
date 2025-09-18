@@ -336,3 +336,28 @@ def plot_20yr_financials(years, battery, generator, solar, wind, userId, project
     blob.upload_from_file(plot_stream, content_type='image/png')
     print(f"20 year financial expenses plot saved successfully to {blob_path}")
     return blob_path  # Return the path to the saved plot
+
+def plot_annual_revenue(years, revenue, userId, projectId):
+    """
+    Plot the annual revenue over 20 years.
+    """
+    plt.figure(figsize=(12, 6))
+    plt.bar(years, revenue, color='green', label='Annual Revenue')
+    cumulative = np.cumsum(revenue)
+    plt.plot(years, cumulative, color='black', label='Cumulative Revenue', linewidth=2)
+    plt.title('Annual Revenue (20 Years)')
+    plt.xlabel('Year')
+    plt.ylabel('Revenue ($)')
+    plt.legend()
+    plt.grid(True)
+    
+    plot_stream = io.BytesIO()
+    plt.savefig(plot_stream, format='png')
+    plt.close()
+    plot_stream.seek(0)
+
+    blob_path = f"{userId}/{projectId}/annual_revenue.png"
+    blob = bucket.blob(blob_path)
+    blob.upload_from_file(plot_stream, content_type='image/png')
+    print(f"Annual revenue plot saved successfully to {blob_path}")
+    return blob_path

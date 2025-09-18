@@ -57,6 +57,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 licensingCost: projectSettings.licensingCost || 0,
                 otherCapex: projectSettings.otherCapitalCosts || 0,
                 inflation: projectSettings.inflation || 3.0,
+                energyPrice: projectSettings.energyPrice || 0.15,
                     
                 // Battery parameters
                 usingBattery: batteryInputs.usingBattery || false,

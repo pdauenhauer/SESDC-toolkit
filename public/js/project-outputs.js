@@ -32,7 +32,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 	    'battery_plot.png',
 	    'net_battery_plot.png',
         'load_serviced_plot.png',
-        'financial_expenses.png'
+        'financial_expenses.png',
+        'annual_revenue.png'
     ]
 
     const plotsContainer = document.getElementById('plotsContainer');

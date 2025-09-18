@@ -258,3 +258,27 @@ def calculate_20_year_expenses(inflation_rate, capex, opex, replacement_cost, li
             inflated_replacement = replacement_cost * ((1 + inflation_rate) ** year)
             expenses[year] += inflated_replacement
     return expenses
+
+# Revenue Calculation Helper Functions
+def compute_annual_energy(daily_values):
+    return float(np.sum(daily_values) * 24.0)
+
+def normalize_inflation(inflation_raw):
+    """
+    Normalize the inflation rate to a decimal value.
+    """
+    value = float(inflation_raw)
+    return value / 100.0 if value > 1 else value
+
+def compute_20_year_revenue(daily_load_serviced, price_per_kwh, inflation, years=20):
+    """
+    Calculate the 20 year revenue for a given daily load serviced, price per kWh, and inflation rate.
+    """
+    
+    annual_energy = compute_annual_energy(daily_load_serviced)
+    price = float(price_per_kwh)
+    base_revenue = annual_energy * price
+    inflation_rate = normalize_inflation(inflation)
+    revenue_yearly = [base_revenue * ((1 + inflation_rate) ** year) for year in range(years)]
+    return revenue_yearly
+    

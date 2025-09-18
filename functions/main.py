@@ -21,7 +21,8 @@ from calculations import (
     calculate_hourly_diesel_energy, diesel_losses,
     calc_daily_load_serviced, calc_load_not_serviced, calc_daily_energy,
     predict20years,
-    calculate_20_year_expenses
+    calculate_20_year_expenses,
+    compute_20_year_revenue
 )
 from graph import (
     generate_power_graph, 
@@ -33,7 +34,8 @@ from graph import (
     plot_net_energy, 
     plot_battery_soc, 
     plot20year,
-    plot_20yr_financials
+    plot_20yr_financials,
+    plot_annual_revenue
 )
 
 import pandas as pd
@@ -176,13 +178,15 @@ def fetch_solar_data_function(req: https_fn.Request) -> https_fn.Response:
         landLeasingCost = data.get('landLeasingCost', 0)
         licensingCost = data.get('licensingCost', 0)
         otherCapex = data.get('otherCapex', 0)
+        energyPrice = data.get('energyPrice', 0.15)
 
         financial_inputs = {
             "inflation": inflation,
             "labor_cost": laborCost,
             "land_leasing_cost": landLeasingCost,
             "licensing_cost": licensingCost,
-            "other_capex": otherCapex
+            "other_capex": otherCapex,
+            "energy_price": energyPrice
         }
 
         fetch_solar_data(load_inputs, location_inputs, battery_inputs, generator_inputs, solar_inputs, wind_inputs, financial_inputs, userId, projectId)
@@ -437,7 +441,7 @@ def run_simulation(userId, projectId, location_inputs, battery_inputs, generator
 
     '''
 
-
+    years = np.arange(20)
 
     daily_load_serviced = np.asarray(load_profile_daily) - np.asarray(loadNotServiced_daily)
     
@@ -446,8 +450,10 @@ def run_simulation(userId, projectId, location_inputs, battery_inputs, generator
     load_serviced20 = predict20years(daily_load_serviced)
 
     load_serviced_20years_path = plot20year(daily20years, load_serviced20, userId, projectId)
+
+    annual_revenue = compute_20_year_revenue(daily_load_serviced, financial_inputs['energy_price'], financial_inputs['inflation'], years=20)
+    annual_revenue_path = plot_annual_revenue(years, annual_revenue, userId, projectId)
     
-    years = np.arange(20)
     battery_expenses = calculate_20_year_expenses(
         financial_inputs['inflation'],
         battery_inputs['capex'],
@@ -492,5 +498,6 @@ def run_simulation(userId, projectId, location_inputs, battery_inputs, generator
         "net_plot_url": net_bat_plot_path,
         #"net_kw_url": net_kw_path,
         "load_serviced_20years_url": load_serviced_20years_path,
-        "financial_expenses_plot_url": financial_expenses_plot_path
+        "financial_expenses_plot_url": financial_expenses_plot_path,
+        "annual_revenue_plot_url": annual_revenue_path
     }
