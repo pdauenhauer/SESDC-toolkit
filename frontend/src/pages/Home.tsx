@@ -1,7 +1,9 @@
 function Home() {
     return (
-        <h1>placeholder for now</h1>
+        <>
+            <h1>placeholder for home page</h1>
+        </>
     )
 }
 
-export default Home
+export default Home;
