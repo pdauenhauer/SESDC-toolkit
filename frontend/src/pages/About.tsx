@@ -13,7 +13,6 @@ function About() {
             {/* About Container */}
             <div class="about-container">
                 <h2 class="about-heading">About</h2>
-
                 <section class="about-section">
                 <img src={logo} alt="Section 1" class="about-img" />
                 <div class="about-text">

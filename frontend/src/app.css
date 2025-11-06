@@ -71,60 +71,52 @@ nav {
     display: flex;
     align-items: center;
 }
-  
+
 .nav-logo {
     height: 50px;
     width: auto;
     margin-right: 10px;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
-  
+
 .logo-nav {
-color: var(--white-main);
-font-size: 24px;
-font-weight: bold;
-line-height: 80px; 
+    color: var(--white-main);
+    font-size: 24px;
+    font-weight: bold;
+    line-height: 80px;
 }
 
 .nav-links {
     list-style: none;
     display: flex;
     gap: 20px;
-}
-  
-.nav-links a {
-    text-decoration: none;
-    color: #333;
-}
-
-nav ul {
     float: right;
     margin-right: 20px;
 }
-    
-nav ul li {
+
+.nav-links li {
     display: inline-block;
     line-height: 80px;
     margin: 0 5px;
 }
-    
-nav ul li a {
+
+.nav-links a {
     color: var(--white-main);
     font-size: 17px;
     text-decoration: none;
     padding: 7px 13px;
     border-radius: 3px;
-}
-    
-nav ul li a:hover {
-    background: var(--selection-green);
     transition: .5s;
 }
-    
-a.active {
+
+.nav-links a:hover {
     background: var(--selection-green);
 }
-    
+
+.nav-links a.active {
+    background: var(--selection-green);
+}
+
 .check-btn {
     font-size: 30px;
     color: var(--white-main);
@@ -134,9 +126,33 @@ a.active {
     cursor: pointer;
     display: none;
 }
-    
+
 #check {
     display: none;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .check-btn {
+        display: block;
+    }
+    
+    .nav-links {
+        position: fixed;
+        width: 100%;
+        height: 100vh;
+        background: var(--gradient-bg);
+        top: 80px;
+        left: -100%;
+        text-align: center;
+        transition: all .5s;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    #check:checked ~ .nav-links {
+        left: 0;
+    }
 }
     
 .about-section {
