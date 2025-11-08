@@ -1,4 +1,4 @@
-import './app.css'
+/*import './app.css'
 import { LocationProvider, ErrorBoundary, Router, Route } from 'preact-iso'
 import About from './pages/About'
 import Home from './pages/Home'
@@ -22,4 +22,26 @@ export function App() {
       </ErrorBoundary>
     </LocationProvider>
   )
+}*/
+
+import './app.css';
+import { LocationProvider, ErrorBoundary, Router, Route } from 'preact-iso';
+import About from './pages/Login';
+import Contact from './pages/Login';
+import Login from './pages/Account';
+import Account from './pages/Account';
+
+export function App() {
+  return (
+    <LocationProvider>
+      <ErrorBoundary onError={(e) => alert(e)}>
+        <Router>
+          {/* show About at /about */}
+          <Route path="/Account" component={Account} />
+          {/* if you also want it at /, add this: */}
+          <Route path="/" component={Account} />
+        </Router>
+      </ErrorBoundary>
+    </LocationProvider>
+  );
 }
