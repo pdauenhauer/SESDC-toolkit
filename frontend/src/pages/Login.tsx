@@ -35,19 +35,7 @@ export default function Login() {
   return (
     <>
       {/* navbar */}
-      <nav>
-        <input type="checkbox" id="check" />
-        <label htmlFor="check" class="check-btn">
-          <i class="bx bx-menu"></i>
-        </label>
-
-        <div class="nav-left">
-          <img src="/media/Logo-white.svg" alt="Logo" class="nav-logo" />
-          <label class="logo-nav">Microgrid Toolkit</label>
-        </div>
-
-        <ul id="SESDCHeader">{/* add links or replace with <Navbar /> */}</ul>
-      </nav>
+      <SESDCHeader />
 
       <main>
         <div class="logo-container">
@@ -131,41 +119,8 @@ export default function Login() {
         </div>
       </main>
 
-      <footer class="SESDCFooter">
-        <div class="social-icons">
-          <a
-            href="https://www.facebook.com/KilowattsforHumanity/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <i class="bx bxl-facebook"></i>
-          </a>
-          <a
-            href="https://www.instagram.com/kilowattsforhumanity/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <i class="bx bxl-instagram"></i>
-          </a>
-          <a
-            href="https://www.linkedin.com/company/kilowatts-for-humanity/posts/?feedView=all"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <i class="bx bxl-linkedin"></i>
-          </a>
-          <a
-            href="https://github.com/pdauenhauer/SESDC-toolkit"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <i class="bx bxl-github"></i>
-          </a>
-        </div>
-        <div class="footer-bottom">
-          <p>&copy; 2025 SESDC. All rights reserved</p>
-        </div>
-      </footer>
+      <SESDCFooter />
+
     </>
   );
 }
