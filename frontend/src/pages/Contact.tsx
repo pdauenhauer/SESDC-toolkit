@@ -14,7 +14,7 @@ function Contact() {
           <label class="logo-nav">Microgrid Toolkit</label>
         </div>
 
-        <ul id="navbar">
+        <ul id="SESDCHeader">
           {/* if your old navbar.js populated this, you can hardcode links here later */}
         </ul>
       </nav>
@@ -69,7 +69,7 @@ function Contact() {
         </div>
       </main>
 
-      <footer class="footer">
+      <footer class="SESDCFooter">
         <div class="social-icons">
           <a
             href="https://www.facebook.com/KilowattsforHumanity/"

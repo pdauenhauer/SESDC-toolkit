@@ -46,7 +46,7 @@ export default function Login() {
           <label class="logo-nav">Microgrid Toolkit</label>
         </div>
 
-        <ul id="navbar">{/* add links or replace with <Navbar /> */}</ul>
+        <ul id="SESDCHeader">{/* add links or replace with <Navbar /> */}</ul>
       </nav>
 
       <main>
@@ -131,7 +131,7 @@ export default function Login() {
         </div>
       </main>
 
-      <footer class="footer">
+      <footer class="SESDCFooter">
         <div class="social-icons">
           <a
             href="https://www.facebook.com/KilowattsforHumanity/"

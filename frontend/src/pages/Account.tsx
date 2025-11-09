@@ -55,7 +55,7 @@ export default function Account() {
           <label class="logo-nav">Microgrid Toolkit</label>
         </div>
 
-        <ul id="navbar">{/* add links or reuse Navbar component here */}</ul>
+        <ul id="SESDCHeader">{/* add links or reuse Navbar component here */}</ul>
       </nav>
 
       <div class="main-content">
@@ -164,7 +164,7 @@ export default function Account() {
         </div>
       </div>
 
-      <footer class="footer">
+      <footer class="SESDCFooter">
         <div class="social-icons">
           <a
             href="https://www.facebook.com/KilowattsforHumanity/"
