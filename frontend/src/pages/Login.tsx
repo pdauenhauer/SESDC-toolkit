@@ -1,4 +1,7 @@
 // src/pages/Login.tsx
+import SESDCHeader from '../components/SESDCHeader';
+import SESDCFooter from '../components/SESDCFooter';
+
 import { useState } from 'preact/hooks';
 import '../css/new-login.css';
 

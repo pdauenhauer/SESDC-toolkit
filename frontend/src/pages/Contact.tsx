@@ -1,4 +1,6 @@
 import SESDCHeader from '../components/SESDCHeader';
+import SESDCFooter from '../components/SESDCFooter';
+
 import '../css/contact.css'; // adjust path to where your css actually is
 
 function Contact() {
