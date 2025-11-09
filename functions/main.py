@@ -41,8 +41,6 @@ from graph import (
 import pandas as pd
 import numpy as np
 
-bucket = get_storage_bucket()
-
 cors_settings = options.CorsOptions(
     cors_origins=["*"],
     cors_methods=["POST", "OPTIONS"],
