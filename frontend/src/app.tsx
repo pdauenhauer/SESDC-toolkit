@@ -13,7 +13,7 @@ export function App() {
     <LocationProvider>
       <ErrorBoundary onError={e => alert(e)}> 
         <Router>
-          <Route path="/" component={Home}/>
+          <Route path="/" component={Login}/>
           <Route path="/about" component={About}/>
           <Route path="/contact" component={Contact}/>
           <Route path="/account" component={Account}/>
@@ -24,3 +24,4 @@ export function App() {
     </LocationProvider>
   )
 }
+
