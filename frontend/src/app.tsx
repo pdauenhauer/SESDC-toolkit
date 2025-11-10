@@ -1,4 +1,5 @@
 import './app.css'
+import './guide.css'
 import { LocationProvider, ErrorBoundary, Router, Route } from 'preact-iso'
 import About from './pages/About'
 import Home from './pages/Home'
