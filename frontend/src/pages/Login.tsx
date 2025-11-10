@@ -1,6 +1,7 @@
 // src/pages/Login.tsx
 import SESDCHeader from '../components/SESDCHeader';
 import SESDCFooter from '../components/SESDCFooter';
+import logo from '../media/Logo.svg'
 
 import { useState } from 'preact/hooks';
 import '../css/new-login.css';
@@ -42,7 +43,7 @@ export default function Login() {
 
       <main>
         <div class="logo-container">
-          <img src="/media/Logo.svg" alt="Logo" class="logo" />
+          <img src={logo} alt="Logo" class="logo" />
         </div>
 
         <div class="wrapper">
