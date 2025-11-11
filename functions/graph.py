@@ -7,8 +7,6 @@ import os
 import io
 from firebase_storage_setup import get_storage_bucket
 
-bucket = get_storage_bucket()
-
 # Graph Solar Power
 def generate_power_graph(time_points, solar_power, userId, projectId, xlabel):
     """
@@ -33,7 +31,7 @@ def generate_power_graph(time_points, solar_power, userId, projectId, xlabel):
     plot_stream.seek(0)
 
     blob_path = f"{userId}/{projectId}/solar_plot.png"
-    blob = bucket.blob(blob_path)
+    blob = get_storage_bucket().blob(blob_path)
     blob.upload_from_file(plot_stream, content_type='image/png')
     print(f"Solar plot saved successfully to {blob_path}")
     return blob_path  # Return the path to the saved plot
@@ -60,7 +58,7 @@ def generate_financial_graph(time_points, financial_data, userId, projectId):
     plot_stream.seek(0)
 
     blob_path = f"{userId}/{projectId}/financial_plot.png"
-    blob = bucket.blob(blob_path)
+    blob = get_storage_bucket().blob(blob_path)
     blob.upload_from_file(plot_stream, content_type='image/png')
 
     return blob_path  # Return the path to the saved plot
@@ -90,7 +88,7 @@ def generate_solar_heatmap(solar_power, userId, projectId):
     plot_stream.seek(0)
 
     blob_path = f"{userId}/{projectId}/solar_heatmap.png"
-    blob = bucket.blob(blob_path)
+    blob = get_storage_bucket().blob(blob_path)
     blob.upload_from_file(plot_stream, content_type='image/png')
     print(f"Solar heatmap saved successfully to {blob_path}")
     return blob_path
@@ -138,7 +136,7 @@ def generate_monthly_heatmap(solar_power, userId, projectId):
     plot_stream.seek(0)
 
     blob_path = f"{userId}/{projectId}/solar_monthly_heatmap.png"
-    blob = bucket.blob(blob_path)
+    blob = get_storage_bucket().blob(blob_path)
     blob.upload_from_file(plot_stream, content_type='image/png')
     print(f"Monthly heatmap saved successfully to {blob_path}")
     return blob_path
@@ -165,7 +163,7 @@ def plot_load_profile(time_points, load_profile, userId, projectId, xlabel):
     plot_stream.seek(0)
 
     blob_path = f"{userId}/{projectId}/load_plot.png"
-    blob = bucket.blob(blob_path)
+    blob = get_storage_bucket().blob(blob_path)
     blob.upload_from_file(plot_stream, content_type='image/png')
     print(f"Load plot saved successfully to {blob_path}")
     return blob_path  # Return the path to the saved plot
@@ -192,7 +190,7 @@ def plot_wind_energy(time_points, hourly_wind_energy, userId, projectId, xlabel)
     plot_stream.seek(0)
 
     blob_path = f"{userId}/{projectId}/wind_plot.png"
-    blob = bucket.blob(blob_path)
+    blob = get_storage_bucket().blob(blob_path)
     blob.upload_from_file(plot_stream, content_type='image/png')
     print(f"Wind plot saved successfully to {blob_path}")
     return blob_path  # Return the path to the saved plot
@@ -221,7 +219,7 @@ def plot_generic(time_points, energy, label, title, filename, userId, projectId)
     plot_stream.seek(0)
 
     blob_path = f"{userId}/{projectId}/{filename}_plot.png"
-    blob = bucket.blob(blob_path)
+    blob = get_storage_bucket().blob(blob_path)
     blob.upload_from_file(plot_stream, content_type='image/png')
     print(f"{filename} plot saved successfully to {blob_path}")
     return blob_path  # Return the path to the saved plot
@@ -253,7 +251,7 @@ def plot_net_energy(time_points, net_energy, load, solar, wind, diesel, title, f
     plot_stream.seek(0)
 
     blob_path = f"{userId}/{projectId}/{filename}_plot.png"
-    blob = bucket.blob(blob_path)
+    blob = get_storage_bucket().blob(blob_path)
     blob.upload_from_file(plot_stream, content_type='image/png')
     print(f"Net energy plot saved successfully to {blob_path}")
     return blob_path  # Return the path to the saved plot
@@ -277,7 +275,7 @@ def plot_battery_soc(time_points, battpower, userId, projectId, load, load_not_s
     plot_stream.seek(0)
 
     blob_path = f"{userId}/{projectId}/battery_plot.png"
-    blob = bucket.blob(blob_path)
+    blob = get_storage_bucket().blob(blob_path)
     blob.upload_from_file(plot_stream, content_type='image/png')
     print(f"Net energy plot saved successfully to {blob_path}")
     return blob_path  # Return the path to the saved plot
@@ -299,7 +297,7 @@ def plot20year(days, load_serviced, userId, projectId):
     plot_stream.seek(0)
 
     blob_path = f"{userId}/{projectId}/load_serviced_plot.png"
-    blob = bucket.blob(blob_path)
+    blob = get_storage_bucket().blob(blob_path)
     blob.upload_from_file(plot_stream, content_type='image/png')
     print(f"Net energy plot saved successfully to {blob_path}")
     return blob_path  # Return the path to the saved plot 
@@ -332,7 +330,7 @@ def plot_20yr_financials(years, battery, generator, solar, wind, userId, project
     plot_stream.seek(0)
 
     blob_path = f"{userId}/{projectId}/financial_expenses.png"
-    blob = bucket.blob(blob_path)
+    blob = get_storage_bucket().blob(blob_path)
     blob.upload_from_file(plot_stream, content_type='image/png')
     print(f"20 year financial expenses plot saved successfully to {blob_path}")
     return blob_path  # Return the path to the saved plot
@@ -357,7 +355,7 @@ def plot_annual_revenue(years, revenue, userId, projectId):
     plot_stream.seek(0)
 
     blob_path = f"{userId}/{projectId}/annual_revenue.png"
-    blob = bucket.blob(blob_path)
+    blob = get_storage_bucket().blob(blob_path)
     blob.upload_from_file(plot_stream, content_type='image/png')
     print(f"Annual revenue plot saved successfully to {blob_path}")
     return blob_path

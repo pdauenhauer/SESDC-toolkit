@@ -1,0 +1,382 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+    --black: #0A090C;
+    --green-start: #046153;
+    --blue-end: #409492;
+    --green-main: #037F6F;
+    --subheading: #4a5568;
+    --selection-green: #05B39C;
+    --yellow-accent: #EDD16E;
+    --orange-accent: #FFA947;
+    --white-main: #F7F9F1;
+    --gradient-bg: linear-gradient(135deg, var(--green-start), var(--green-main), var(--blue-end));
+    --gradient-yo: linear-gradient(var(--yellow-accent), var(--orange-accent))
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    text-decoration: none;
+    list-style: none;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+
+.logo-container {
+    padding-top: 100px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.logo {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.main-title {
+    font-size: 48px;
+    color: var(--green-main);
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+/* UPDATED - body & html flex container for layout */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--white-main);
+}
+
+body {
+    min-height: 100vh; /* keep this in case you want it */
+}
+
+/* UPDATED - main content wrapper flex-grow so footer sticks at bottom */
+.content-wrapper {
+    flex-grow: 1;
+    width: 100%;
+    max-width: 550px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    padding-top: 0;
+}
+
+/* navbar */
+nav {
+    background: var(--gradient-bg);
+    height: 80px;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+}
+
+.nav-logo {
+    height: 50px;
+    width: auto;
+    margin-right: 10px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.logo-nav {
+color: var(--white-main);
+font-size: 24px;
+font-weight: bold;
+line-height: 80px;
+}
+
+label.logo-nav {
+    color: var(--white-main);
+    font-size: 35px;
+    line-height: 80px;
+    padding: 0 100px;
+    font-weight: bold;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #333;
+}
+
+nav ul {
+    float: right;
+    margin-right: 20px;
+}
+
+nav ul li {
+    display: inline-block;
+    line-height: 80px;
+    margin: 0 5px;
+}
+
+nav ul li a {
+    color: var(--white-main);
+    font-size: 17px;
+    text-decoration: none;
+    padding: 7px 13px;
+    border-radius: 3px;
+}
+
+nav ul li a:hover {
+    background: var(--selection-green);
+    transition: .5s;
+}
+
+a.active {
+    background: var(--selection-green);
+}
+
+.check-btn {
+    font-size: 30px;
+    color: var(--white-main);
+    float: right;
+    line-height: 80px;
+    margin-right: 40px;
+    cursor: pointer;
+    display: none;
+}
+
+#check {
+    display: none;
+}
+
+@media (max-width: 952px) {
+    label.logo-nav {
+      font-size: 30px;
+      padding-left: 50px;
+    }
+
+    nav ul li a {
+      font-size: 16px;
+    }
+}
+
+@media (max-width: 858px) {
+    .check-btn {
+      display: block;
+    }
+
+    ul {
+      position: fixed;
+      width: 100%;
+      height: 100vh;
+      background: var(--gradient-bg);
+      top: 80px;
+      left: -100%;
+      text-align: center;
+      transition: all .5s;
+    }
+
+    nav ul li {
+      display: block;
+      margin: 50px 0;
+      line-height: 30px;
+    }
+
+    nav ul li a {
+      font-size: 20px;
+    }
+
+    a.active {
+      background: none;
+      color: white;
+    }
+
+    #check:checked ~ ul {
+      left: 0;
+    }
+}
+
+
+.about-section {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin: 4rem auto;
+    max-width: 1000px;
+    padding: 0 1rem;
+}
+
+.about-section:nth-child(even) {
+    flex-direction: row-reverse;
+}
+
+.about-img {
+    flex: 1;
+    max-width: 400px;
+    height: 300px;
+    object-fit: cover;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.about-text {
+    flex: 2;
+    font-size: 1rem;
+    color: var(--green-start);
+    line-height: 1.6;
+}
+
+/* Removed this because your main container is content-wrapper now */
+/*
+.about-container {
+    padding-top: 100px;
+}
+*/
+
+h2.about-heading {
+    text-align: center;
+    font-size: 2.5rem;
+    color: var(--green-main);
+    margin-bottom: 2rem;
+}
+
+/* UPDATED - footer fixed bottom space fix */
+.footer {
+    flex-shrink: 0;
+    background-color: var(--green-start);
+    color: var(--white-main);
+    text-align: center;
+    padding: 1rem 0;
+    width: 100%;
+    margin: 0;
+}
+
+.footer .social-icons {
+    margin-bottom: 10px;
+}
+
+.footer .social-icons a {
+    color: #fff;
+    font-size: 1.5rem;
+    margin: 0 10px;
+    display: inline-block;
+    transition: color 0.3s ease;
+}
+
+.footer .social-icons a:hover {
+    color: var(--selection-green);
+}
+
+.footer .footer-links {
+    margin-bottom: 10px;
+}
+
+.footer .footer-links a {
+    color: #fff;
+    margin: 0 10px;
+    text-decoration: none;
+    font-size: 1rem;
+}
+
+.footer .footer-links a:hover {
+    text-decoration: underline;
+}
+
+.footer-bottom {
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+/* css for contact form on contact page*/
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background-color: var(--green-main);
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin: 2rem auto;
+
+    width: 100%;
+    max-width: 600px;
+  }
+
+  .contact-form label {
+    font-size: 1rem;
+    color: var(--white-main);
+    text-align: left;
+    margin-bottom: 0.3rem;
+  }
+
+  .contact-form input,
+  .contact-form textarea {
+    padding: 0.75rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    background-color: var(--white-main);
+    color: var(--black);
+  }
+
+  .contact-form input:focus,
+  .contact-form textarea:focus {
+    outline: 2px solid var(--selection-green);
+  }
+
+  .contact-submit-btn {
+    background-color: var(--selection-green);
+    color: var(--white-main);
+    border: none;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 1rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: background-color 0.3s ease;
+  }
+
+  .contact-submit-btn:hover {
+    background-color: var(--orange-accent);
+  }
+
+
+  .contact-title {
+    font-size: 2.5rem;
+    color: var(--green-main);
+    margin-bottom: 1rem;
+  }
+
+  .contact-container {
+    text-align: center;
+    color: var(--green-start);
+    margin: 3rem auto 0.5rem auto; /* reduced top margin from 6rem to 3rem */
+    max-width: 550px;
+    width: 100%;
+    padding: 0 1rem;
+    padding-top: 80px;
+  }
+
+  .page-container {
+    width: 100%;
+    max-width: 550px;
+    margin: 0 auto;
+  }

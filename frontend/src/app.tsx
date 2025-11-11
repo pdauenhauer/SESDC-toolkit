@@ -1,4 +1,3 @@
-import './app.css'
 import { LocationProvider, ErrorBoundary, Router, Route } from 'preact-iso'
 import About from './pages/About'
 import Home from './pages/Home'
@@ -6,6 +5,7 @@ import Contact from './pages/Contact'
 import Account from './pages/Account'
 import UserGuide from './pages/UserGuide'
 import Login from './pages/Login'
+import './app.css'
 
 export function App() {
   return (
@@ -23,3 +23,4 @@ export function App() {
     </LocationProvider>
   )
 }
+
