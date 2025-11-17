@@ -6,7 +6,7 @@ import SESDCFooter from "../components/SESDCFooter";
 import graph from '../media/graph.png';
 
 
-const Home: FunctionalComponent = () => {
+function Home () {
   return (
     <div class="min-h-screen flex flex-col">
     {/* navbar */}
