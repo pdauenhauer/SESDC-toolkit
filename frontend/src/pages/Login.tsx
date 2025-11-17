@@ -2,10 +2,12 @@
 import SESDCHeader from '../components/SESDCHeader';
 import SESDCFooter from '../components/SESDCFooter';
 import LoginForm from '../components/LoginForm';
+import RegisterForm from '../components/RegisterForm';
 import logo from '../media/Logo.svg'
 
 import { useState } from 'preact/hooks';
 import '../css/new-login.css';
+
 
 export default function Login() {
   // which form is showing
@@ -52,42 +54,7 @@ export default function Login() {
           <LoginForm isVisible={isLoginActive} handleLoginSubmit={handleLoginSubmit} showRegister={showRegister}/>
 
           {/* REGISTER */}
-          <div
-            id="registerForm"
-          >
-            <h1>Create an Account</h1>
-            <form id="signup-form" onSubmit={handleRegisterSubmit}>
-              {registerMessage && (
-                <div id="account-creation-message" class="messageDiv" style="display: block;">
-                  {registerMessage}
-                </div>
-              )}
-
-              <div class="input-box">
-                <input id="enterEmail" type="text" placeholder="Email" required />
-                <i class="bx bxs-envelope"></i>
-              </div>
-              <div class="input-box">
-                <input id="enterUsername" type="text" placeholder="Username" required />
-                <i class="bx bxs-user"></i>
-              </div>
-              <div class="input-box">
-                <input id="enterPassword" type="password" placeholder="Password" required />
-                <i class="bx bxs-lock-alt"></i>
-              </div>
-              <button id="register" type="submit" class="btn">
-                Register
-              </button>
-            </form>
-            <div class="register">
-              <p>
-                Already have an account?{' '}
-                <a href="#" class="toggle-form" onClick={showLogin}>
-                  Login
-                </a>
-              </p>
-            </div>
-          </div>
+          <RegisterForm isVisible={!isLoginActive} handleRegisterSubmit={handleRegisterSubmit} showLogin={showLogin}/>
         </div>
       </main>
 
