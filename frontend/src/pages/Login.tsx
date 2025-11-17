@@ -1,6 +1,7 @@
 // src/pages/Login.tsx
 import SESDCHeader from '../components/SESDCHeader';
 import SESDCFooter from '../components/SESDCFooter';
+import LoginForm from '../components/LoginForm';
 import logo from '../media/Logo.svg'
 
 import { useState } from 'preact/hooks';
@@ -8,19 +9,19 @@ import '../css/new-login.css';
 
 export default function Login() {
   // which form is showing
-  const [activeForm, setActiveForm] = useState<'login' | 'register'>('login');
+  const [isLoginActive, setIsLoginActive] = useState<boolean>(true);
   const [loginMessage, setLoginMessage] = useState('');
   const [registerMessage, setRegisterMessage] = useState('');
 
   function showLogin(e?: Event) {
     e?.preventDefault();
-    setActiveForm('login');
+    setIsLoginActive(true);
     setRegisterMessage('');
   }
 
   function showRegister(e?: Event) {
     e?.preventDefault();
-    setActiveForm('register');
+    setIsLoginActive(false);
     setLoginMessage('');
   }
 
@@ -48,44 +49,11 @@ export default function Login() {
 
         <div class="wrapper">
           {/* LOGIN */}
-          <div
-            id="loginForm"
-            class={`form-container ${activeForm === 'login' ? 'visible' : 'hidden'}`}
-          >
-            <h1>Login</h1>
-            <form id="login-form" onSubmit={handleLoginSubmit}>
-              {loginMessage && (
-                <div id="account-login-message" class="messageDiv" style="display: block;">
-                  {loginMessage}
-                </div>
-              )}
-
-              <div class="input-box">
-                <input id="loginEmail" type="text" placeholder="Email" required />
-                <i class="bx bxs-user"></i>
-              </div>
-              <div class="input-box">
-                <input id="loginPassword" type="password" placeholder="Password" required />
-                <i class="bx bxs-lock-alt"></i>
-              </div>
-              <button id="login" type="submit" class="btn">
-                Login
-              </button>
-            </form>
-            <div class="register">
-              <p>
-                Don't have an account?{' '}
-                <a href="#" class="toggle-form" onClick={showRegister}>
-                  Register
-                </a>
-              </p>
-            </div>
-          </div>
+          <LoginForm isVisible={isLoginActive} handleLoginSubmit={handleLoginSubmit} showRegister={showRegister}/>
 
           {/* REGISTER */}
           <div
             id="registerForm"
-            class={`form-container ${activeForm === 'register' ? 'visible' : 'hidden'}`}
           >
             <h1>Create an Account</h1>
             <form id="signup-form" onSubmit={handleRegisterSubmit}>
