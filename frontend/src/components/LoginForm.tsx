@@ -1,46 +1,73 @@
+import { useState } from "react";
+import { loginUser } from '../utils/firebase/auth';
+
 interface LoginFormProps {
     loginMessage?: string;
     isVisible?: boolean;
-    handleLoginSubmit: (e: Event) => void;
-    showRegister: (e: Event) => void;
+    showRegister: () => void;
 }
 
-function LoginForm({ loginMessage, isVisible, handleLoginSubmit, showRegister }: LoginFormProps) {
-    if(!isVisible) return null;
-    
+function LoginForm({ isVisible, showRegister }: LoginFormProps) {
+    if (!isVisible) return null;
+
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [loginMessage, setLoginMessage] = useState("");
+
     return (
-        
-        <div id="loginForm">
+        <div className="loginForm">
             <h1>Login</h1>
-            <form id="login-form" onSubmit={handleLoginSubmit}>
+
+            <form
+                onSubmit={async (e) => {
+                    e.preventDefault();
+                    const message = await loginUser(email, password);
+                    setLoginMessage(message || "");
+                }}
+            >
                 {loginMessage && (
-                    <div id="account-login-message" class="messageDiv" style="display: block;">
+                    <div className="messageDiv">
                         {loginMessage}
                     </div>
                 )}
 
-                <div class="input-box">
-                    <input id="loginEmail" type="text" placeholder="Email" required />
-                    <i class="bx bxs-user"></i>
+                <div className="input-box">
+                    <input
+                        type="text"
+                        placeholder="Email"
+                        value={email}
+                        required
+                        onChange={(e) => setEmail((e.target as HTMLInputElement).value)}
+                    />
+                    <i className="bx bxs-user"></i>
                 </div>
-                <div class="input-box">
-                    <input id="loginPassword" type="password" placeholder="Password" required />
-                    <i class="bx bxs-lock-alt"></i>
+
+                <div className="input-box">
+                    <input
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        required
+                        onChange={(e) => setPassword((e.target as HTMLInputElement).value)}
+                    />
+                    <i className="bx bxs-lock-alt"></i>
                 </div>
-                <button id="login" type="submit" class="btn">
+
+                <button type="submit" className="btn">
                     Login
                 </button>
             </form>
-            <div class="register">
+
+            <div className="register">
                 <p>
-                    Don't have an account?{' '}
-                    <a href="#" class="toggle-form" onClick={showRegister}>
+                    Don't have an account?{" "}
+                    <a href="#" className="toggle-form" onClick={showRegister}>
                         Register
                     </a>
                 </p>
             </div>
         </div>
-    )
+    );
 }
 
-export default LoginForm
+export default LoginForm;
