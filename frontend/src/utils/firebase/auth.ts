@@ -3,9 +3,7 @@ import { createFolder } from './storage.ts';
 import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
-    sendEmailVerification,
-    sendPasswordResetEmail,
-    fetchSignInMethodsForEmail
+    sendEmailVerification
 } from 'firebase/auth';
 import { setDoc, doc } from 'firebase/firestore'
 
@@ -35,5 +33,42 @@ export async function registerUser(email: string, password: string, username: st
         await auth.signOut();
     } catch (error: any) {
         throw error;
+    }
+}
+
+
+export async function loginUser(email: string, password: string) {
+    try {
+        await signInWithEmailAndPassword(auth, email, password)
+        const user = auth.currentUser
+
+        // Null validation (realistically should not hit this)
+        if (!user) {
+            return "User does not exist."
+        }
+
+        // Check verification of the email
+        if (!user.emailVerified) {
+            await auth.signOut();
+            return `User is not verified. Please check ${email} for a confirmation link.`;
+        }
+
+        // Successful login; cache in localStorage
+        localStorage.setItem("loggedInUserId", user.uid);
+        return "Login Successful!"
+    } catch (error: any) {
+
+        // Message for if the email is invalid
+        if (error.message.includes('auth/invalid-email')) {
+            return "Email is invalid."
+
+        // Message for if the password is incorrect
+        } else if (error.message.includes('auth/invalid-credential')) {
+            return "Password is incorrect."
+
+        // Anything else
+        }else {
+            return error.message
+        }
     }
 }
