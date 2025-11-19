@@ -24,11 +24,6 @@ export default function Login() {
     setIsLoginActive(false);
   }
 
-  function handleRegisterSubmit(e: Event) {
-    e.preventDefault();
-    // TODO: replace with real register request
-  }
-
   return (
     <>
       {/* navbar */}
@@ -44,7 +39,7 @@ export default function Login() {
           <LoginForm isVisible={isLoginActive} showRegister={showRegister}/>
 
           {/* REGISTER */}
-          <RegisterForm isVisible={!isLoginActive} handleRegisterSubmit={handleRegisterSubmit} showLogin={showLogin}/>
+          <RegisterForm isVisible={!isLoginActive} showLogin={showLogin}/>
         </div>
       </main>
 
