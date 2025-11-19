@@ -1,50 +1,87 @@
+import { useState } from "preact/hooks";
+import { registerUser } from "../utils/firebase/auth";
+
 interface RegisterFormProps {
-    registerMessage?: string;
     isVisible?: boolean;
-    handleRegisterSubmit: (e: Event) => void;
-    showLogin: (e: Event) => void;
+    showLogin: () => void;
 }
 
-function RegisterForm({ registerMessage, isVisible, handleRegisterSubmit, showLogin }: RegisterFormProps) {
+function RegisterForm({ isVisible, showLogin }: RegisterFormProps) {
     if (!isVisible) return null;
+
+    const [email, setEmail] = useState("");
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [registerMessage, setRegisterMessage] = useState("");
+
     return (
-        <div
-            id="registerForm"
-        >
+        <div className="registerForm">
             <h1>Create an Account</h1>
-            <form id="signup-form" onSubmit={handleRegisterSubmit}>
+
+            <form
+                onSubmit={async (e) => {
+                    e.preventDefault();
+
+                    const message = await registerUser(email, username, password);
+                    setRegisterMessage(message || "");
+                }}
+            >
                 {registerMessage && (
-                    <div id="account-creation-message" class="messageDiv" style="display: block;">
+                    <div className="messageDiv">
                         {registerMessage}
                     </div>
                 )}
 
-                <div class="input-box">
-                    <input id="enterEmail" type="text" placeholder="Email" required />
-                    <i class="bx bxs-envelope"></i>
+                <div className="input-box">
+                    <input
+                        type="text"
+                        placeholder="Email"
+                        value={email}
+                        required
+                        onChange={(e) => setEmail((e.target as HTMLInputElement).value)}
+                    />
+                    <i className="bx bxs-envelope"></i>
                 </div>
-                <div class="input-box">
-                    <input id="enterUsername" type="text" placeholder="Username" required />
-                    <i class="bx bxs-user"></i>
+
+                <div className="input-box">
+                    <input
+                        type="text"
+                        placeholder="Username"
+                        value={username}
+                        required
+                        onChange={(e) => setUsername((e.target as HTMLInputElement).value)}
+                    />
+                    <i className="bx bxs-user"></i>
                 </div>
-                <div class="input-box">
-                    <input id="enterPassword" type="password" placeholder="Password" required />
-                    <i class="bx bxs-lock-alt"></i>
+
+                <div className="input-box">
+                    <input
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        required
+                        onChange={(e) =>
+                            setPassword((e.target as HTMLInputElement).value)
+                        }
+                    />
+                    <i className="bx bxs-lock-alt"></i>
                 </div>
-                <button id="register" type="submit" class="btn">
+
+                <button type="submit" className="btn">
                     Register
                 </button>
             </form>
-            <div class="register">
+
+            <div className="register">
                 <p>
-                    Already have an account?{' '}
-                    <a href="#" class="toggle-form" onClick={showLogin}>
+                    Already have an account?{" "}
+                    <a href="#" className="toggle-form" onClick={showLogin}>
                         Login
                     </a>
                 </p>
             </div>
         </div>
-    )
+    );
 }
 
 export default RegisterForm;
