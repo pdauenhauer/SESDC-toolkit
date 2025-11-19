@@ -4,7 +4,9 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 // definitely move to a .env, but previous iteration had it in the open,
-// so it might be ok for now
+// so it might be ok for now, but
+// note for maintainence: might be a good idea to get a new firebase configuration
+// if your repository has a lot of traction
 const firebaseConfig = {
     apiKey: "AIzaSyDa0W1i5K_3tnh26xUpO9xTEIQDeHgpnrA",
     authDomain: "sesdc-toolkit2.firebaseapp.com",

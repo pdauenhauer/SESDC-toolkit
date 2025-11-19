@@ -31,8 +31,9 @@ export async function registerUser(email: string, password: string, username: st
 
         // 5. Sign out after data is saved
         await auth.signOut();
+        return `Registration Complete! Check your email (${email}) for verification.`;
     } catch (error: any) {
-        throw error;
+        return errorHandling(error);
     }
 }
 
@@ -57,18 +58,29 @@ export async function loginUser(email: string, password: string) {
         localStorage.setItem("loggedInUserId", user.uid);
         return "Login Successful!"
     } catch (error: any) {
+        return errorHandling(error)
+    }
+}
 
-        // Message for if the email is invalid
-        if (error.message.includes('auth/invalid-email')) {
-            return "Email is invalid."
 
-        // Message for if the password is incorrect
-        } else if (error.message.includes('auth/invalid-credential')) {
-            return "Password is incorrect."
+function errorHandling(error: any) {
+    // Message for if the email is invalid
+    if (error.message.includes('auth/invalid-email')) {
+        return "Email is invalid."
 
-        // Anything else
-        }else {
-            return error.message
-        }
+    // Message for if the password is incorrect
+    } else if (error.message.includes('auth/invalid-credential')) {
+        return "Password is incorrect."
+
+    // Account exists already (only available for user registration)
+    } else if (error.message.includes('auth/email-already-in-use')) {
+        return "Account already exists with this email."
+
+    } else if (error.message.includes('auth/weak-password')) {
+        return "Password is weak. Make sure to include at least 6 characters."
+
+    // Anything else
+    } else {
+        return error.message
     }
 }
