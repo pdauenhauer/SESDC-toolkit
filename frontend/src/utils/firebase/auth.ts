@@ -31,7 +31,7 @@ export async function registerUser(email: string, password: string, username: st
 
         // 5. Sign out after data is saved
         await auth.signOut();
-        return `Registration Complete! Check your email (${email}) for verification.`;
+        return `Registration Complete! Last step: check your email (${email}) for a verification link.`;
     } catch (error: any) {
         return errorHandling(error);
     }
