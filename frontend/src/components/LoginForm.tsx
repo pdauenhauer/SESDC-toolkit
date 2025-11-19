@@ -1,13 +1,14 @@
 import { useState } from "preact/hooks";
 import { loginUser } from '../utils/firebase/auth';
+import { useLocation } from "preact-iso";
 
 interface LoginFormProps {
-    loginMessage?: string;
     isVisible?: boolean;
     showRegister: () => void;
 }
 
 function LoginForm({ isVisible, showRegister }: LoginFormProps) {
+    const { route } = useLocation();
     if (!isVisible) return null;
 
     const [email, setEmail] = useState("");
@@ -23,6 +24,11 @@ function LoginForm({ isVisible, showRegister }: LoginFormProps) {
                     e.preventDefault();
                     const message = await loginUser(email, password);
                     setLoginMessage(message || "");
+                    if (message.includes("Login Successful!")) {
+                        setTimeout(() => {
+                            route('/');
+                        }, 1000);
+                    }
                 }}
             >
                 {loginMessage && (
