@@ -21,15 +21,12 @@ function RegisterForm({ isVisible, showLogin }: RegisterFormProps) {
             <form
                 onSubmit={async (e) => {
                     e.preventDefault();
-
-                    const message = await registerUser(email, username, password);
-                    setRegisterMessage(message || "");
+                    const message = await registerUser(email, password, username);
+                    setRegisterMessage(message);
                 }}
             >
                 {registerMessage && (
-                    <div className="messageDiv">
-                        {registerMessage}
-                    </div>
+                    <div className="messageDiv">{registerMessage}</div>
                 )}
 
                 <div className="input-box">
@@ -40,7 +37,7 @@ function RegisterForm({ isVisible, showLogin }: RegisterFormProps) {
                         required
                         onChange={(e) => setEmail((e.target as HTMLInputElement).value)}
                     />
-                    <i className="bx bxs-envelope"></i>
+                    <i class="bx bxs-envelope"></i>
                 </div>
 
                 <div className="input-box">
@@ -51,7 +48,7 @@ function RegisterForm({ isVisible, showLogin }: RegisterFormProps) {
                         required
                         onChange={(e) => setUsername((e.target as HTMLInputElement).value)}
                     />
-                    <i className="bx bxs-user"></i>
+                    <i class="bx bxs-user"></i>
                 </div>
 
                 <div className="input-box">
@@ -60,16 +57,12 @@ function RegisterForm({ isVisible, showLogin }: RegisterFormProps) {
                         placeholder="Password"
                         value={password}
                         required
-                        onChange={(e) =>
-                            setPassword((e.target as HTMLInputElement).value)
-                        }
+                        onChange={(e) => setPassword((e.target as HTMLInputElement).value)}
                     />
-                    <i className="bx bxs-lock-alt"></i>
+                    <i class="bx bxs-lock-alt"></i>
                 </div>
 
-                <button type="submit" className="btn">
-                    Register
-                </button>
+                <button type="submit" className="btn">Register</button>
             </form>
 
             <div className="register">
