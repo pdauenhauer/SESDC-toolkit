@@ -115,6 +115,15 @@ export default function Account() {
               >
                 {showDeleteConfirm ? 'Hide Delete Form' : 'Delete Account'}
               </button>
+
+              <button
+                id="goToLoginBtn"
+                class="btn primary-btn"
+                type="button"
+                onClick={() => (window.location.href = '/login')}
+              >
+                Go to Login
+              </button>
             </div>
 
             {showDeleteConfirm && (
