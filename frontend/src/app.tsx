@@ -5,6 +5,7 @@ import Contact from './pages/Contact'
 import Account from './pages/Account'
 import UserGuide from './pages/UserGuide'
 import Login from './pages/Login'
+import Logout from './pages/Logout'
 import './app.css'
 
 export function App() {
@@ -18,6 +19,7 @@ export function App() {
           <Route path="/account" component={Account}/>
           <Route path="/guide" component={UserGuide}/>
           <Route path="/login" component={Login}/>
+          <Route path="/logout" component={Logout}/>
         </Router>
       </ErrorBoundary>
     </LocationProvider>

@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "firebase": "^12.5.0",
     "preact": "^10.27.2",
     "preact-iso": "^2.11.0"
   },
