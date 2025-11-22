@@ -1,20 +1,20 @@
-// src/pages/Account.tsx
 import SESDCHeader from '../components/SESDCHeader';
 import SESDCFooter from '../components/SESDCFooter';
 
 import { useState } from 'preact/hooks';
 import { deleteAccount } from '../utils/deleteAccount';
+import { auth } from '../utils/firebase/firebase-init';
+import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
+
 import '../css/account.css';
 
 export default function Account() {
-  // whether each section is open
   const [showUpdatePassword, setShowUpdatePassword] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [message, setMessage] = useState('');
 
   function toggleUpdatePassword() {
     setShowUpdatePassword((prev) => !prev);
-    // hide other section when opening this one, if you want
     setShowDeleteConfirm(false);
     setMessage('');
   }
@@ -25,29 +25,71 @@ export default function Account() {
     setMessage('');
   }
 
-  function handleConfirmPasswordUpdate() {
-    // TODO: call your real API here
-    setMessage('Password updated (demo).');
-    setShowUpdatePassword(false);
+  // update password 
+  async function handleConfirmPasswordUpdate() {
+    const newPasswordInput = document.getElementById('newPassword') as HTMLInputElement;
+    const newPassword = newPasswordInput.value;
+
+    if (!newPassword) {
+      setMessage("Please enter a new password.");
+      return;
+    }
+
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        setMessage("No authenticated user.");
+        return;
+      }
+
+      // Optionally reauth with old password (Firebase now requires reauth for this)
+      // For now, just update:
+      await updatePassword(user, newPassword);
+
+      setMessage("Password updated successfully.");
+      setShowUpdatePassword(false);
+    } catch (error: any) {
+      setMessage("Error updating password: " + error.message);
+    }
   }
 
   function handleCancelPasswordUpdate() {
     setShowUpdatePassword(false);
   }
 
-  function handleConfirmDelete() {
-    // TODO: call your real API here
-    setMessage('Account deleted (demo).');
-    setShowDeleteConfirm(false);
+  //delete account
+  async function handleConfirmDelete() {
+    const passwordInput = document.getElementById('deletePassword') as HTMLInputElement;
+    const password = passwordInput.value;
+
+    if (!password) {
+      setMessage("Please enter your password.");
+      return;
+    }
+
+    const result = await deleteAccount(password);
+    setMessage(result);
+
+    if (result === "Account deleted successfully.") {
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1500);
+    }
   }
 
   function handleCancelDelete() {
     setShowDeleteConfirm(false);
   }
 
+  // logout for “Go to Login”
+  async function handleLogoutAndGoToLogin() {
+    await auth.signOut();
+    localStorage.removeItem("loggedInUserId");
+    window.location.href = "/login";
+  }
+
   return (
     <>
-      {/* navbar */}
       <SESDCHeader />
 
       <div class="main-content">
@@ -56,11 +98,7 @@ export default function Account() {
             <h1>Account Management</h1>
 
             {message && (
-              <div
-                id="account-management-message"
-                class="messageDiv"
-                style="display: block;"
-              >
+              <div class="messageDiv" style="display: block;">
                 {message}
               </div>
             )}
@@ -68,7 +106,6 @@ export default function Account() {
             <div class="button-group">
               {/* UPDATE PASSWORD */}
               <button
-                id="updatePasswordBtn"
                 class="btn secondary-btn"
                 onClick={toggleUpdatePassword}
                 type="button"
@@ -88,7 +125,6 @@ export default function Account() {
                   </div>
                   <div class="confirmation-buttons">
                     <button
-                      id="confirmUpdatePasswordBtn"
                       class="btn secondary-btn"
                       type="button"
                       onClick={handleConfirmPasswordUpdate}
@@ -96,7 +132,6 @@ export default function Account() {
                       Confirm Update
                     </button>
                     <button
-                      id="cancelUpdatePasswordBtn"
                       class="btn secondary-btn"
                       type="button"
                       onClick={handleCancelPasswordUpdate}
@@ -109,7 +144,6 @@ export default function Account() {
 
               {/* DELETE ACCOUNT */}
               <button
-                id="deleteAccountBtn"
                 class="btn danger-btn"
                 type="button"
                 onClick={toggleDelete}
@@ -118,10 +152,9 @@ export default function Account() {
               </button>
 
               <button
-                id="goToLoginBtn"
                 class="btn primary-btn"
                 type="button"
-                onClick={() => (window.location.href = '/login')}
+                onClick={handleLogoutAndGoToLogin}
               >
                 Go to Login
               </button>
@@ -139,11 +172,9 @@ export default function Account() {
                     placeholder="Enter your password to confirm"
                     required
                   />
-                  <i class="bx bxs-lock-alt"></i>
                 </div>
                 <div class="confirmation-buttons">
                   <button
-                    id="confirmDeleteBtn"
                     class="btn danger-btn"
                     type="button"
                     onClick={handleConfirmDelete}
@@ -151,7 +182,6 @@ export default function Account() {
                     Confirm Delete
                   </button>
                   <button
-                    id="cancelDeleteBtn"
                     class="btn secondary-btn"
                     type="button"
                     onClick={handleCancelDelete}
@@ -166,21 +196,6 @@ export default function Account() {
       </div>
 
       <SESDCFooter />
-
     </>
   );
-}
-function handleConfirmDelete() {
-  const passwordInput = (document.getElementById('deletePassword') as HTMLInputElement);
-  const password = passwordInput.value;
-
-  deleteAccount(password).then((result) => {
-    setMessage(result);
-
-    if (result === "Account deleted successfully.") {
-      setTimeout(() => {
-        window.location.href = '/login';
-      }, 2000);
-    }
-  });
 }
