@@ -9,12 +9,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.1.17",
     "preact": "^10.27.2",
     "preact-iso": "^2.11.0"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.10.2",
     "@types/node": "^24.10.0",
+    "autoprefixer": "^10.4.22",
+    "postcss": "^8.5.6",
     "typescript": "~5.7.2",
     "vite": "^6.1.0"
   }

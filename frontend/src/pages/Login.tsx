@@ -1,10 +1,8 @@
-// src/pages/Login.tsx
 import SESDCHeader from '../components/SESDCHeader';
 import SESDCFooter from '../components/SESDCFooter';
 import logo from '../media/Logo.svg'
-
 import { useState } from 'preact/hooks';
-import '../css/new-login.css';
+import '../css/login.css';
 
 export default function Login() {
   // which form is showing
@@ -41,30 +39,31 @@ export default function Login() {
       {/* navbar */}
       <SESDCHeader />
 
-      <main>
-        <div class="logo-container">
-          <img src={logo} alt="Logo" class="logo" />
+      <main class="login-main">
+        <div class="login-logo-container">
+          <img src={logo} alt="Logo" class="login-logo" />
         </div>
 
-        <div class="wrapper">
+        <div class="login-wrapper">
           {/* LOGIN */}
           <div
             id="loginForm"
-            class={`form-container ${activeForm === 'login' ? 'visible' : 'hidden'}`}
+            class={`login-form-container ${activeForm === 'login' ? '' : 'login-hidden'}`}
+
           >
             <h1>Login</h1>
             <form id="login-form" onSubmit={handleLoginSubmit}>
               {loginMessage && (
-                <div id="account-login-message" class="messageDiv" style="display: block;">
+                <div id="account-login-message" class="login-messageDiv" style="display: block;">
                   {loginMessage}
                 </div>
               )}
 
-              <div class="input-box">
+              <div class="login-input-box">
                 <input id="loginEmail" type="text" placeholder="Email" required />
                 <i class="bx bxs-user"></i>
               </div>
-              <div class="input-box">
+              <div class="login-input-box">
                 <input id="loginPassword" type="password" placeholder="Password" required />
                 <i class="bx bxs-lock-alt"></i>
               </div>
@@ -72,7 +71,7 @@ export default function Login() {
                 Login
               </button>
             </form>
-            <div class="register">
+            <div class="login-register">
               <p>
                 Don't have an account?{' '}
                 <a href="#" class="toggle-form" onClick={showRegister}>
@@ -85,25 +84,25 @@ export default function Login() {
           {/* REGISTER */}
           <div
             id="registerForm"
-            class={`form-container ${activeForm === 'register' ? 'visible' : 'hidden'}`}
+            class={`login-form-container ${activeForm === 'register' ? '' : 'login-hidden'}`}
           >
             <h1>Create an Account</h1>
             <form id="signup-form" onSubmit={handleRegisterSubmit}>
               {registerMessage && (
-                <div id="account-creation-message" class="messageDiv" style="display: block;">
+                <div id="account-creation-message" class="login-messageDiv" style="display: block;">
                   {registerMessage}
                 </div>
               )}
 
-              <div class="input-box">
+              <div class="login-input-box">
                 <input id="enterEmail" type="text" placeholder="Email" required />
                 <i class="bx bxs-envelope"></i>
               </div>
-              <div class="input-box">
+              <div class="login-input-box">
                 <input id="enterUsername" type="text" placeholder="Username" required />
                 <i class="bx bxs-user"></i>
               </div>
-              <div class="input-box">
+              <div class="login-input-box">
                 <input id="enterPassword" type="password" placeholder="Password" required />
                 <i class="bx bxs-lock-alt"></i>
               </div>
@@ -111,7 +110,7 @@ export default function Login() {
                 Register
               </button>
             </form>
-            <div class="register">
+            <div class="login-register">
               <p>
                 Already have an account?{' '}
                 <a href="#" class="toggle-form" onClick={showLogin}>

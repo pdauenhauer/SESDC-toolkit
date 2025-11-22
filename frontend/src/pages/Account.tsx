@@ -1,7 +1,5 @@
-// src/pages/Account.tsx
 import SESDCHeader from '../components/SESDCHeader';
 import SESDCFooter from '../components/SESDCFooter';
-
 import { useState } from 'preact/hooks';
 import '../css/account.css';
 
@@ -49,26 +47,26 @@ export default function Account() {
       {/* navbar */}
       <SESDCHeader />
 
-      <div class="main-content">
-        <div class="wrapper">
-          <div id="accountManagement" class="form-container visible">
-            <h1>Account Management</h1>
+      <div class="account-main-content">
+        <div class="account-wrapper">
+          <div id="accountManagement" class="account-form-container visible">
+            <h1 class="account-heading">Account Management</h1>
 
             {message && (
               <div
                 id="account-management-message"
-                class="messageDiv"
+                class="account-messageDiv"
                 style="display: block;"
               >
                 {message}
               </div>
             )}
 
-            <div class="button-group">
+            <div class="account-button-group">
               {/* UPDATE PASSWORD */}
               <button
                 id="updatePasswordBtn"
-                class="btn secondary-btn"
+                class="account-btn account-secondary-btn"
                 onClick={toggleUpdatePassword}
                 type="button"
               >
@@ -76,8 +74,8 @@ export default function Account() {
               </button>
 
               {showUpdatePassword && (
-                <div id="updatePasswordSection">
-                  <div class="input-box">
+                <div id="account-updatePasswordSection">
+                  <div class="account-input-box">
                     <input
                       id="newPassword"
                       type="password"
@@ -85,10 +83,10 @@ export default function Account() {
                       required
                     />
                   </div>
-                  <div class="confirmation-buttons">
+                  <div class="account-confirmation-buttons">
                     <button
                       id="confirmUpdatePasswordBtn"
-                      class="btn secondary-btn"
+                      class="account-btn account-secondary-btn"
                       type="button"
                       onClick={handleConfirmPasswordUpdate}
                     >
@@ -96,7 +94,7 @@ export default function Account() {
                     </button>
                     <button
                       id="cancelUpdatePasswordBtn"
-                      class="btn secondary-btn"
+                      class="account-btn account-secondary-btn"
                       type="button"
                       onClick={handleCancelPasswordUpdate}
                     >
@@ -109,7 +107,7 @@ export default function Account() {
               {/* DELETE ACCOUNT */}
               <button
                 id="deleteAccountBtn"
-                class="btn danger-btn"
+                class="account-btn account-danger-btn"
                 type="button"
                 onClick={toggleDelete}
               >
@@ -118,11 +116,11 @@ export default function Account() {
             </div>
 
             {showDeleteConfirm && (
-              <div id="deleteConfirmation">
+              <div id="account-deleteConfirmation">
                 <p>
                   Are you sure you want to delete your account? This action cannot be undone.
                 </p>
-                <div class="input-box">
+                <div class="account-input-box">
                   <input
                     id="deletePassword"
                     type="password"
@@ -131,10 +129,10 @@ export default function Account() {
                   />
                   <i class="bx bxs-lock-alt"></i>
                 </div>
-                <div class="confirmation-buttons">
+                <div class="account-confirmation-buttons">
                   <button
                     id="confirmDeleteBtn"
-                    class="btn danger-btn"
+                    class="account-btn account-danger-btn"
                     type="button"
                     onClick={handleConfirmDelete}
                   >
@@ -142,7 +140,7 @@ export default function Account() {
                   </button>
                   <button
                     id="cancelDeleteBtn"
-                    class="btn secondary-btn"
+                    class="account-btn account-secondary-btn"
                     type="button"
                     onClick={handleCancelDelete}
                   >

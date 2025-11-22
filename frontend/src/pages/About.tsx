@@ -4,6 +4,7 @@ import IEEE_logo from '../media/IEEE.png'
 import team_picture from '../media/team.png'
 import SESDCHeader from '../components/SESDCHeader'
 import SESDCFooter from '../components/SESDCFooter'
+import '../css/about.css'
 
 function About() {
     return (
@@ -29,6 +30,8 @@ function About() {
 
                 <section class="about-section">
                 <img src={kwh_logo} alt="Section 2" class="about-img" />
+                
+                
                 <div class="about-text">
                     <p>
                     KiloWatts for Humanity (KWH) is a nonprofit organization dedicated to ending energy poverty by providing renewable electricity access to underserved communities.

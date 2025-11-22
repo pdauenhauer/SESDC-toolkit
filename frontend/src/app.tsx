@@ -5,7 +5,9 @@ import Contact from './pages/Contact'
 import Account from './pages/Account'
 import UserGuide from './pages/UserGuide'
 import Login from './pages/Login'
-import './app.css'
+import '../src/css/SESDCFooter.css';
+import '../src/css/SESDCHeader.css';
+import './app.css';
 
 export function App() {
   return (
