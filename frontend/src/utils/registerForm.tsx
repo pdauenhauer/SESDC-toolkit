@@ -14,10 +14,17 @@ export default function RegisterForm({ isVisible, showLogin }: RegisterFormProps
 
   async function handleRegister(e: Event) {
     e.preventDefault();
-
+  
     const result = await registerUser(email, password, username);
     setMessage(result);
+  
+    if (result.startsWith("Registration Complete")) {
+      setEmail('');
+      setPassword('');
+      setUsername('');
+    }
   }
+  
 
   return (
     <div class={`form-container ${isVisible ? 'visible' : 'hidden'}`}>
