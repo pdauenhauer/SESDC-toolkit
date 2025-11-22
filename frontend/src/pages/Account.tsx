@@ -3,6 +3,7 @@ import SESDCHeader from '../components/SESDCHeader';
 import SESDCFooter from '../components/SESDCFooter';
 
 import { useState } from 'preact/hooks';
+import { deleteAccount } from '../utils/deleteAccount';
 import '../css/account.css';
 
 export default function Account() {
@@ -168,4 +169,18 @@ export default function Account() {
 
     </>
   );
+}
+function handleConfirmDelete() {
+  const passwordInput = (document.getElementById('deletePassword') as HTMLInputElement);
+  const password = passwordInput.value;
+
+  deleteAccount(password).then((result) => {
+    setMessage(result);
+
+    if (result === "Account deleted successfully.") {
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 2000);
+    }
+  });
 }
