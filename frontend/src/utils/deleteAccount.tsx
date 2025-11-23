@@ -1,36 +1,33 @@
 import { auth, db, storage } from "./firebase/firebase-init";
-import { EmailAuthProvider, reauthenticateWithCredential, deleteUser } from 'firebase/auth';
-import { doc, deleteDoc } from 'firebase/firestore';
-import { ref, listAll, deleteObject } from 'firebase/storage';
+import { EmailAuthProvider, reauthenticateWithCredential, deleteUser } from "firebase/auth";
+import { doc, deleteDoc } from "firebase/firestore";
+import { ref, listAll, deleteObject } from "firebase/storage";
 
-export async function deleteAccount(password: string) {
-  const user = auth.currentUser;
-  if (!user) return "No authenticated user.";
+export async function deleteAccount(password: string): Promise<string> {
+    const user = auth.currentUser;
 
-  try {
-    // 1. Reauthenticate using password
-    const credential = EmailAuthProvider.credential(user.email!, password);
-    await reauthenticateWithCredential(user, credential);
+    if (!user) return "No user logged in.";
 
-    // 2. Delete Firestore user document
-    await deleteDoc(doc(db, "users", user.uid));
+    try {
+        // 1. Reauthenticate
+        const credential = EmailAuthProvider.credential(user.email!, password);
+        await reauthenticateWithCredential(user, credential);
 
-    // 3. Delete the user's entire storage folder
-    const folderRef = ref(storage, user.uid);
-    const items = await listAll(folderRef);
+        // 2. Delete Firestore user doc
+        await deleteDoc(doc(db, "users", user.uid));
 
-    for (const item of items.items) {
-      await deleteObject(item);
+        // 3. Delete Storage folder
+        const userFolderRef = ref(storage, `${user.uid}/`);
+
+        const folderList = await listAll(userFolderRef);
+        const deletions = folderList.items.map((fileRef) => deleteObject(fileRef));
+        await Promise.allSettled(deletions);
+
+        // 4. Delete Authentication user
+        await deleteUser(user);
+
+        return "Account deleted successfully.";
+    } catch (err: any) {
+        return err.message ?? "Failed to delete account.";
     }
-
-    // 4. Delete the auth user
-    await deleteUser(user);
-
-    // 5. Clear local cache
-    localStorage.removeItem("loggedInUserId");
-
-    return "Account deleted successfully.";
-  } catch (error: any) {
-    return error.message;
-  }
 }
