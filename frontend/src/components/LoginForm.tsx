@@ -1,79 +1,58 @@
-import { useState } from "preact/hooks";
-import { loginUser } from '../utils/firebase/auth';
-import { useLocation } from "preact-iso";
+import { useState } from 'preact/hooks';
+import { loginUser } from '../services/auth';
 
 interface LoginFormProps {
-    isVisible?: boolean;
-    showRegister: () => void;
+  isVisible: boolean;
+  showRegister: () => void;
 }
 
-function LoginForm({ isVisible, showRegister }: LoginFormProps) {
-    const { route } = useLocation();
-    if (!isVisible) return null;
+export default function LoginForm({ isVisible, showRegister }: LoginFormProps) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
 
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [loginMessage, setLoginMessage] = useState("");
+  async function handleLogin(e: Event) {
+    e.preventDefault();
+    const result = await loginUser(email, password);
+    setMessage(result);
 
-    return (
-        <div className="loginForm">
-            <h1>Login</h1>
+    if (result === 'Login Successful!') {
+      window.location.href = '/project-selection';
+    }
+  }
 
-            <form
-                onSubmit={async (e) => {
-                    e.preventDefault();
-                    const message = await loginUser(email, password);
-                    setLoginMessage(message || "");
-                    if (message.includes("Login Successful!")) {
-                        setTimeout(() => {
-                            route('/');
-                        }, 1000);
-                    }
-                }}
-            >
-                {loginMessage && (
-                    <div className="messageDiv">
-                        {loginMessage}
-                    </div>
-                )}
+  return (
+    <div class={`form-container ${isVisible ? 'visible' : 'hidden'}`}>
+      <h2>Login</h2>
 
-                <div className="input-box">
-                    <input
-                        type="text"
-                        placeholder="Email"
-                        value={email}
-                        required
-                        onChange={(e) => setEmail((e.target as HTMLInputElement).value)}
-                    />
-                    <i className="bx bxs-user"></i>
-                </div>
+      {message && <p class="message">{message}</p>}
 
-                <div className="input-box">
-                    <input
-                        type="password"
-                        placeholder="Password"
-                        value={password}
-                        required
-                        onChange={(e) => setPassword((e.target as HTMLInputElement).value)}
-                    />
-                    <i className="bx bxs-lock-alt"></i>
-                </div>
-
-                <button type="submit" className="btn">
-                    Login
-                </button>
-            </form>
-
-            <div className="register">
-                <p>
-                    Don't have an account?{" "}
-                    <a href="#" className="toggle-form" onClick={showRegister}>
-                        Register
-                    </a>
-                </p>
-            </div>
+      <form onSubmit={handleLogin}>
+        <div class="input-box">
+          <input
+            type="email"
+            placeholder="Email"
+            required
+            onInput={(e: any) => setEmail(e.target.value)}
+          />
         </div>
-    );
-}
 
-export default LoginForm;
+        <div class="input-box">
+          <input
+            type="password"
+            placeholder="Password"
+            required
+            onInput={(e: any) => setPassword(e.target.value)}
+          />
+        </div>
+
+        <button class="btn primary-btn" type="submit">Login</button>
+
+        <p class="toggle-text">
+          Don't have an account?{' '}
+          <a href="#" onClick={showRegister}>Register</a>
+        </p>
+      </form>
+    </div>
+  );
+}

@@ -1,80 +1,72 @@
-import { useState } from "preact/hooks";
-import { registerUser } from "../utils/firebase/auth";
+import { useState } from 'preact/hooks';
+import { registerUser } from '../services/auth';
 
 interface RegisterFormProps {
-    isVisible?: boolean;
-    showLogin: () => void;
+  isVisible: boolean;
+  showLogin: () => void;
 }
 
-function RegisterForm({ isVisible, showLogin }: RegisterFormProps) {
-    if (!isVisible) return null;
+export default function RegisterForm({ isVisible, showLogin }: RegisterFormProps) {
+  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
 
-    const [email, setEmail] = useState("");
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
-    const [registerMessage, setRegisterMessage] = useState("");
+  async function handleRegister(e: Event) {
+    e.preventDefault();
+  
+    const result = await registerUser(email, password, username);
+    setMessage(result);
+  
+    if (result.startsWith("Registration Complete")) {
+      setEmail('');
+      setPassword('');
+      setUsername('');
+    }
+  }
+  
 
-    return (
-        <div className="registerForm">
-            <h1>Create an Account</h1>
+  return (
+    <div class={`form-container ${isVisible ? 'visible' : 'hidden'}`}>
+      <h2>Create Account</h2>
 
-            <form
-                onSubmit={async (e) => {
-                    e.preventDefault();
-                    const message = await registerUser(email, password, username);
-                    setRegisterMessage(message);
-                }}
-            >
-                {registerMessage && (
-                    <div className="messageDiv">{registerMessage}</div>
-                )}
+      {message && <p class="message">{message}</p>}
 
-                <div className="input-box">
-                    <input
-                        type="text"
-                        placeholder="Email"
-                        value={email}
-                        required
-                        onChange={(e) => setEmail((e.target as HTMLInputElement).value)}
-                    />
-                    <i class="bx bxs-envelope"></i>
-                </div>
-
-                <div className="input-box">
-                    <input
-                        type="text"
-                        placeholder="Username"
-                        value={username}
-                        required
-                        onChange={(e) => setUsername((e.target as HTMLInputElement).value)}
-                    />
-                    <i class="bx bxs-user"></i>
-                </div>
-
-                <div className="input-box">
-                    <input
-                        type="password"
-                        placeholder="Password"
-                        value={password}
-                        required
-                        onChange={(e) => setPassword((e.target as HTMLInputElement).value)}
-                    />
-                    <i class="bx bxs-lock-alt"></i>
-                </div>
-
-                <button type="submit" className="btn">Register</button>
-            </form>
-
-            <div className="register">
-                <p>
-                    Already have an account?{" "}
-                    <a href="#" className="toggle-form" onClick={showLogin}>
-                        Login
-                    </a>
-                </p>
-            </div>
+      <form onSubmit={handleRegister}>
+        <div class="input-box">
+          <input
+            type="text"
+            placeholder="Username"
+            required
+            onInput={(e: any) => setUsername(e.target.value)}
+          />
         </div>
-    );
-}
 
-export default RegisterForm;
+        <div class="input-box">
+          <input
+            type="email"
+            placeholder="Email"
+            required
+            onInput={(e: any) => setEmail(e.target.value)}
+          />
+        </div>
+
+        <div class="input-box">
+          <input
+            type="password"
+            placeholder="Password"
+            required
+            onInput={(e: any) => setPassword(e.target.value)}
+          />
+        </div>
+
+        <button class="btn primary-btn" type="submit">Register</button>
+
+        <p class="toggle-text">
+          Already have an account?{' '}
+          <a href="#" onClick={showLogin}>Log In</a>
+        </p>
+      </form>
+    </div>
+  );
+}
