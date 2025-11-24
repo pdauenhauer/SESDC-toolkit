@@ -140,13 +140,13 @@ export default function Account() {
         <>
             <SESDCHeader />
 
-            <div class="main-content">
-                <div class="wrapper">
-                    <div id="accountManagement" class="form-container visible">
-                        <h1>Account Management</h1>
+            <div class="account-main-content">
+                <div class="account-wrapper">
+                    <div id="accountManagement" class="account-form-container visible">
+                        <h1 class="account-heading">Account Management</h1>
 
                         {message && (
-                            <div class="messageDiv" style="display: block;">
+                            <div id="account-management-message" class="account-messageDiv" style="display: block;">
                                 {message}
                             </div>
                         )}
@@ -204,47 +204,47 @@ export default function Account() {
 
 
 
-                        <div class="button-group">
-                            <button class="btn secondary-btn" type="button" onClick={toggleUpdatePassword}>
+                        <div class="account-button-group">
+                            <button id="updatePasswordBtn" class="account-btn account-secondary-btn" type="button" onClick={toggleUpdatePassword}>
                                 {showUpdatePassword ? 'Hide Password Form' : 'Update Password'}
                             </button>
 
                             {showUpdatePassword && (
-                                <div id="updatePasswordSection">
-                                    <div class="input-box">
+                                <div id="account-updatePasswordSection">
+                                    <div class="account-input-box">
                                         <input id="newPassword" type="password" placeholder="Enter new password" required />
                                     </div>
-                                    <div class="confirmation-buttons">
-                                        <button class="btn secondary-btn" type="button" onClick={handleConfirmPasswordUpdate}>
+                                    <div class="account-confirmation-buttons">
+                                        <button id="confirmUpdatePasswordBtn" class="account-btn account-secondary-btn" type="button" onClick={handleConfirmPasswordUpdate}>
                                             Confirm Update
                                         </button>
-                                        <button class="btn secondary-btn" type="button" onClick={handleCancelPasswordUpdate}>
+                                        <button id="cancelUpdatePasswordBtn" class="account-btn account-secondary-btn" type="button" onClick={handleCancelPasswordUpdate}>
                                             Cancel
                                         </button>
                                     </div>
                                 </div>
                             )}
 
-                            <button class="btn danger-btn" type="button" onClick={toggleDelete}>
+                            <button id="deleteAccountBtn" class="account-btn account-danger-btn" type="button" onClick={toggleDelete}>
                                 {showDeleteConfirm ? 'Hide Delete Form' : 'Delete Account'}
                             </button>
 
-                            <button class="btn primary-btn" type="button" onClick={handleGoToLogin}>
+                            <button id="goToLoginBtn" class="account-btn account-primary-btn" type="button" onClick={handleGoToLogin}>
                                 Go to Login
                             </button>
                         </div>
 
                         {showDeleteConfirm && (
-                            <div id="deleteConfirmation">
+                            <div id="account-deleteConfirmation">
                                 <p>Are you sure you want to delete your account? This action cannot be undone.</p>
-                                <div class="input-box">
+                                <div class="account-input-box">
                                     <input id="deletePassword" type="password" placeholder="Enter your password to confirm" required />
                                 </div>
-                                <div class="confirmation-buttons">
-                                    <button class="btn danger-btn" type="button" onClick={handleConfirmDelete}>
+                                <div class="account-confirmation-buttons">
+                                    <button id="confirmDeleteBtn" class="account-btn account-danger-btn" type="button" onClick={handleConfirmDelete}>
                                         Confirm Delete
                                     </button>
-                                    <button class="btn secondary-btn" type="button" onClick={handleCancelDelete}>
+                                    <button id="cancelDeleteBtn" class="account-btn account-secondary-btn" type="button" onClick={handleCancelDelete}>
                                         Cancel
                                     </button>
                                 </div>

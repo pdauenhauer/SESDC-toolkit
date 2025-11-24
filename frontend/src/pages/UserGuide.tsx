@@ -1,8 +1,7 @@
-//Need to make footer run all the way to the left
-
 import { useEffect } from 'preact/hooks'
-import SESDCHeader from '../components/SESDCHeader'
-import SESDCFooter from '../components/SESDCFooter'
+import SESDCHeader from '../components/SESDCHeader';
+import SESDCFooter from '../components/SESDCFooter';
+import '../css/userGuide.css';
 
 function UserGuide() {
   useEffect(() => {
@@ -85,7 +84,7 @@ function UserGuide() {
         <a href="#section1" class="nav-link has-sub"><i class="bx bx-chevron-right arrow" /> Introduction</a>
         <div class="sub-links">
           <a href="#section1a" class="nav-link">Purpose</a>
-          <a href="#section1b" class="nav-link">Who it’s for</a>
+          <a href="#section1b" class="nav-link">Who it's for</a>
           <a href="#section1c" class="nav-link">Benefits of the Tool</a>
           <a href="#section1d" class="nav-link">Accessing the Tool</a>
           <a href="#section1e" class="nav-link">Supported Browsers</a>
@@ -138,18 +137,18 @@ function UserGuide() {
         </div>
       </div>
 
-      {/* Main content */}
-      <div class="main-content">
+      {/* Main Content */}
+      <div class="guide-main-content">
         <h1 id="page-title">Microgrid Toolkit User Guide</h1>
 
         {/* INTRODUCTION */}
-        <h2 id="section1"> Introduction </h2>
+        <h2 id="section1"> Introduction</h2>
         <p>Welcome to the Microgrid Design Tool User Guide. This guide will walk you through everything you need to know to get started—from accessing the tool and creating your first project, to configuring system settings, running simulations, and analyzing results. Whether you're a first-time user or looking to deepen your understanding, this guide is designed to support you at every step.</p>
 
         <h3 id="section1a"> Purpose </h3>
         <p>The microgrid design tool empowers users to simulate and evaluate custom off-grid energy systems based on real-world scenarios. It allows for detailed configuration of electrical loads, energy sources, and supplemental power options to generate cost, performance, and sustainability insights.</p>
 
-        <h3 id="section1b"> Who it’s for</h3>
+        <h3 id="section1b"> Who it's for</h3>
         <p>This tool is designed for users with an interest in renewable energy planning, including non-engineers, community leaders, students, and project developers. No prior technical background is required—our interface is built to be accessible and intuitive for anyone passionate about clean energy solutions.</p>
 
         <h3 id="section1d"> Benefits of the Tool </h3>
@@ -177,15 +176,15 @@ function UserGuide() {
 
         {/* GETTING STARTED */}
         <h2 id="section2"> Getting Started</h2>
-        <p>Before diving into microgrid configurations and simulations, it’s important to get set up with the tool. This section will guide you through the basics—creating an account, navigating the dashboard, and starting your first project. Whether you're a new or returning user, these steps ensure you can make the most of the platform from the very beginning.</p>
+        <p>Before diving into microgrid configurations and simulations, it's important to get set up with the tool. This section will guide you through the basics—creating an account, navigating the dashboard, and starting your first project. Whether you're a new or returning user, these steps ensure you can make the most of the platform from the very beginning.</p>
 
         <h3 id="section2a">Creating an Account & Logging in</h3>
 
         <h4>Steps to Sign Up</h4>
-        <p>To begin using the Microgrid Design Tool, go to the login page and select “Create Account.” You’ll be asked to enter your name, email address, and a secure password. Once you submit the form, a verification email will be sent to your inbox.</p>
+        <p>To begin using the Microgrid Design Tool, go to the login page and select “Create Account.” You'll be asked to enter your name, email address, and a secure password. Once you submit the form, a verification email will be sent to your inbox.</p>
 
         <h4>Email Verification</h4>
-        <p>Click the link in the verification email to activate your account. If you don’t see the email, check your spam or junk folder.</p>
+        <p>Click the link in the verification email to activate your account. If you don't see the email, check your spam or junk folder.</p>
 
         <h4>Logging in & Password Resets</h4>
         <p>After verifying your email, return to the login page and enter your credentials to access the tool. If you forget your password, click “Forgot Password?” and follow the instructions in the reset email to create a new password.</p>
@@ -200,10 +199,10 @@ function UserGuide() {
 
         <h4>Key Icons + Their Functions</h4>
         <ul>
-          <li><strong> New Project</strong> – Start designing a new microgrid</li>
-          <li><strong> Edit</strong> – Modify an existing project</li>
-          <li><strong> Duplicate</strong> – Make a copy of a project for comparison or reuse</li>
-          <li><strong> Delete</strong> – Remove a project permanently</li>
+          <li><strong> New Project</strong> - Start designing a new microgrid</li>
+          <li><strong> Edit</strong> - Modify an existing project</li>
+          <li><strong> Duplicate</strong> - Make a copy of a project for comparison or reuse</li>
+          <li><strong> Delete</strong> - Remove a project permanently</li>
         </ul>
 
         <h3 id="section2c">Starting a New Project</h3>
