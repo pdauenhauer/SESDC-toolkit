@@ -18,7 +18,7 @@ export default function LoginForm({ isVisible, showRegister }: LoginFormProps) {
     setMessage(result);
 
     if (result === 'Login Successful!') {
-      window.location.href = '/project-selection';
+      window.location.href = '/';
     }
   }
 
