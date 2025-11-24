@@ -1,13 +1,11 @@
-// src/pages/Login.tsx
 import SESDCHeader from '../components/SESDCHeader';
 import SESDCFooter from '../components/SESDCFooter';
 import LoginForm from '../components/LoginForm';
 import RegisterForm from '../components/RegisterForm';
 
 import logo from '../media/Logo.svg'
-
 import { useState } from 'preact/hooks';
-import '../css/new-login.css';
+import '../css/login.css';
 
 
 export default function Login() {
@@ -29,12 +27,12 @@ export default function Login() {
       {/* navbar */}
       <SESDCHeader />
 
-      <main>
-        <div class="logo-container">
-          <img src={logo} alt="Logo" class="logo" />
+      <main class="login-main">
+        <div class="login-logo-container">
+          <img src={logo} alt="Logo" class="login-logo" />
         </div>
 
-        <div class="wrapper">
+        <div class="login-wrapper">
           {/* LOGIN */}
           <LoginForm isVisible={isLoginActive} showRegister={showRegister}/>
 

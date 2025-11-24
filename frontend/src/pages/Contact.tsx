@@ -1,7 +1,6 @@
 import SESDCHeader from '../components/SESDCHeader';
 import SESDCFooter from '../components/SESDCFooter';
-
-import '../css/contact.css'; // adjust path to where your css actually is
+import '../css/contact.css'; 
 
 function Contact() {
   return (
@@ -17,7 +16,7 @@ function Contact() {
       </div>
 
       <main class="content-wrapper">
-        <div class="page-container">
+        <div class="contact-page-container">
           <form
             action="https://api.web3forms.com/submit"
             method="POST"
