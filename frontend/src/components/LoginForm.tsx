@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks';
-import { loginUser } from '../services/auth';
+import { loginUser } from '../utils/firebase/auth';
+
 
 interface LoginFormProps {
   isVisible: boolean;
@@ -22,13 +23,13 @@ export default function LoginForm({ isVisible, showRegister }: LoginFormProps) {
   }
 
   return (
-    <div class={`form-container ${isVisible ? 'visible' : 'hidden'}`}>
+    <div class={`login-form-container ${isVisible ? 'login-visible' : 'login-hidden'}`}>
       <h2>Login</h2>
 
       {message && <p class="message">{message}</p>}
 
       <form onSubmit={handleLogin}>
-        <div class="input-box">
+        <div class="login-input-box">
           <input
             type="email"
             placeholder="Email"
@@ -37,7 +38,7 @@ export default function LoginForm({ isVisible, showRegister }: LoginFormProps) {
           />
         </div>
 
-        <div class="input-box">
+        <div class="login-input-box">
           <input
             type="password"
             placeholder="Password"
@@ -46,7 +47,7 @@ export default function LoginForm({ isVisible, showRegister }: LoginFormProps) {
           />
         </div>
 
-        <button class="btn primary-btn" type="submit">Login</button>
+        <button class="login-btn login-primary-btn" type="submit">Login</button>
 
         <p class="toggle-text">
           Don't have an account?{' '}
