@@ -1,16 +1,62 @@
 import SESDCHeader from '../components/SESDCHeader';
 import SESDCFooter from '../components/SESDCFooter';
 
-import { useState } from 'preact/hooks';
-import '../css/account.css';
+import { useEffect, useState } from 'preact/hooks';
+import "../css/account.css";
 
 import { deleteAccount } from "../utils/deleteAccount";
-import { updateUserPassword, logoutUser } from "../utils/user";
+import {
+    updateUserPassword,
+    logoutUser,
+    getCurrentUserId,
+    getUserProfile,
+    updateUserMetadata,
+    getUserStats,
+    UserProfile,
+    UserMetadata,
+    UserStats
+} from "../utils/user";
+
 
 export default function Account() {
+    const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [metadata, setMetadata] = useState<UserMetadata | null>(null);
+    const [stats, setStats] = useState<UserStats | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [savingMetadata, setSavingMetadata] = useState(false);
+
     const [showUpdatePassword, setShowUpdatePassword] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [message, setMessage] = useState('');
+
+    useEffect(() => {
+        const uid = getCurrentUserId();
+        if (!uid) {
+            setMessage("You must be logged in to view your account.");
+            setLoading(false);
+            return;
+        }
+
+        (async () => {
+            try {
+            const [profileData, statsData] = await Promise.all([
+                getUserProfile(uid),
+                getUserStats(uid),
+            ]);
+
+            if (profileData) {
+                setProfile(profileData);
+                setMetadata(profileData.metadata);
+            }
+            setStats(statsData);
+            } catch (err) {
+            console.error(err);
+            setMessage("Failed to load account information.");
+            } finally {
+            setLoading(false);
+            }
+        })();
+    }, []);
 
     function toggleUpdatePassword() {
         setShowUpdatePassword(prev => !prev);
@@ -65,6 +111,31 @@ export default function Account() {
         window.location.href = "/login";
     }
 
+    function handleMetadataChange<K extends keyof UserMetadata>(
+        key: K,
+        value: UserMetadata[K]
+    ) {
+    if (!metadata) return;
+    setMetadata({ ...metadata, [key]: value });
+    }
+
+    async function handleSaveMetadata() {
+    const uid = getCurrentUserId();
+    if (!uid || !metadata) return;
+
+    try {
+        setSavingMetadata(true);
+        await updateUserMetadata(uid, metadata);
+        setMessage("Account preferences updated.");
+    } catch (err) {
+        console.error(err);
+        setMessage("Failed to update preferences.");
+    } finally {
+        setSavingMetadata(false);
+    }
+}
+
+
     return (
         <>
             <SESDCHeader />
@@ -79,6 +150,59 @@ export default function Account() {
                                 {message}
                             </div>
                         )}
+                        
+                        {loading ? (
+                            <p>Loading account information...</p>
+                        ) : (
+                        <>
+                        
+                        {profile && (
+                            <section class="account-section">
+                            <h2>Profile Details</h2>
+                            <p><strong>Name:</strong> {profile.displayName ?? "N/A"}</p>
+                            <p><strong>Email:</strong> {profile.email ?? "N/A"}</p>
+                            </section>
+                        )}
+
+                        {metadata && (
+                            <section class="account-section">
+                            <h2>Account Preferences</h2>
+
+                            <label class="toggle-row">
+                                <span>Email updates</span>
+                                <input
+                                type="checkbox"
+                                checked={metadata.emailUpdates}
+                                onChange={(e) =>
+                                    handleMetadataChange(
+                                    "emailUpdates",
+                                    (e.currentTarget as HTMLInputElement).checked
+                                    )
+                                }
+                                />
+                            </label>
+
+                            <button
+                                class="btn primary-btn"
+                                type="button"
+                                onClick={handleSaveMetadata}
+                                disabled={savingMetadata}
+                            >
+                                {savingMetadata ? "Saving..." : "Save Preferences"}
+                            </button>
+                            </section>
+                        )}
+
+                        {stats && (
+                            <section class="account-section">
+                            <h2>Insights &amp; Analytics</h2>
+                            <p><strong>Projects owned:</strong> {stats.projectCount}</p>
+                            </section>
+                        )}
+                        </>
+                    )}
+
+
 
                         <div class="button-group">
                             <button class="btn secondary-btn" type="button" onClick={toggleUpdatePassword}>
