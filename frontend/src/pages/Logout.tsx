@@ -5,7 +5,7 @@ import { getAuth, signOut } from "firebase/auth";
 import SESDCHeader from '../components/SESDCHeader';
 import SESDCFooter from '../components/SESDCFooter';
 
-import '../css/new-login.css'; // optional if you want the same fonts/style
+import '../css/Login.css'; // optional if you want the same fonts/style
 
 export default function Logout() {
 

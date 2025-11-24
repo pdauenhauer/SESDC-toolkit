@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import { registerUser } from '../services/auth';
+import { registerUser } from '../utils/firebase/auth';
 
 interface RegisterFormProps {
   isVisible: boolean;
@@ -27,13 +27,13 @@ export default function RegisterForm({ isVisible, showLogin }: RegisterFormProps
   
 
   return (
-    <div class={`form-container ${isVisible ? 'visible' : 'hidden'}`}>
+    <div class={`login-form-container ${isVisible ? 'login-visible' : 'login-hidden'}`}>
       <h2>Create Account</h2>
 
       {message && <p class="message">{message}</p>}
 
       <form onSubmit={handleRegister}>
-        <div class="input-box">
+        <div class="login-input-box">
           <input
             type="text"
             placeholder="Username"
@@ -42,7 +42,7 @@ export default function RegisterForm({ isVisible, showLogin }: RegisterFormProps
           />
         </div>
 
-        <div class="input-box">
+        <div class="login-input-box">
           <input
             type="email"
             placeholder="Email"
@@ -51,7 +51,7 @@ export default function RegisterForm({ isVisible, showLogin }: RegisterFormProps
           />
         </div>
 
-        <div class="input-box">
+        <div class="login-input-box">
           <input
             type="password"
             placeholder="Password"
@@ -60,7 +60,7 @@ export default function RegisterForm({ isVisible, showLogin }: RegisterFormProps
           />
         </div>
 
-        <button class="btn primary-btn" type="submit">Register</button>
+        <button class="login-btn login-primary-btn" type="submit">Register</button>
 
         <p class="toggle-text">
           Already have an account?{' '}
