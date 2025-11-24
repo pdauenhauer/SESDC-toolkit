@@ -1,9 +1,23 @@
 import white_logo from '../media/Logo-white.svg'
+import { useState, useEffect } from 'preact/hooks'
+
+import { auth } from '../utils/firebase/firebase-init';
+import { onAuthStateChanged, User } from 'firebase/auth';
 
 function SESDCHeader() {
-    const isActive = (path: string): string => {
-        return window.location.pathname === path ? 'active' : ''
-    }
+    const [user, setUser] = useState<User | null>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const isActive = (path: string): string =>
+        window.location.pathname === path ? 'active' : '';
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
+            setIsLoading(false);
+        });
+        return () => unsubscribe();
+    }, []);
+
     return (
         <nav>
             <input type="checkbox" id="check" />
@@ -18,7 +32,7 @@ function SESDCHeader() {
 
             <div class="nav-links">
                 {/* add authentication logic */}
-                {true ? (
+                {!isLoading && user ? (
                     <>
                         <li><a className={isActive('/')} href="/">Home</a></li>
                         <li><a className={isActive('/projects')} href="/projects">Projects</a></li>
@@ -26,7 +40,7 @@ function SESDCHeader() {
                         <li><a className={isActive('/contact')} href="/contact">Contact</a></li>
                         <li><a className={isActive('/account')} href="/account">Account</a></li>
                         <li><a className={isActive('/guide')} href="/guide">User Guide</a></li>
-                        <li><a className={isActive('/logout')} href="/login">Logout</a></li>
+                        <li><a className={isActive('/logout')} href="/logout">Logout</a></li>
                     </>
                 ) : (
                     <>

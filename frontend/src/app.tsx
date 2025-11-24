@@ -5,9 +5,10 @@ import Contact from './pages/Contact'
 import Account from './pages/Account'
 import UserGuide from './pages/UserGuide'
 import Login from './pages/Login'
-import '../src/css/SESDCFooter.css';
-import '../src/css/SESDCHeader.css';
-import './app.css';
+import Logout from './pages/Logout'
+import '../src/css/SESDCFooter.css'
+import '../src/css/SESDCHeader.css'
+import './app.css'
 
 export function App() {
   return (
@@ -20,6 +21,7 @@ export function App() {
           <Route path="/account" component={Account}/>
           <Route path="/guide" component={UserGuide}/>
           <Route path="/login" component={Login}/>
+          <Route path="/logout" component={Logout}/>
         </Router>
       </ErrorBoundary>
     </LocationProvider>

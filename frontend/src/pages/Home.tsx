@@ -4,8 +4,8 @@ import SESDCFooter from "../components/SESDCFooter";
 import graph from '../media/graph.png';
 import '../css/homepage.css';
 
-//added home to everything
-const Home: FunctionalComponent = () => {
+
+function Home () {
   return (
     <div class="min-h-screen flex flex-col">
     
