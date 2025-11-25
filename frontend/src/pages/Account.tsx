@@ -183,7 +183,7 @@ export default function Account() {
                             </label>
 
                             <button
-                                class="btn primary-btn"
+                                class="account-btn account-primary-btn"
                                 type="button"
                                 onClick={handleSaveMetadata}
                                 disabled={savingMetadata}
