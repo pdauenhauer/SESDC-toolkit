@@ -1,4 +1,3 @@
-import { FunctionalComponent } from "preact";
 import SESDCHeader from "../components/SESDCHeader";
 import SESDCFooter from "../components/SESDCFooter";
 import graph from '../media/graph.png';
