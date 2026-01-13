@@ -4,6 +4,7 @@ import SESDCFooter from '../components/SESDCFooter';
 import { useEffect, useState } from 'preact/hooks';
 import "../css/account.css";
 
+import placeholder_user from '../media/placeholder_user.png';
 import { deleteAccount } from "../utils/firebase/auth";
 import {
     updateUserPassword,
@@ -154,7 +155,9 @@ return (
           {/* PROFILE CARD */}
           <aside class="account-profile-card">
             <div class="account-profile-row">
-              <div class="account-avatar"></div>
+              <div class="account-avatar">
+                <img src={placeholder_user} class="account-avatar" alt="User Avatar" />
+              </div>
               <div>
                 <div class="account-name">{profile?.displayName ?? "User"}</div>
                 <div class="account-email">{profile?.email}</div>
