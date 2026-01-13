@@ -4,7 +4,7 @@ import SESDCFooter from '../components/SESDCFooter';
 import { useEffect, useState } from 'preact/hooks';
 import "../css/account.css";
 
-import { deleteAccount } from "../utils/deleteAccount";
+import { deleteAccount } from "../utils/firebase/auth";
 import {
     updateUserPassword,
     logoutUser,
