@@ -1,4 +1,4 @@
-import { auth, db } from './firebase-init.ts';
+import { auth, db, storage } from './firebase-init.ts';
 import { createFolder } from './storage.ts';
 import {
     createUserWithEmailAndPassword,
