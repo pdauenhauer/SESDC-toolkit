@@ -106,7 +106,19 @@ function ProjectsList() {
                 </button>
             </div>
 
-            {showNewProjectModal && <NewProjectModal />}
+            {showNewProjectModal && (
+                <NewProjectModal 
+                    onClose={() => setShowNewProjectModal(false)}
+                    onProjectCreated={async () => {
+                        // Refresh projects list after creating a new one
+                        const user = auth.currentUser;
+                        if (user) {
+                            const userProjects = await listProjects(user.uid);
+                            setProjects(userProjects);
+                        }
+                    }}
+                />
+            )}
         </aside>
     );
 }
