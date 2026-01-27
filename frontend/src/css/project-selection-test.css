@@ -1,3 +1,5 @@
+/*
+
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
@@ -29,6 +31,7 @@ body {
 }
 
 /* Navigation styles */
+/*
 nav {
   background: var(--gradient-bg);
   height: 80px;
@@ -106,6 +109,7 @@ a.active {
 }
 
 /* Logo container */
+/*
 .logo-container {
   padding-top: 100px;
   margin-bottom: 20px;
@@ -128,6 +132,7 @@ a.active {
 }
 
 /* Header styles */
+/*
 .header {
   background: var(--green-main);
   color: var(--white-main);
@@ -144,6 +149,7 @@ a.active {
 }
 
 /* Main content */
+/*
 .main-content {
   max-width: 1200px;
   margin: 2rem auto;
@@ -176,6 +182,7 @@ a.active {
 }
 
 /* Project grid and cards */
+/*
 .projects-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -223,6 +230,7 @@ a.active {
 }
 
 /* Project action buttons */
+/*
 .share-project-button {
   background: none;
   border: none;
@@ -280,6 +288,7 @@ a.active {
 }
 
 /* MODAL STYLES - Fixed and Complete */
+/*
 .modal {
   display: none;
   position: fixed;
@@ -336,6 +345,7 @@ a.active {
 }
 
 /* Form styles */
+/*
 .form-group {
   margin: 20px 0;
   margin-bottom: 1rem;
@@ -389,6 +399,7 @@ a.active {
 }
 
 /* Button styles */
+/*
 .submit-btn {
   background: var(--green-main);
   color: var(--white-main);
@@ -466,6 +477,7 @@ a.active {
 }
 
 /* Share project modal specific styles */
+/*
 .form-wrapper {
   display: flex;
   width: 200%;
@@ -572,6 +584,7 @@ a.active {
 }
 
 /* Modal delete confirmation */
+/*
 .modal-buttons {
   display: flex;
   justify-content: space-between;
@@ -602,6 +615,7 @@ a.active {
 }
 
 /* Section headers */
+/*
 .input-section-header {
   font-size: 20px;
   font-weight: 600;
@@ -609,6 +623,7 @@ a.active {
 }
 
 /* Additional input styles */
+/*
 #drop-area {
   border: 2px dashed var(--white-main);
   border-radius: 20px;
@@ -748,6 +763,7 @@ a.active {
 }
 
 /* Footer */
+/*
 .footer {
   flex-shrink: 0;
   background-color: var(--green-start);
@@ -818,9 +834,11 @@ a.active {
 }
 
 /* === Project Settings Styles === */
+/*
 .settings-sections {
     /* Removed max-height and overflow-y */
     /* Removed padding-right */
+    /*
 }
 
 .settings-section {
@@ -850,6 +868,7 @@ a.active {
 }
 
 /* Enhanced Form Groups for Settings */
+/*
 .settings-section .form-group {
     background: var(--white-main);
     border: 1px solid #e0e0e0;
@@ -899,6 +918,7 @@ a.active {
 }
 
 /* Settings Actions */
+/*
 .settings-actions {
     display: flex;
     justify-content: space-between;
@@ -949,6 +969,7 @@ a.active {
 }
 
 /* === Animation for Content Switching === */
+/*
 #projectInputsContent,
 #projectSettingsContent {
     animation: fadeIn 0.3s ease-in-out;
@@ -966,12 +987,16 @@ a.active {
 }
 
 /* === Enhanced Modal Content === */
+/*
 .modal-content {
     max-width: 900px; /* Increased for settings */
+    /*
     max-height: 90%; /* Increased to accommodate settings without scrolling */
+    /*
 }
 
 /* === Responsive Design === */
+/*
 @media (max-width: 768px) {
     .modal-header-buttons {
         gap: 5px;
@@ -1020,6 +1045,7 @@ a.active {
 /* Removed scrollbar styles since settings sections are no longer scrollable */
 
 /* === Input Validation Styles === */
+/*
 .settings-section .form-group input.invalid {
     border-color: #dc3545;
     background-color: #fff5f5;
@@ -1131,6 +1157,7 @@ a.active {
 }
 
 /* Input state indicators */
+/*
 .input-wrapper input.auto-calculated {
     background-color: #e8f5e8;
     border-color: #28a745;
@@ -1169,6 +1196,7 @@ a.active {
 }
 
 /* Responsive design for dual inputs */
+/*
 @media (max-width: 768px) {
     .dual-input-container {
         grid-template-columns: 1fr;
@@ -1177,6 +1205,7 @@ a.active {
 }
 
 /* Animation for auto-calculated values */
+/*
 @keyframes highlightCalculation {
     0% { transform: scale(1); }
     50% { transform: scale(1.02); }
@@ -1188,6 +1217,7 @@ a.active {
 }
 
 /* Visual indicators for connection between inputs */
+/*
 .dual-input-container::before {
     content: '';
     position: absolute;
