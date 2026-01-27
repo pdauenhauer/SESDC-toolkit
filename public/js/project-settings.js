@@ -1,5 +1,5 @@
 import { app } from './firebase-init.js';
-import { getFirestore, doc, updateDoc, getDoc } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+import { getFirestore, doc, updateDoc, getDoc,serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
 const db = getFirestore(app);
 
@@ -180,7 +180,7 @@ class ProjectSettings {
             // Save settings under a 'projectSettings' field
             await updateDoc(projectRef, {
                 projectSettings: this.currentSettings,
-                lastModified: new Date().toISOString()
+                updatedAt: serverTimestamp()
             });
 
             console.log('Settings saved to Firebase successfully');
@@ -371,23 +371,7 @@ class ProjectSettings {
         await this.loadFromFirebase(projectId);
     }
 
-    // Legacy method for backward compatibility
-    loadFromLocalStorage(projectId) {
-        this.currentProjectId = projectId;
-        const storageKey = `projectSettings_${projectId}`;
-        const savedSettings = localStorage.getItem(storageKey);
-        
-        if (savedSettings) {
-            try {
-                this.currentSettings = { ...this.defaultSettings, ...JSON.parse(savedSettings) };
-            } catch (error) {
-                console.error('Error loading saved settings:', error);
-                this.currentSettings = { ...this.defaultSettings };
-            }
-        } else {
-            this.currentSettings = { ...this.defaultSettings };
-        }
-    }
+  
 }
 
 // Initialize the project settings when DOM is loaded

@@ -17,6 +17,12 @@ var app;
 var storage: FirebaseStorage;
 
 if (getApps().length === 0) {
+    //will log in the dev console if you have a valid api key from env file 
+        console.log("Firebase env check:", {
+            apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+            projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+        });
+      
     app = initializeApp(firebaseConfig);
     storage = getStorage(app);
 } else {
