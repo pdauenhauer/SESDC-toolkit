@@ -4,7 +4,8 @@ import SESDCFooter from '../components/SESDCFooter';
 import { useEffect, useState } from 'preact/hooks';
 import "../css/account.css";
 
-import { deleteAccount } from "../utils/deleteAccount";
+import placeholder_user from '../media/placeholder_user.png';
+import { deleteAccount } from "../utils/firebase/auth";
 import {
     updateUserPassword,
     logoutUser,
@@ -136,125 +137,143 @@ export default function Account() {
 }
 
 
-    return (
-        <>
-            <SESDCHeader />
-
-            <div class="account-main-content">
-                <div class="account-wrapper">
-                    <div id="accountManagement" class="account-form-container visible">
-                        <h1 class="account-heading">Account Management</h1>
-
-                        {message && (
-                            <div id="account-management-message" class="account-messageDiv" style="display: block;">
-                                {message}
-                            </div>
-                        )}
-                        
-                        {loading ? (
-                            <p>Loading account information...</p>
-                        ) : (
-                        <>
-                        
-                        {profile && (
-                            <section class="account-section">
-                            <h2>Profile Details</h2>
-                            <p><strong>Name:</strong> {profile.displayName ?? "N/A"}</p>
-                            <p><strong>Email:</strong> {profile.email ?? "N/A"}</p>
-                            </section>
-                        )}
-
-                        {metadata && (
-                            <section class="account-section">
-                            <h2>Account Preferences</h2>
-
-                            <label class="toggle-row">
-                                <span>Email updates</span>
-                                <input
-                                type="checkbox"
-                                checked={metadata.emailUpdates}
-                                onChange={(e) =>
-                                    handleMetadataChange(
-                                    "emailUpdates",
-                                    (e.currentTarget as HTMLInputElement).checked
-                                    )
-                                }
-                                />
-                            </label>
-
-                            <button
-                                class="account-btn account-primary-btn"
-                                type="button"
-                                onClick={handleSaveMetadata}
-                                disabled={savingMetadata}
-                            >
-                                {savingMetadata ? "Saving..." : "Save Preferences"}
-                            </button>
-                            </section>
-                        )}
-
-                        {stats && (
-                            <section class="account-section">
-                            <h2>Insights &amp; Analytics</h2>
-                            <p><strong>Projects owned:</strong> {stats.projectCount}</p>
-                            </section>
-                        )}
-                        </>
-                    )}
-
-
-
-                        <div class="account-button-group">
-                            <button id="updatePasswordBtn" class="account-btn account-secondary-btn" type="button" onClick={toggleUpdatePassword}>
-                                {showUpdatePassword ? 'Hide Password Form' : 'Update Password'}
-                            </button>
-
-                            {showUpdatePassword && (
-                                <div id="account-updatePasswordSection">
-                                    <div class="account-input-box">
-                                        <input id="newPassword" type="password" placeholder="Enter new password" required />
-                                    </div>
-                                    <div class="account-confirmation-buttons">
-                                        <button id="confirmUpdatePasswordBtn" class="account-btn account-secondary-btn" type="button" onClick={handleConfirmPasswordUpdate}>
-                                            Confirm Update
-                                        </button>
-                                        <button id="cancelUpdatePasswordBtn" class="account-btn account-secondary-btn" type="button" onClick={handleCancelPasswordUpdate}>
-                                            Cancel
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-
-                            <button id="deleteAccountBtn" class="account-btn account-danger-btn" type="button" onClick={toggleDelete}>
-                                {showDeleteConfirm ? 'Hide Delete Form' : 'Delete Account'}
-                            </button>
-
-                            <button id="goToLoginBtn" class="account-btn account-primary-btn" type="button" onClick={handleGoToLogin}>
-                                Go to Login
-                            </button>
-                        </div>
-
-                        {showDeleteConfirm && (
-                            <div id="account-deleteConfirmation">
-                                <p>Are you sure you want to delete your account? This action cannot be undone.</p>
-                                <div class="account-input-box">
-                                    <input id="deletePassword" type="password" placeholder="Enter your password to confirm" required />
-                                </div>
-                                <div class="account-confirmation-buttons">
-                                    <button id="confirmDeleteBtn" class="account-btn account-danger-btn" type="button" onClick={handleConfirmDelete}>
-                                        Confirm Delete
-                                    </button>
-                                    <button id="cancelDeleteBtn" class="account-btn account-secondary-btn" type="button" onClick={handleCancelDelete}>
-                                        Cancel
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
+return (
+    <>
+      <SESDCHeader />
+  
+      <main class="account-page">
+        {/* HERO */}
+        <section class="account-hero">
+          <div class="account-hero-content">
+            <h1>Account Management</h1>
+            <p>Manage your account and preferences.</p>
+          </div>
+        </section>
+  
+        {/* CONTENT */}
+        <section class="account-layout">
+          {/* PROFILE CARD */}
+          <aside class="account-profile-card">
+            <div class="account-profile-row">
+              <div class="account-avatar">
+                <img src={placeholder_user} class="account-avatar" alt="User Avatar" />
+              </div>
+              <div>
+                <div class="account-name">{profile?.displayName ?? "User"}</div>
+                <div class="account-email">{profile?.email}</div>
+              </div>
             </div>
-
-            <SESDCFooter />
-        </>
-    );
+          </aside>
+  
+          {/* MAIN PANEL */}
+          <div class="account-panel">
+            <h2>Account Management</h2>
+  
+            {message && (
+              <div class="account-messageDiv">{message}</div>
+            )}
+  
+            {loading ? (
+              <p>Loading account information...</p>
+            ) : (
+              <>
+                {profile && (
+                  <section class="account-section">
+                    <h3>Profile Details</h3>
+                    <p><strong>Name:</strong> {profile.displayName ?? "N/A"}</p>
+                    <p><strong>Email:</strong> {profile.email ?? "N/A"}</p>
+                  </section>
+                )}
+  
+                {metadata && (
+                  <section class="account-section">
+                    <h3>Account Preferences</h3>
+  
+                    <label class="account-toggle-row">
+                      <span>Email updates</span>
+                      <input
+                        type="checkbox"
+                        checked={metadata.emailUpdates}
+                        onChange={(e) =>
+                          handleMetadataChange(
+                            "emailUpdates",
+                            (e.currentTarget as HTMLInputElement).checked
+                          )
+                        }
+                      />
+                    </label>
+  
+                    <button
+                      class="account-primary-btn"
+                      onClick={handleSaveMetadata}
+                      disabled={savingMetadata}
+                    >
+                      {savingMetadata ? "Saving..." : "Save Preferences"}
+                    </button>
+                  </section>
+                )}
+  
+                {stats && (
+                  <section class="account-section">
+                    <h3>Insights & Analytics</h3>
+                    <p><strong>Projects owned:</strong> {stats.projectCount}</p>
+                  </section>
+                )}
+              </>
+            )}
+  
+            {/* ACTIONS */}
+            <div class="account-actions">
+                {!showUpdatePassword && (
+                    <button
+                        class="account-secondary-btn"
+                        onClick={toggleUpdatePassword}
+                    >
+                        Update Password
+                    </button>
+                )}
+              {showUpdatePassword && (
+                <div class="account-inline-form">
+                  <input id="newPassword" type="password" placeholder="New password" />
+                  <div class="account-inline-actions">
+                    <button class="account-secondary-btn" onClick={handleConfirmPasswordUpdate}>
+                      Confirm
+                    </button>
+                    <button class="account-secondary-btn" onClick={handleCancelPasswordUpdate}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+  
+              <button class="account-danger-btn" onClick={toggleDelete}>
+                {showDeleteConfirm ? "Hide Delete Form" : "Delete Account"}
+              </button>
+  
+              <button class="account-primary-btn" onClick={handleGoToLogin}>
+                Sign Out
+              </button>
+            </div>
+  
+            {showDeleteConfirm && (
+              <div class="account-delete-box">
+                <p>This action cannot be undone.</p>
+                <input id="deletePassword" type="password" placeholder="Confirm password" />
+                <div class="account-inline-actions">
+                  <button class="account-danger-btn" onClick={handleConfirmDelete}>
+                    Confirm Delete
+                  </button>
+                  <button class="account-secondary-btn" onClick={handleCancelDelete}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      </main>
+  
+      <SESDCFooter />
+    </>
+  );  
 }
