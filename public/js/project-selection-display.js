@@ -1,5 +1,5 @@
 import { app, storage } from './firebase-init.js'
-import { onSnapshot, getFirestore, getDoc, deleteDoc, doc, increment, setDoc, arrayUnion, arrayRemove, collection, updateDoc, where, query, getDocs, writeBatch } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+import { onSnapshot, getFirestore, getDoc, deleteDoc, doc, increment, setDoc, arrayUnion, arrayRemove, collection, updateDoc, where, query, getDocs, writeBatch, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 import { ref, deleteObject, uploadBytes, uploadString, listAll, getDownloadURL} from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js';
 
 const db = getFirestore(app);
@@ -110,7 +110,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         redirectButton.style.display = 'block';
 
         await updateDoc(projectRef, {
-            simulationRan: true
+            simulationRan: true,
+            updatedAt: serverTimestamp()
         });
 
         submitBtn.textContent = originalText;
@@ -121,8 +122,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     })
 });
 
-let projects = [,
-];
+let projects = [,];
 
 document.getElementById('add-project').addEventListener('click', () => {
     openModal();
@@ -156,7 +156,8 @@ document.getElementById('addProjectForm').addEventListener('submit', async (even
     const newProject = {
         name,
         description,
-        created: new Date().toISOString().split('T')[0],
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
         id: projectId,
         isShared: false,
         projectOwner: userId,
@@ -184,6 +185,14 @@ document.getElementById('addProjectForm').addEventListener('submit', async (even
     closeModal();
     event.target.reset();
 })
+
+//make the timestamp correct format for display
+function formatTimestamp(ts) {
+    if (!ts) return "";
+    // Firestore Timestamp objects have toDate()
+    const d = typeof ts.toDate === "function" ? ts.toDate() : new Date(ts);
+    return d.toISOString().split("T")[0];
+  }
 
 function renderProjects() {
     const grid = document.getElementById('projectsGrid');
@@ -214,7 +223,8 @@ function renderProjects() {
                 </div>
                 <p>${project.description}</p>
                 <div class="project-meta">
-                    <span>Created: ${project.created}</span>
+                <span>Created: ${formatTimestamp(project.createdAt)}</span>
+
                 </div>
                 <div class="simulation-btn">
                     ${showSimulationButton ? `
@@ -252,7 +262,8 @@ async function loadProjects() {
                     id: projectId,
                     name: data.name,
                     description: data.description,
-                    created: data.created,
+                    createdAt: data.createdAt,   
+                    updatedAt: data.updatedAt,
                     isShared: data.isShared || false,
                     projectOwner: data.projectOwner || userId,
                     projectEditors: data.projectEditors || [],
@@ -902,7 +913,7 @@ document.getElementById('save-manual-inputs').addEventListener('click', async (e
             loadInputs,
             projectSettings: projectSettings.currentSettings,
             addedLocationData: true, 
-            lastModified: new Date().toISOString()
+            updatedAt: serverTimestamp()
         });
 
         alert('All manual inputs have been saved successfully!');
