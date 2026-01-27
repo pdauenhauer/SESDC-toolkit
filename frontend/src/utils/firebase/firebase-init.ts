@@ -3,17 +3,14 @@ import { FirebaseStorage, getStorage } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-// definitely move to a .env, but previous iteration had it in the open,
-// so it might be ok for now, but
-// note for maintainence: might be a good idea to get a new firebase configuration
-// if your repository has a lot of traction
+// see .env
 const firebaseConfig = {
-    apiKey: "AIzaSyDa0W1i5K_3tnh26xUpO9xTEIQDeHgpnrA",
-    authDomain: "sesdc-toolkit2.firebaseapp.com",
-    projectId: "sesdc-toolkit2",
-    storageBucket: "sesdc-toolkit2.firebasestorage.app",
-    messagingSenderId: "987889774022",
-    appId: "1:987889774022:web:a36f983b38c8d558c4d6c7"    
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID   
 };
 
 var app;
