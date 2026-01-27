@@ -15,7 +15,7 @@ import {
   type DocumentData,
 } from "firebase/firestore";
 
-import type { UserDoc, ProjectConfigDoc } from "./types";
+import type { User, Project } from "./models/metadata";
 
 //import env data
 const firebaseConfig = {
@@ -35,10 +35,10 @@ const projectRef = (uid: string, projectId: string) => doc(db, "users", uid, "pr
 //user 
 export async function getUser(uid: string) {
   const snap = await getDoc(userRef(uid));
-  return snap.exists() ? ({ id: snap.id, ...(snap.data() as UserDoc) }) : null;
+  return snap.exists() ? ({ ...(snap.data() as User) }) : null;
 }
 
-export async function upsertUser(uid: string, data: Partial<UserDoc>) {
+export async function upsertUser(uid: string, data: Partial<User>) {
   //merge keeps existing fields
   await setDoc(
     userRef(uid),
@@ -50,7 +50,7 @@ export async function upsertUser(uid: string, data: Partial<UserDoc>) {
 }
 
 //projects 
-export async function createProject(uid: string, data: Omit<Partial<ProjectConfigDoc>, "createdAt" | "updatedAt">) {
+export async function createProject(uid: string, data: Omit<Partial<Project>, "createdAt" | "updatedAt">) {
   const docRef = await addDoc(projectsCol(uid), {
     ...data,
     createdAt: serverTimestamp(),
@@ -61,17 +61,17 @@ export async function createProject(uid: string, data: Omit<Partial<ProjectConfi
 
 export async function getProject(uid: string, projectId: string) {
   const snap = await getDoc(projectRef(uid, projectId));
-  return snap.exists() ? ({ id: snap.id, ...(snap.data() as ProjectConfigDoc) }) : null;
+  return snap.exists() ? ({ ...(snap.data() as Project) }) : null;
 }
 
 export async function listProjects(uid: string, max = 50) {
   // orderBy requires createdAt/updatedAt to be Timestamp (serverTimestamp is fine)
   const q = query(projectsCol(uid), orderBy("updatedAt", "desc"));
   const snaps = await getDocs(q);
-  return snaps.docs.map((d) => ({ id: d.id, ...(d.data() as ProjectConfigDoc) }));
+  return snaps.docs.map((d) => ({ ...(d.data() as Project) }));
 }
 
-export async function updateProject(uid: string, projectId: string, patch: Partial<ProjectConfigDoc>) {
+export async function updateProject(uid: string, projectId: string, patch: Partial<Project>) {
   await updateDoc(projectRef(uid, projectId), {
     ...patch,
     updatedAt: serverTimestamp(),

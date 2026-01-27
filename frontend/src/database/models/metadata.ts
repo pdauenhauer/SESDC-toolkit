@@ -1,24 +1,17 @@
 import type { Timestamp } from "firebase/firestore";
+import type { BatteryInputs } from "./inputs";
 
-export type UserDoc = {
+export type User = {
+  id: string;
   email: string;
   username: string;
-  numprojects?: number;
   projectids?: string[];
 };
 
-export type BatteryInputs = {
-  batteryType: string;
-  capex: number;
-  chargeCapacity: number;
-  lifespan: number;
-  maximumStorage: number;
-  opex: number;
-  replacement: number;
-  usingBattery: boolean;
-};
-
-export type ProjectConfigDoc = {
+export type Project = {
+  id: string;
+  name: string;
+  ownerId: string;
   description?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
