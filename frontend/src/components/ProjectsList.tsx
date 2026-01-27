@@ -1,9 +1,49 @@
 import type { Project } from "../database/models/metadata";
 import { useState, useEffect } from "preact/hooks";
+import { Timestamp } from "firebase/firestore";
 import { listProjects } from "../database/firestore";
 import { auth } from "../utils/firebase/firebase-init";
 import { onAuthStateChanged } from "firebase/auth";
 import NewProjectModal from "./NewProjectModal";
+
+// Set to true to use hardcoded dummy projects instead of fetching from DB
+const USE_DUMMY_DATA = false;
+
+// Hardcoded dummy projects for testing
+const dummyProjects: Project[] = [
+    {
+        id: "1",
+        name: "Solar Farm Project",
+        ownerId: "user1",
+        description: "Large-scale solar installation",
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+    },
+    {
+        id: "2",
+        name: "Microgrid Design Alpha",
+        ownerId: "user1",
+        description: "Community microgrid system",
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+    },
+    {
+        id: "3",
+        name: "Rural Energy System",
+        ownerId: "user1",
+        description: "Off-grid renewable energy solution",
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+    },
+    {
+        id: "4",
+        name: "Hybrid Solar-Wind",
+        ownerId: "user1",
+        description: "Combined renewable energy project",
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+    },
+];
 
 function ProjectsList() {
     const [projects, setProjects] = useState<Project[]>([]);
@@ -11,6 +51,13 @@ function ProjectsList() {
     const [showNewProjectModal, setShowNewProjectModal] = useState(false);
 
     useEffect(() => {
+        // Use dummy data for testing
+        if (USE_DUMMY_DATA) {
+            setProjects(dummyProjects);
+            setLoading(false);
+            return;
+        }
+
         // Listen for auth state changes
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
