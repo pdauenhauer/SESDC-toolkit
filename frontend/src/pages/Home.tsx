@@ -46,7 +46,6 @@ function Home () {
           </button>
         </section>
       </main>
-      <ProjectsList />
       <SESDCFooter />
     </div>
   );
