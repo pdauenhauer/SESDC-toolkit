@@ -1,3 +1,5 @@
+/*
+
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
@@ -49,6 +51,7 @@ body {
 }
 
 /* navbar */
+/*
 nav {
   background: var(--gradient-bg);
   height: 80px;
@@ -157,6 +160,7 @@ a.active {
   }
 }
 /* end navbar code */
+/*
 .header {
     background: #008000;
     color: white;
@@ -168,6 +172,7 @@ a.active {
 }
 
 /* --- Footer --- */
+/*
 
 .footer {
   flex-shrink: 0;
@@ -212,4 +217,4 @@ text-decoration: underline;
 .footer-bottom {
 font-size: 0.9rem;
 color: #ccc;
-}
+}*/
