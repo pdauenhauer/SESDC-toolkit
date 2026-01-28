@@ -9,6 +9,7 @@ import Logout from './pages/Logout'
 import '../src/css/SESDCFooter.css'
 import '../src/css/SESDCHeader.css'
 import './app.css'
+import ProjectsPage from './pages/ProjectsPage';
 
 export function App() {
   return (
@@ -16,6 +17,7 @@ export function App() {
       <ErrorBoundary onError={e => alert(e)}> 
         <Router>
           <Route path="/" component={Home}/>
+          <Route path="/projects" component={ProjectsPage} />
           <Route path="/about" component={About}/>
           <Route path="/contact" component={Contact}/>
           <Route path="/account" component={Account}/>
