@@ -2,6 +2,9 @@ import { useState, useEffect } from "preact/hooks";
 import { Timestamp } from "firebase/firestore";
 import SESDCHeader from "../components/SESDCHeader";
 import ProjectsList from "../components/ProjectsList";
+import ProjectCraftArea, { type CraftTabId } from "../components/ProjectCraftArea";
+import type { Load } from "../database/models/load";
+import { createNewLoad } from "../utils/loadUtils";
 import { listProjects } from "../database/firestore";
 import { auth } from "../utils/firebase/firebase-init";
 import { onAuthStateChanged } from "firebase/auth";
@@ -51,7 +54,13 @@ export default function Projects() {
   const [activeProjectId, setActiveProjectId] = useState<string>("1");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeCraftTab, setActiveCraftTab] = useState<CraftTabId>("workbench");
+  const [workbenchLoads, setWorkbenchLoads] = useState<Load[]>([]);
   const HEADER_H = 80;
+
+  const handleAddComponent = () => {
+    setWorkbenchLoads((prev) => [...prev, createNewLoad(`Load ${prev.length + 1}`)]);
+  };
 
   // Fetch projects
   useEffect(() => {
@@ -109,14 +118,16 @@ export default function Projects() {
           {/*Cross bar*/}
           <div class="projects-toolbar">
             <div class="projects-toolbar-row">
-              <button
-                type="button"
-                class="projects-btn projects-btn-add"
-                onClick={() => console.log("Add new Component")}
-              >
-                <span class="projects-btn-plus">＋</span>
-                Add new Component
-              </button>
+              {activeCraftTab === "workbench" && (
+                <button
+                  type="button"
+                  class="projects-btn projects-btn-add"
+                  onClick={handleAddComponent}
+                >
+                  <span class="projects-btn-plus">＋</span>
+                  Add new Component
+                </button>
+              )}
 
               <div class="projects-currentLoad">
                 Current Total Load: <span class="projects-currentLoad-strong">   </span>
@@ -136,7 +147,14 @@ export default function Projects() {
           </div>
 
           {/* Workspace */}
-          <main class="projects-workspace" />
+          <main class="projects-workspace">
+            <ProjectCraftArea
+              activeTab={activeCraftTab}
+              onTabChange={setActiveCraftTab}
+              workbenchLoads={workbenchLoads}
+              setWorkbenchLoads={setWorkbenchLoads}
+            />
+          </main>
         </section>
       </div>
     </div>
