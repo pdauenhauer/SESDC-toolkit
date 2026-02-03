@@ -1,4 +1,4 @@
-import { useState } from "preact/hooks";
+import { useState, useEffect, useRef } from "preact/hooks";
 import type { Load } from "../database/models/load";
 import { LOAD_LABELS, getLoadLabelById } from "../data/loadLabels";
 
@@ -41,9 +41,44 @@ export default function Load({
   onDrop,
 }: LoadProps) {
   const [editingName, setEditingName] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [draftProfile, setDraftProfile] = useState<number[]>(load.profile);
+  const menuRef = useRef<HTMLDivElement>(null);
+
   const label = getLoadLabelById(load.labelId);
   const canNest = label?.canNest ?? false;
   const maxProfile = Math.max(...load.profile, 1);
+
+  // Keep draft in sync when opening menu
+  useEffect(() => {
+    if (menuOpen) setDraftProfile([...load.profile]);
+  }, [menuOpen, load.profile]);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+        onUpdate({ profile: draftProfile });
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [menuOpen, draftProfile]);
+
+  const handleProfileHourChange = (hourIndex: number, value: number) => {
+    setDraftProfile((prev) => {
+      const next = [...prev];
+      next[hourIndex] = Math.max(0, value);
+      return next;
+    });
+  };
+
+  const handleSaveProfile = () => {
+    onUpdate({ profile: draftProfile });
+    setMenuOpen(false);
+  };
 
   const cardClass = [
     "load-card",
@@ -116,14 +151,68 @@ export default function Load({
         </div>
       </div>
 
-      <button
-        type="button"
-        class="load-card-remove"
-        onClick={onRemove}
-        aria-label="Remove load"
-      >
-        ×
-      </button>
+      <div class="load-card-actions">
+        <button
+          type="button"
+          class="load-card-menu-btn"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setMenuOpen((open) => !open);
+          }}
+          aria-label="Edit 24h profile"
+          aria-expanded={menuOpen}
+        >
+          <i class="bx bx-pencil" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          class="load-card-remove"
+          onClick={onRemove}
+          aria-label="Remove load"
+        >
+          ×
+        </button>
+      </div>
+
+      {/* 24h profile editor popover */}
+      {menuOpen && (
+        <div ref={menuRef} class="load-profile-editor">
+          <div class="load-profile-editor-header">
+            <span>Edit 24h load profile</span>
+            <button
+              type="button"
+              class="load-profile-editor-close"
+              onClick={() => setMenuOpen(false)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
+          <div class="load-profile-editor-grid">
+            {draftProfile.map((value, i) => (
+              <label key={i} class="load-profile-editor-cell">
+                <span class="load-profile-editor-hour">{i}h</span>
+                <input
+                  type="number"
+                  min={0}
+                  step={0.1}
+                  value={value}
+                  onInput={(e) =>
+                    handleProfileHourChange(i, parseFloat((e.target as HTMLInputElement).value) || 0)
+                  }
+                />
+              </label>
+            ))}
+          </div>
+          <div class="load-profile-editor-footer">
+            <button type="button" class="load-profile-editor-save" onClick={handleSaveProfile}>
+              Done
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Nested loads (one level) */}
       {canNest && (

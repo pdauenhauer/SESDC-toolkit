@@ -13,11 +13,7 @@ export type Load = {
   children?: Load[];
 };
 
-/** Default 24h profile: zeros or a simple placeholder curve. */
+/** Default 24h profile: all zeros (no default inputs). */
 export function defaultProfile(): number[] {
-  return Array.from({ length: 24 }, (_, i) => {
-    // Slight daytime bump for demo
-    if (i >= 7 && i <= 22) return 0.3 + 0.2 * Math.sin((i - 14) / 4);
-    return 0.1;
-  });
+  return Array.from({ length: 24 }, () => 0);
 }
