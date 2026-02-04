@@ -88,22 +88,25 @@ function ProjectsList({
 
             {/* New Project button at bottom */}
             <div class="projects-sidebar-footer">
-                <button
-                    type="button"
-                    class="projects-new-btn"
-                    onClick={() => setShowNewProjectModal(true)}
-                >
-                    <span class="projects-new-plus">＋</span>
-                    New Project
-                </button>
+                {!showNewProjectModal ? (
+                    <button
+                       type="button"
+                       class="projects-new-btn"
+                       onClick={() => setShowNewProjectModal(true)}
+                    >
+                        <span class="projects-new-plus">＋</span>
+                        New Project
+                    </button>
+                    ) : (
+                        <NewProjectModal
+                        onClose={() => setShowNewProjectModal(false)}
+                        onProjectCreated={() => {
+                        onProjectCreated?.();
+                        setShowNewProjectModal(false);
+                        }}
+                    />
+                )}
             </div>
-
-            {showNewProjectModal && (
-                <NewProjectModal 
-                    onClose={() => setShowNewProjectModal(false)}
-                    onProjectCreated={onProjectCreated}
-                />
-            )}
         </>
     );
 }
