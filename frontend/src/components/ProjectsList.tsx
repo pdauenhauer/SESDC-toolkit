@@ -1,8 +1,9 @@
 import type { Project } from "../database/models/metadata";
-import { useState, useMemo } from "preact/hooks";
+import { useState, useMemo, useEffect } from "preact/hooks";
 import NewProjectModal from "./NewProjectModal";
 import exitIcon from "../media/cross.png";
 import projectIcon from "../media/project.png";
+import optionIcon from "../media/option.png";
 
 interface ProjectsListProps {
     projects: Project[];
@@ -19,6 +20,7 @@ function ProjectsList({
     onProjectSelect, 
     onProjectCreated 
 }: ProjectsListProps) {
+    const [openOptionsProject, setOpenOptionsProject] = useState<string | null>(null);
     const [showNewProjectModal, setShowNewProjectModal] = useState(false);
     const [query, setQuery] = useState("");
 
@@ -28,6 +30,14 @@ function ProjectsList({
         if (!q) return projects;
         return projects.filter((p) => p.name.toLowerCase().includes(q));
     }, [projects, query]);
+
+    useEffect(() => {
+        if (!openOptionsProject) return;
+        const handleClickOutside = () => setOpenOptionsProject(null);
+        document.addEventListener("click", handleClickOutside);
+        return () => document.removeEventListener("click", handleClickOutside);
+    }, [openOptionsProject]);
+
 
     return (
         <>
@@ -79,6 +89,39 @@ function ProjectsList({
                                 >
                                     <img src={projectIcon} alt="" class="projects-item-icon" />
                                     <span class="projects-item-label">{project.name}</span>
+
+                                    <button
+                                    type="button"
+                                    class="projects-item-options"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setOpenOptionsProject((prev) => (prev === project.id ? null : project.id));
+                                    }}
+                                        aria-label="Options"
+                                        >
+                                          <img src={optionIcon} alt="" class="projects-item-icon" />
+
+                                        </button>
+                                        
+                                        {openOptionsProject === project.id && (
+                                          <div
+                                            class="projects-item-menu"
+                                            onClick={(e) => e.stopPropagation()} 
+                                          >
+                                            <button type="button" class="projects-item-menu-item">
+                                              Rename
+                                            </button>
+
+                                            <button type="button" class="projects-item-menu-item">
+                                              Project Info
+                                            </button>
+
+                                            <div class="projects-item-menu-divider" />
+                                            <button type="button" class="projects-item-menu-item is-danger">
+                                              Delete
+                                            </button>
+                                        </div>
+                                    )}
                                 </button>
                             ))
                         )}
