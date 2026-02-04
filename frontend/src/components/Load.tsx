@@ -1,0 +1,243 @@
+import { useState, useEffect, useRef } from "preact/hooks";
+import type { Load } from "../database/models/load";
+import { LOAD_LABELS, getLoadLabelById } from "../data/loadLabels";
+
+interface LoadProps {
+  load: Load;
+  isNested?: boolean;
+  onUpdate: (patch: Partial<Load>) => void;
+  onRemove: () => void;
+  onAddChild?: () => void;
+  childLoads?: Load[];
+  onRemoveChild?: (id: string) => void;
+  onUpdateChild?: (id: string, patch: Partial<Load>) => void;
+  /** When true, card is draggable (e.g. for reorder on workbench). */
+  draggable?: boolean;
+  isDragging?: boolean;
+  isDragOver?: boolean;
+  onDragStart?: (e: DragEvent) => void;
+  onDragEnd?: () => void;
+  onDragOver?: (e: DragEvent) => void;
+  onDragLeave?: () => void;
+  onDrop?: (e: DragEvent) => void;
+}
+
+export default function Load({
+  load,
+  isNested = false,
+  onUpdate,
+  onRemove,
+  onAddChild,
+  childLoads = [],
+  onRemoveChild,
+  onUpdateChild,
+  draggable = false,
+  isDragging = false,
+  isDragOver = false,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+}: LoadProps) {
+  const [editingName, setEditingName] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [draftProfile, setDraftProfile] = useState<number[]>(load.profile);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const label = getLoadLabelById(load.labelId);
+  const canNest = label?.canNest ?? false;
+  const maxProfile = Math.max(...load.profile, 1);
+
+  // Keep draft in sync when opening menu
+  useEffect(() => {
+    if (menuOpen) setDraftProfile([...load.profile]);
+  }, [menuOpen, load.profile]);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+        onUpdate({ profile: draftProfile });
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [menuOpen, draftProfile]);
+
+  const handleProfileHourChange = (hourIndex: number, value: number) => {
+    setDraftProfile((prev) => {
+      const next = [...prev];
+      next[hourIndex] = Math.max(0, value);
+      return next;
+    });
+  };
+
+  const handleSaveProfile = () => {
+    onUpdate({ profile: draftProfile });
+    setMenuOpen(false);
+  };
+
+  const cardClass = [
+    "load-card",
+    isNested ? "load-card--nested" : "",
+    isDragging ? "is-dragging" : "",
+    isDragOver ? "is-drag-over" : "",
+  ].filter(Boolean).join(" ");
+
+  return (
+    <div
+      class={cardClass}
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+    >
+      {/* Picture-style icon */}
+      <div class="load-card-icon" aria-hidden="true">
+        {label?.icon ?? "🔌"}
+      </div>
+
+      <div class="load-card-body">
+        {/* Name */}
+        {editingName ? (
+          <input
+            type="text"
+            class="load-card-name-input"
+            value={load.name}
+            onInput={(e) => onUpdate({ name: (e.target as HTMLInputElement).value })}
+            onBlur={() => setEditingName(false)}
+            onKeyDown={(e) => e.key === "Enter" && setEditingName(false)}
+          />
+        ) : (
+          <button
+            type="button"
+            class="load-card-name"
+            onClick={() => setEditingName(true)}
+          >
+            {load.name}
+          </button>
+        )}
+
+        {/* Label dropdown */}
+        <select
+          class="load-card-label"
+          value={load.labelId}
+          onInput={(e) => onUpdate({ labelId: (e.target as HTMLSelectElement).value })}
+        >
+          {LOAD_LABELS.map((l) => (
+            <option key={l.id} value={l.id}>
+              {l.name}
+            </option>
+          ))}
+        </select>
+
+        {/* 24h load profile mini chart */}
+        <div class="load-card-profile" title="24-hour load profile">
+          <div class="load-card-profile-bars">
+            {load.profile.map((v, i) => (
+              <div
+                key={i}
+                class="load-card-profile-bar"
+                style={{ height: `${(v / maxProfile) * 100}%` }}
+              />
+            ))}
+          </div>
+          <span class="load-card-profile-label">24h</span>
+        </div>
+      </div>
+
+      <div class="load-card-actions">
+        <button
+          type="button"
+          class="load-card-menu-btn"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setMenuOpen((open) => !open);
+          }}
+          aria-label="Edit 24h profile"
+          aria-expanded={menuOpen}
+        >
+          <i class="bx bx-pencil" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          class="load-card-remove"
+          onClick={onRemove}
+          aria-label="Remove load"
+        >
+          ×
+        </button>
+      </div>
+
+      {/* 24h profile editor popover */}
+      {menuOpen && (
+        <div ref={menuRef} class="load-profile-editor">
+          <div class="load-profile-editor-header">
+            <span>Edit 24h load profile</span>
+            <button
+              type="button"
+              class="load-profile-editor-close"
+              onClick={() => setMenuOpen(false)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
+          <div class="load-profile-editor-grid">
+            {draftProfile.map((value, i) => (
+              <label key={i} class="load-profile-editor-cell">
+                <span class="load-profile-editor-hour">{i}h</span>
+                <input
+                  type="number"
+                  min={0}
+                  step={0.1}
+                  value={value}
+                  onInput={(e) =>
+                    handleProfileHourChange(i, parseFloat((e.target as HTMLInputElement).value) || 0)
+                  }
+                />
+              </label>
+            ))}
+          </div>
+          <div class="load-profile-editor-footer">
+            <button type="button" class="load-profile-editor-save" onClick={handleSaveProfile}>
+              Done
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Nested loads (one level) */}
+      {canNest && (
+        <div class="load-card-children">
+          {childLoads.map((child) => (
+            <Load
+              key={child.id}
+              load={child}
+              isNested
+              onUpdate={(patch) => onUpdateChild?.(child.id, patch)}
+              onRemove={() => onRemoveChild?.(child.id)}
+              onUpdateChild={onUpdateChild}
+              onRemoveChild={onRemoveChild}
+              draggable={false}
+            />
+          ))}
+          <button
+            type="button"
+            class="load-card-add-child"
+            onClick={onAddChild}
+          >
+            + Add load
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

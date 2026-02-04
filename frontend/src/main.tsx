@@ -1,5 +1,6 @@
-import { render } from "preact";
-import { App } from "./app.tsx";
+import { render } from 'preact';
+import { App } from './app.tsx';
+import "./app.css";
 
 if (import.meta.env.DEV) {
   import("./utils/firebase/tests/testdb")

@@ -1,0 +1,111 @@
+import type { Project } from "../database/models/metadata";
+import { useState, useMemo } from "preact/hooks";
+import NewProjectModal from "./NewProjectModal";
+import exitIcon from "../media/cross.png";
+import projectIcon from "../media/project.png";
+
+interface ProjectsListProps {
+    projects: Project[];
+    loading: boolean;
+    activeProjectId?: string;
+    onProjectSelect?: (projectId: string) => void;
+    onProjectCreated?: () => void;
+}
+
+function ProjectsList({ 
+    projects, 
+    loading, 
+    activeProjectId, 
+    onProjectSelect, 
+    onProjectCreated 
+}: ProjectsListProps) {
+    const [showNewProjectModal, setShowNewProjectModal] = useState(false);
+    const [query, setQuery] = useState("");
+
+    // Filter projects based on search query
+    const filtered = useMemo(() => {
+        const q = query.trim().toLowerCase();
+        if (!q) return projects;
+        return projects.filter((p) => p.name.toLowerCase().includes(q));
+    }, [projects, query]);
+
+    return (
+        <>
+            {/* Header with title and search */}
+            <div class="projects-sidebar-header">
+                <div class="projects-sidebar-title">Projects</div>
+                <div class="projects-search">
+                    <input
+                        class="projects-search-input"
+                        placeholder="Search Projects"
+                        value={query}
+                        onInput={(e) => setQuery((e.currentTarget as HTMLInputElement).value)}
+                    />
+                    <button
+                        type="button"
+                        class="projects-search-clear"
+                        onClick={() => setQuery("")}
+                        aria-label="Clear search"
+                        title="Clear"
+                    >
+                        <img src={exitIcon} alt="Clear search" class="projects-search-clear-icon" />
+                    </button>
+                </div>
+            </div>
+
+            {/* Projects list */}
+            <div class="projects-sidebar-content">
+                <div class="projects-group">
+                    <div class="projects-group-title">My Projects</div>
+                    <div class="projects-list">
+                        {loading ? (
+                            <div class="projects-item" style="opacity: 0.7; cursor: default;">
+                                <span class="projects-item-label">Loading...</span>
+                            </div>
+                        ) : filtered.length === 0 ? (
+                            <div class="projects-item" style="opacity: 0.7; cursor: default;">
+                                <span class="projects-item-label">No projects yet</span>
+                            </div>
+                        ) : (
+                            filtered.map((project) => (
+                                <button
+                                    key={project.id}
+                                    type="button"
+                                    class={[
+                                        "projects-item",
+                                        project.id === activeProjectId ? "is-active" : "",
+                                    ].join(" ")}
+                                    onClick={() => onProjectSelect?.(project.id)}
+                                >
+                                    <img src={projectIcon} alt="" class="projects-item-icon" />
+                                    <span class="projects-item-label">{project.name}</span>
+                                </button>
+                            ))
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* New Project button at bottom */}
+            <div class="projects-sidebar-footer">
+                <button
+                    type="button"
+                    class="projects-new-btn"
+                    onClick={() => setShowNewProjectModal(true)}
+                >
+                    <span class="projects-new-plus">＋</span>
+                    New Project
+                </button>
+            </div>
+
+            {showNewProjectModal && (
+                <NewProjectModal 
+                    onClose={() => setShowNewProjectModal(false)}
+                    onProjectCreated={onProjectCreated}
+                />
+            )}
+        </>
+    );
+}
+
+export default ProjectsList;

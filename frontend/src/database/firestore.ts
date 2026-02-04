@@ -1,6 +1,4 @@
-import { initializeApp } from "firebase/app";
 import {
-  getFirestore,
   doc,
   collection,
   getDoc,
@@ -14,18 +12,11 @@ import {
   serverTimestamp,
   type DocumentData,
 } from "firebase/firestore";
+import type { Load } from "./models/load";
+
 
 import type { User, Project } from "./models/metadata";
-
-//import env data
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-};
-
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+import { db } from "../utils/firebase/firebase-init";
 
 //path helpers 
 const userRef = (uid: string) => doc(db, "users", uid);
@@ -61,14 +52,14 @@ export async function createProject(uid: string, data: Omit<Partial<Project>, "c
 
 export async function getProject(uid: string, projectId: string) {
   const snap = await getDoc(projectRef(uid, projectId));
-  return snap.exists() ? ({ ...(snap.data() as Project) }) : null;
+  return snap.exists() ? ({ id: snap.id, ...(snap.data() as Project) }) : null;
 }
 
 export async function listProjects(uid: string, max = 50) {
   // orderBy requires createdAt/updatedAt to be Timestamp (serverTimestamp is fine)
   const q = query(projectsCol(uid), orderBy("updatedAt", "desc"));
   const snaps = await getDocs(q);
-  return snaps.docs.map((d) => ({ ...(d.data() as Project) }));
+  return snaps.docs.map((d) => ({ id: d.id, ...(d.data() as Project) }));
 }
 
 export async function updateProject(uid: string, projectId: string, patch: Partial<Project>) {
@@ -81,3 +72,33 @@ export async function updateProject(uid: string, projectId: string, patch: Parti
 export async function deleteProject(uid: string, projectId: string) {
   await deleteDoc(projectRef(uid, projectId));
 }
+
+// Fetch the persisted load tree for a project
+export async function getProjectLoads(uid: string, projectId: string): Promise<Load[]> {
+  const snap = await getDoc(projectRef(uid, projectId));
+  if (!snap.exists()) return [];
+  const data = snap.data() as any;
+  return (data.loads ?? []) as Load[];
+}
+// Persist the project's load tree to Firestore and update its last-modified timestamp.
+export async function saveProjectLoads(uid: string, projectId: string, loads: Load[]) {
+  await updateDoc(projectRef(uid, projectId), {
+    loads: sanitizeLoads(loads),
+    updatedAt: serverTimestamp(),
+  } as DocumentData);
+}
+
+// sanitize loads for Firestore by stripping undefined fields and recursively sanitizing children.
+
+function sanitizeLoads(loads: Load[]): any[] {
+  const sanitize = (l: Load): any => ({
+    id: l.id,
+    name: l.name,
+    labelId: l.labelId,
+    profile: Array.isArray(l.profile) ? l.profile : [],
+    ...(l.children && l.children.length ? { children: l.children.map(sanitize) } : {}),
+  });
+
+  return loads.map(sanitize);
+}
+

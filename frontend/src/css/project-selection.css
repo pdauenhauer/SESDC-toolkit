@@ -1,3 +1,4 @@
+/*
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
@@ -29,6 +30,7 @@ body {
 }
 
 /* Navigation styles */
+/*
 nav {
   background: var(--gradient-bg);
   height: 80px;
@@ -106,6 +108,7 @@ a.active {
 }
 
 /* Logo container */
+/*
 .logo-container {
   padding-top: 100px;
   margin-bottom: 20px;
@@ -128,6 +131,7 @@ a.active {
 }
 
 /* Header styles */
+/*
 .header {
   background: var(--green-main);
   color: var(--white-main);
@@ -144,6 +148,7 @@ a.active {
 }
 
 /* Main content */
+/*
 .main-content {
   max-width: 1200px;
   margin: 2rem auto;
@@ -176,6 +181,7 @@ a.active {
 }
 
 /* Project grid and cards */
+/*
 .projects-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -223,6 +229,7 @@ a.active {
 }
 
 /* Project action buttons */
+/*
 .share-project-button {
   background: none;
   border: none;
@@ -280,6 +287,7 @@ a.active {
 }
 
 /* MODAL STYLES - Fixed and Complete */
+/*
 .modal {
   display: none;
   position: fixed;
@@ -336,6 +344,7 @@ a.active {
 }
 
 /* Form styles */
+/*
 .form-group {
   margin: 20px 0;
   margin-bottom: 1rem;
@@ -389,6 +398,7 @@ a.active {
 }
 
 /* Button styles */
+/*
 .submit-btn {
   background: var(--green-main);
   color: var(--white-main);
@@ -466,6 +476,7 @@ a.active {
 }
 
 /* Share project modal specific styles */
+/*
 .form-wrapper {
   display: flex;
   width: 200%;
@@ -572,6 +583,7 @@ a.active {
 }
 
 /* Modal delete confirmation */
+/*
 .modal-buttons {
   display: flex;
   justify-content: space-between;
@@ -602,6 +614,7 @@ a.active {
 }
 
 /* Section headers */
+/*
 .input-section-header {
   font-size: 20px;
   font-weight: 600;
@@ -609,6 +622,7 @@ a.active {
 }
 
 /* Additional input styles */
+/*
 #drop-area {
   border: 2px dashed var(--white-main);
   border-radius: 20px;
@@ -743,6 +757,7 @@ a.active {
 }
 
 /* Footer */
+/*
 .footer {
   flex-shrink: 0;
   background-color: var(--green-start);
@@ -813,9 +828,11 @@ a.active {
 }
 
 /* === Project Settings Styles === */
+/*
 .settings-sections {
     /* Removed max-height and overflow-y */
     /* Removed padding-right */
+    /*
 }
 
 .settings-section {
@@ -845,6 +862,7 @@ a.active {
 }
 
 /* Enhanced Form Groups for Settings */
+/*
 .settings-section .form-group {
     background: var(--white-main);
     border: 1px solid #e0e0e0;
@@ -894,6 +912,7 @@ a.active {
 }
 
 /* Settings Actions */
+/*
 .settings-actions {
     display: flex;
     justify-content: space-between;
@@ -944,6 +963,7 @@ a.active {
 }
 
 /* === Animation for Content Switching === */
+/*
 #projectInputsContent,
 #projectSettingsContent {
     animation: fadeIn 0.3s ease-in-out;
@@ -961,12 +981,16 @@ a.active {
 }
 
 /* === Enhanced Modal Content === */
+/*
 .modal-content {
     max-width: 900px; /* Increased for settings */
+    /*
     max-height: 90%; /* Increased to accommodate settings without scrolling */
+    /*
 }
 
 /* === Responsive Design === */
+/*
 @media (max-width: 768px) {
     .modal-header-buttons {
         gap: 5px;
@@ -1015,6 +1039,7 @@ a.active {
 /* Removed scrollbar styles since settings sections are no longer scrollable */
 
 /* === Input Validation Styles === */
+/*
 .settings-section .form-group input.invalid {
     border-color: #dc3545;
     background-color: #fff5f5;
@@ -1126,6 +1151,7 @@ a.active {
 }
 
 /* Input state indicators */
+/*
 .input-wrapper input.auto-calculated {
     background-color: #e8f5e8;
     border-color: #28a745;
@@ -1164,6 +1190,7 @@ a.active {
 }
 
 /* Responsive design for dual inputs */
+/*
 @media (max-width: 768px) {
     .dual-input-container {
         grid-template-columns: 1fr;
@@ -1172,6 +1199,7 @@ a.active {
 }
 
 /* Animation for auto-calculated values */
+/*
 @keyframes highlightCalculation {
     0% { transform: scale(1); }
     50% { transform: scale(1.02); }
@@ -1183,6 +1211,7 @@ a.active {
 }
 
 /* Visual indicators for connection between inputs */
+/*
 .dual-input-container::before {
     content: '';
     position: absolute;
@@ -1198,6 +1227,7 @@ a.active {
 /* === Consistent Input Styling System === */
 
 /* Base styling for all form groups */
+/*
 .form-group {
     margin: 20px 0;
     padding: 15px;
@@ -1207,6 +1237,7 @@ a.active {
 }
 
 /* Input section headers */
+/*
 .input-section-header {
     font-size: 1.3rem;
     font-weight: 600;
@@ -1218,6 +1249,7 @@ a.active {
 }
 
 /* Standard input wrapper for single inputs */
+/*
 .standard-input-wrapper {
     margin: 15px 0;
     display: flex;
@@ -1232,6 +1264,7 @@ a.active {
 }
 
 /* Consistent styling for all input types */
+/*
 .form-group input[type="number"],
 .form-group input[type="text"],
 .form-group input[type="email"],
@@ -1251,6 +1284,7 @@ a.active {
 }
 
 /* Focus states for all inputs */
+/*
 .form-group input[type="number"]:focus,
 .form-group input[type="text"]:focus,
 .form-group input[type="email"]:focus,
@@ -1265,6 +1299,7 @@ a.active {
 }
 
 /* Disabled state styling */
+/*
 .form-group input:disabled,
 .form-group select:disabled,
 .form-group textarea:disabled {
@@ -1275,6 +1310,7 @@ a.active {
 }
 
 /* Hover effects for inputs */
+/*
 .form-group input:not(:disabled):hover,
 .form-group select:not(:disabled):hover,
 .form-group textarea:not(:disabled):hover,
@@ -1286,6 +1322,7 @@ a.active {
 }
 
 /* Enhanced styling for direct form-group labels */
+/*
 .form-group > label {
     display: block;
     font-size: 0.95rem;
@@ -1300,6 +1337,7 @@ a.active {
 }
 
 /* Special styling for checkbox inputs */
+/*
 .form-group input[type="checkbox"] {
     width: 20px;
     height: 20px;
@@ -1319,6 +1357,7 @@ a.active {
 }
 
 /* Enhanced select styling */
+/*
 .form-group select,
 .standard-input-wrapper select {
     appearance: none;
@@ -1331,6 +1370,7 @@ a.active {
 }
 
 /* Enhanced textarea styling */
+/*
 .form-group textarea {
     min-height: 80px;
     resize: vertical;
@@ -1338,6 +1378,7 @@ a.active {
 }
 
 /* Input validation states */
+/*
 .form-group input.valid,
 .input-wrapper input.valid,
 .standard-input-wrapper input.valid {
@@ -1365,6 +1406,7 @@ a.active {
 }
 
 /* Help text styling */
+/*
 .input-help,
 .form-help {
     display: block;
@@ -1375,6 +1417,7 @@ a.active {
 }
 
 /* Required field indicator */
+/*
 .form-group label.required::after,
 .standard-input-wrapper label.required::after {
     content: " *";
@@ -1383,6 +1426,7 @@ a.active {
 }
 
 /* Group styling for related inputs */
+/*
 .input-group {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -1395,6 +1439,7 @@ a.active {
 }
 
 /* Enhanced form section styling */
+/*
 .form-section {
     background: var(--white-main);
     border: 1px solid #e0e0e0;
@@ -1405,6 +1450,7 @@ a.active {
 }
 
 /* Form section headers */
+/*
 .form-section-title {
     color: var(--green-start);
     font-size: 1.2rem;
@@ -1415,6 +1461,7 @@ a.active {
 }
 
 /* Map container styling */
+/*
 #map {
     width: 100%;
     height: 200px;
@@ -1429,6 +1476,7 @@ a.active {
 }
 
 /* Hourly load inputs grid */
+/*
 #hourlyLoadInputs {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -1464,6 +1512,7 @@ a.active {
 }
 
 /* Animation for focused inputs */
+/*
 @keyframes inputFocus {
     0% { transform: scale(1); }
     50% { transform: scale(1.01); }
@@ -1477,6 +1526,7 @@ a.active {
 }
 
 /* Responsive design */
+/*
 @media (max-width: 768px) {
     .form-group {
         padding: 10px;
@@ -1496,6 +1546,7 @@ a.active {
     .form-group select,
     .form-group textarea {
         font-size: 16px; /* Prevents zoom on iOS */
+        /*
     }
 }
 
@@ -1511,6 +1562,7 @@ a.active {
 }
 
 /* Button consistency with input styling */
+/*
 .form-group button,
 .save-inputs-btn,
 .save-submit-btn,
@@ -1546,6 +1598,7 @@ a.active {
 }
 
 /* Form separator styling */
+/*
 .form-group hr {
     border: none;
     height: 2px;
@@ -1554,6 +1607,7 @@ a.active {
 }
 
 /* Loading state for inputs */
+/*
 .form-group input.loading,
 .input-wrapper input.loading {
     background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
@@ -1582,6 +1636,7 @@ a.active {
 }
 
 /* For a card-like style, add this class to custom-checkbox-label */
+/*
 .card-style {
     border-radius: 16px;
     padding: 1.25rem;
@@ -1596,21 +1651,25 @@ a.active {
 /* ===== COMPONENT-SPECIFIC COLORS (OPTIONAL) ===== */
 
 /* Battery - Blue accent */
+/*
 .custom-checkbox-container.battery .custom-checkbox-input:checked + .custom-checkbox-label .custom-checkbox {
     background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
 }
 
 /* Generator - Orange accent */
+/*
 .custom-checkbox-container.generator .custom-checkbox-input:checked + .custom-checkbox-label .custom-checkbox {
     background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
 }
 
 /* Solar - Yellow accent */
+/*
 .custom-checkbox-container.solar .custom-checkbox-input:checked + .custom-checkbox-label .custom-checkbox {
     background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
 }
 
 /* Wind - Cyan accent */
+/*
 .custom-checkbox-container.wind .custom-checkbox-input:checked + .custom-checkbox-label .custom-checkbox {
     background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
 }
@@ -1621,6 +1680,7 @@ a.active {
 }
 
 /* Hide the default checkbox */
+/*
 .custom-checkbox-input {
     position: absolute;
     opacity: 0;
@@ -1630,6 +1690,7 @@ a.active {
 }
 
 /* Label container */
+/*
 .custom-checkbox-label {
     display: flex;
     align-items: flex-start;
@@ -1657,6 +1718,7 @@ a.active {
 }
 
 /* Hover effect */
+/*
 .custom-checkbox-label:hover {
     border-color: var(--green-main, #008000);
     transform: translateY(-2px);
@@ -1668,6 +1730,7 @@ a.active {
 }
 
 /* The custom checkbox square */
+/*
 .custom-checkbox {
     display: flex;
     align-items: center;
@@ -1685,6 +1748,7 @@ a.active {
 }
 
 /* Checkbox icon (checkmark) */
+/*
 .custom-checkbox-icon {
     font-size: 16px;
     color: #ffffff;
@@ -1694,6 +1758,7 @@ a.active {
 }
 
 /* Text container */
+/*
 .custom-checkbox-text {
     display: flex;
     flex-direction: column;
@@ -1702,6 +1767,7 @@ a.active {
 }
 
 /* Primary text styling */
+/*
 .primary-text {
     font-size: 1.1rem;
     font-weight: 600;
@@ -1711,6 +1777,7 @@ a.active {
 }
 
 /* Secondary text styling */
+/*
 .secondary-text {
     font-size: 0.9rem;
     color: #6b7280;
@@ -1721,6 +1788,7 @@ a.active {
 /* ===== CHECKED STATE STYLES ===== */
 
 /* When checkbox is checked */
+/*
 .custom-checkbox-input:checked + .custom-checkbox-label {
     border-color: var(--green-main, #008000);
     background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
@@ -1751,6 +1819,7 @@ a.active {
 }
 
 /* ===== FOCUS STATES FOR ACCESSIBILITY ===== */
+/*
 
 .custom-checkbox-input:focus + .custom-checkbox-label {
     outline: 2px solid var(--green-main, #008000);
@@ -1758,6 +1827,7 @@ a.active {
 }
 
 /* ===== DISABLED STATE ===== */
+/*
 
 .custom-checkbox-input:disabled + .custom-checkbox-label {
     opacity: 0.6;
@@ -1766,6 +1836,7 @@ a.active {
 }
 
 /* ===== RESPONSIVE DESIGN ===== */
+/*
 
 @media (max-width: 768px) {
     .custom-checkbox-label {
@@ -1794,6 +1865,7 @@ a.active {
 /* ===== ANIMATION VARIATIONS ===== */
 
 /* Pulse animation on check */
+/*
 @keyframes checkPulse {
     0% {
         box-shadow: 0 0 0 0 rgba(0, 128, 0, 0.5);
