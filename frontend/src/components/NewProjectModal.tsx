@@ -1,6 +1,10 @@
 import { useState } from "preact/hooks";
 import { createProject } from "../database/firestore";
 import { auth } from "../utils/firebase/firebase-init";
+import exitIcon from "../media/cross.png";
+import "../css/project-new-project.css";
+
+
 
 interface NewProjectModalProps {
     onClose: () => void;
@@ -47,73 +51,59 @@ function NewProjectModal({ onClose, onProjectCreated }: NewProjectModalProps) {
     };
 
     return (
-        <div 
-            class="fixed inset-0 bg-black/50 flex justify-center items-center z-[200] p-4"
-            onClick={(e) => e.target === e.currentTarget && onClose()}
-        >
-            <div class="bg-[#F7F9F1] rounded-lg p-6 w-full max-w-md shadow-lg">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold text-[#0A090C]">New Project</h2>
-                    <button 
-                        type="button"
-                        class="text-2xl text-[#4a5568] hover:text-[#0A090C] bg-transparent border-none cursor-pointer"
-                        onClick={onClose}
-                    >
-                        &times;
-                    </button>
-                </div>
+  <div class="np-card">
+    <div class="np-header">
+      <h2 class="np-title">New Project</h2>
 
-                <form onSubmit={handleSubmit}>
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-[#4a5568] mb-1">
-                            Project Name *
-                        </label>
-                        <input
-                            type="text"
-                            placeholder="Enter project name"
-                            value={projectName}
-                            onInput={(e) => setProjectName((e.target as HTMLInputElement).value)}
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-[#0A090C] focus:outline-none focus:border-[#037F6F]"
-                        />
-                    </div>
+      <button type="button" class="np-close" onClick={onClose} aria-label="Close">
+        &times;
+      </button>
+    </div>
 
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-[#4a5568] mb-1">
-                            Description
-                        </label>
-                        <textarea
-                            placeholder="Enter project description (optional)"
-                            value={projectDescription}
-                            onInput={(e) => setProjectDescription((e.target as HTMLTextAreaElement).value)}
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-[#0A090C] focus:outline-none focus:border-[#037F6F] resize-none"
-                            rows={3}
-                        />
-                    </div>
+    <form onSubmit={handleSubmit}>
+      <div class="np-group">
+        <label class="np-label"> Project Name <span class="np-required">*</span>
+        </label>
+        <input
+          type="text"
+          class="np-input"
+          placeholder="Enter project name"
+          value={projectName}
+          onInput={(e) => setProjectName((e.target as HTMLInputElement).value)}
+        />
+      </div>
 
-                    {error && (
-                        <p class="text-red-500 text-sm mb-4">{error}</p>
-                    )}
+      <div class="np-group">
+        <label class="np-label">Description</label>
+        <textarea
+          class="np-textarea"
+          rows={3}
+          placeholder="Enter project description (optional)"
+          value={projectDescription}
+          onInput={(e) =>
+            setProjectDescription((e.target as HTMLTextAreaElement).value)
+          }
+        />
+      </div>
 
-                    <div class="flex gap-3 justify-end">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            class="px-4 py-2 rounded-lg text-[#4a5568] bg-gray-200 hover:bg-gray-300 border-none cursor-pointer transition-colors"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            class="px-4 py-2 rounded-lg text-[#F7F9F1] bg-[#037F6F] hover:bg-[#05B39C] border-none cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {loading ? "Creating..." : "Create Project"}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
+      {error && <p class="np-error">{error}</p>}
+
+      <div class="np-actions">
+        <button type="button" class="np-btn np-btn-cancel" onClick={onClose}>
+          Cancel
+        </button>
+
+        <button type="submit" disabled={loading} class="np-btn np-btn-primary">
+          {loading ? "Creating..." : "Create Project"}
+        </button>
+      </div>
+    </form>
+  </div>
+);
+
+
+    
+
 }
 
 export default NewProjectModal;
