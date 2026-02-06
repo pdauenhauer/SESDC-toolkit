@@ -47,7 +47,16 @@ export default function Load({
 
   const label = getLoadLabelById(load.labelId);
   const canNest = label?.canNest ?? false;
-  const maxProfile = Math.max(...load.profile, 1);
+
+  // Parent’s 24h chart: own profile + sum of children’s profiles (children add onto parent)
+  const effectiveProfile =
+    canNest && childLoads.length > 0
+      ? load.profile.map(
+          (p, i) =>
+            p + childLoads.reduce((sum, child) => sum + (child.profile[i] ?? 0), 0)
+        )
+      : load.profile;
+  const maxProfile = Math.max(...effectiveProfile, 1);
 
   // Keep draft in sync when opening menu
   useEffect(() => {
@@ -83,6 +92,7 @@ export default function Load({
   const cardClass = [
     "load-card",
     isNested ? "load-card--nested" : "",
+    canNest ? "load-card--can-nest" : "",
     isDragging ? "is-dragging" : "",
     isDragOver ? "is-drag-over" : "",
   ].filter(Boolean).join(" ");
@@ -97,6 +107,7 @@ export default function Load({
       onDragLeave={onDragLeave}
       onDrop={onDrop}
     >
+      <div class="load-card-main">
       {/* Picture-style icon */}
       <div class="load-card-icon" aria-hidden="true">
         {label?.icon ?? "🔌"}
@@ -136,10 +147,10 @@ export default function Load({
           ))}
         </select>
 
-        {/* 24h load profile mini chart */}
-        <div class="load-card-profile" title="24-hour load profile">
+        {/* 24h load profile (parent: own + children; leaf: own only) */}
+        <div class="load-card-profile" title={canNest && childLoads.length > 0 ? "24h profile (includes child loads)" : "24-hour load profile"}>
           <div class="load-card-profile-bars">
-            {load.profile.map((v, i) => (
+            {effectiveProfile.map((v, i) => (
               <div
                 key={i}
                 class="load-card-profile-bar"
@@ -152,20 +163,23 @@ export default function Load({
       </div>
 
       <div class="load-card-actions">
-        <button
-          type="button"
-          class="load-card-menu-btn"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setMenuOpen((open) => !open);
-          }}
-          aria-label="Edit 24h profile"
-          aria-expanded={menuOpen}
-        >
-          <i class="bx bx-pencil" aria-hidden="true" />
-        </button>
+        {/* Parent loads: no edit icon; profile = own + children. Child/leaf loads: show edit. */}
+        {!canNest && (
+          <button
+            type="button"
+            class="load-card-menu-btn"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setMenuOpen((open) => !open);
+            }}
+            aria-label="Edit 24h profile"
+            aria-expanded={menuOpen}
+          >
+            <i class="bx bx-pencil" aria-hidden="true" />
+          </button>
+        )}
         <button
           type="button"
           class="load-card-remove"
@@ -213,8 +227,9 @@ export default function Load({
           </div>
         </div>
       )}
+      </div>
 
-      {/* Nested loads (one level) */}
+      {/* Nested loads (one level) — append to the right of parent */}
       {canNest && (
         <div class="load-card-children">
           {childLoads.map((child) => (
