@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { StepProps } from '../types';
 import { BATTERY_PRESETS } from '../constants';
+
 import CostInputs from './CostInputs';
 
 export default function BatteryStep({ data, updateSection, updateNested, nextStep, onSkip }: StepProps) {

@@ -14,7 +14,7 @@ export default function CostInputs({ section, data, updateSection, updateNested 
 
   return (
     <div class="advanced-section fade-in">
-      <h4 style={{marginTop:0, color: '#666'}}>💰 Financial & Lifecycle</h4>
+      <h4 style={{marginTop:0, color: '#3b3b3b'}}>Financial & Lifecycle</h4>
       
       <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px'}}>
         <div>

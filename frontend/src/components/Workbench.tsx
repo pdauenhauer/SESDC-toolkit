@@ -6,7 +6,7 @@ import {
   addChildToLoad,
   createNewLoad,
 } from "../utils/loadUtils";
-import LoadCard from "./ProjectWizard/steps/LoadStep";
+import LoadCard from "./Load";
 
 interface WorkbenchProps {
   loads: Load[];

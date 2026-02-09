@@ -1,6 +1,6 @@
 import type { Project } from "../database/models/metadata";
 import { useState, useMemo } from "preact/hooks";
-import NewProjectModal from "./NewProjectModal";
+//import NewProjectModal from "./NewProjectModal";
 import exitIcon from "../media/cross.png";
 import projectIcon from "../media/project.png";
 
@@ -10,6 +10,7 @@ interface ProjectsListProps {
     activeProjectId?: string;
     onProjectSelect?: (projectId: string) => void;
     onProjectCreated?: () => void;
+    onNewProjectClick?: () => void;
 }
 
 function ProjectsList({ 
@@ -17,7 +18,8 @@ function ProjectsList({
     loading, 
     activeProjectId, 
     onProjectSelect, 
-    onProjectCreated 
+    onProjectCreated,
+    onNewProjectClick 
 }: ProjectsListProps) {
     const [showNewProjectModal, setShowNewProjectModal] = useState(false);
     const [query, setQuery] = useState("");
@@ -91,21 +93,23 @@ function ProjectsList({
                 <button
                     type="button"
                     class="projects-new-btn"
-                    onClick={() => setShowNewProjectModal(true)}
+                    onClick={onNewProjectClick}
                 >
                     <span class="projects-new-plus">＋</span>
                     New Project
                 </button>
             </div>
-
-            {showNewProjectModal && (
-                <NewProjectModal 
-                    onClose={() => setShowNewProjectModal(false)}
-                    onProjectCreated={onProjectCreated}
-                />
-            )}
         </>
     );
 }
 
 export default ProjectsList;
+
+/*
+ {showNewProjectModal && (
+                <NewProjectModal 
+                    onClose={() => setShowNewProjectModal(false)}
+                    onProjectCreated={onProjectCreated}
+                />
+            )}
+*/

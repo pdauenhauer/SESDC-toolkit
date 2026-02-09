@@ -8,6 +8,9 @@ import type { Load } from "../database/models/load";
 import type { Project } from "../database/models/metadata";
 import { createNewLoad } from "../utils/loadUtils";
 import { auth } from "../utils/firebase/firebase-init";
+import ProjectWizard from '../components/ProjectWizard';
+import { addDoc, collection } from "firebase/firestore";
+import { db } from "../utils/firebase/firebase-init";
 import { listProjects, getProjectLoads, saveProjectLoads } from "../database/firestore";
 import "../css/projects.css";
 
@@ -56,6 +59,7 @@ export default function Projects() {
   const [activeCraftTab, setActiveCraftTab] = useState<CraftTabId>("workbench");
   const [workbenchLoads, setWorkbenchLoads] = useState<Load[]>([]);
   const hydratedProjectIdRef = useRef<string | null>(null);
+  const [isWizardOpen, setWizardOpen] = useState(false);
 
   const HEADER_H = 80;
 
@@ -173,6 +177,7 @@ export default function Projects() {
             activeProjectId={activeProjectId}
             onProjectSelect={(id) => setActiveProjectId(id)}
             onProjectCreated={refreshProjects}
+            onNewProjectClick={() => setWizardOpen(true)}
           />
         </aside>
 
@@ -180,12 +185,11 @@ export default function Projects() {
           <div class="projects-toolbar">
             <div class="projects-toolbar-row">
               {activeCraftTab === "workbench" && (
-                <button type="button" class="projects-btn projects-btn-add" onClick={handleAddComponent}>
-                  <span class="projects-btn-plus">＋</span>
+                <button type="button" class="projects-btn projects-btn-add" onClick={() => setWizardOpen(true)}>
                   Add new Component
                 </button>
               )}
-
+                  <span class="projects-btn-plus">＋</span>
               <div class="projects-currentLoad">
                 Current Total Load: <span class="projects-currentLoad-strong"> </span>
               </div>
@@ -209,6 +213,39 @@ export default function Projects() {
           </main>
         </section>
       </div>
+      {isWizardOpen && (
+        <ProjectWizard 
+          onClose={() => setWizardOpen(false)}
+          onFinish={async (wizardData) => {
+            console.log("Wizard Completed with Data:", wizardData);
+            setWizardOpen(false);
+
+            if (!auth.currentUser) return;
+
+            try {
+              // 1. Create the new project in Firestore
+              const newProjectRef = await addDoc(collection(db, "projects"), {
+                name: wizardData.name,
+                ownerId: auth.currentUser.uid,
+                description: "Created via Smart Wizard",
+                wizardConfig: wizardData, 
+                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now(),
+              });
+
+              // 2. Refresh the sidebar list to show the new project
+              await refreshProjects();
+
+              // 3. Automatically select the new project
+              setActiveProjectId(newProjectRef.id);
+
+            } catch (e) {
+              console.error("Error creating project:", e);
+              alert("Failed to create project. See console for details.");
+            }
+          }} 
+        />
+      )}
     </div>
   );
 }

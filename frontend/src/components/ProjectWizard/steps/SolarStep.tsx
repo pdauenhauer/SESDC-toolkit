@@ -3,7 +3,7 @@
 import { useState } from 'preact/hooks';
 import { StepProps } from '../types';
 import { SOLAR_PRESETS } from '../constants';
-//import CostInputs from './CostInputs';
+import CostInputs from './CostInputs';
 
 export default function SolarStep({ data, updateSection, updateNested, nextStep, onSkip }: StepProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);

@@ -1,7 +1,7 @@
 // src/components/ProjectWizard/index.tsx
 
 import { useState } from 'preact/hooks';
-// the updated css HERE: import './ProjectWizard.scss';
+import './ProjectWizard.css';
 
 // Import Types and Constants
 import { ProjectWizardProps, WizardStep, ProjectData } from './types';
@@ -25,7 +25,7 @@ export default function ProjectWizard({ onClose, onFinish }: ProjectWizardProps)
   const updateSection = (section: keyof ProjectData, field: string, value: any) => {
     setData(prev => ({
       ...prev,
-      [section]: { ...prev[section], [field]: value }
+      [section]: { ...prev[section] as any, [field]: value }
     }));
   };
 
@@ -33,7 +33,7 @@ export default function ProjectWizard({ onClose, onFinish }: ProjectWizardProps)
     setData(prev => ({
       ...prev,
       [section]: { 
-        ...prev[section], 
+        ...(prev[section] as any)[category], 
         [category]: {
           // @ts-ignore (Handling nested dynamic keys in TS can be tricky, ignore for now)
           ...prev[section][category],
