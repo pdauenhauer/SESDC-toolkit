@@ -1,5 +1,5 @@
 // src/components/ProjectWizard/TutorialOverlay.tsx
-import './TutorialOverlay.css';
+import '../../css/TutorialOverlay.css';
 import { TutorialStep } from './tutorialData';
 
 interface TutorialOverlayProps {

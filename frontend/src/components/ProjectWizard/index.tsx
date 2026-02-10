@@ -1,7 +1,7 @@
 // src/components/ProjectWizard/index.tsx
 
 import { useState } from 'preact/hooks';
-import './ProjectWizard.css';
+import '../../css/ProjectWizard.css';
 
 // Import Types and Constants
 import { ProjectWizardProps, WizardStep, ProjectData } from './types';
