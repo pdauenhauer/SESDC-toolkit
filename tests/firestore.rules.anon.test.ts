@@ -6,7 +6,7 @@ describe("Firestore rules - anonymous", () => {
   const { db } = makeEmulatorClients();
 
   test("anonymous cannot write to users/{uid}/projects", async () => {
-    // We are not signing in; auth.currentUser is null
+    // We are not signing in, so auth.currentUser is null
     const targetUid = "someUid";
     const ref = doc(db, "users", targetUid, "projects", "p1");
 
