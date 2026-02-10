@@ -18,9 +18,11 @@ jobs:
           node-version: 20
 
       - name: Install deps
+        working-directory: frontend
         run: npm ci
 
-      - name: Build
+      - name: Build React app
+        working-directory: frontend
         run: npm run build
 
       - name: Deploy to Firebase Hosting
