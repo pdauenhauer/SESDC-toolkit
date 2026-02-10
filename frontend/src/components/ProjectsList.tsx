@@ -11,6 +11,7 @@ interface ProjectsListProps {
     activeProjectId?: string;
     onProjectSelect?: (projectId: string) => void;
     onProjectCreated?: () => void;
+    onNewProjectClick?: () => void;
 }
 
 function ProjectsList({ 
@@ -18,7 +19,8 @@ function ProjectsList({
     loading, 
     activeProjectId, 
     onProjectSelect, 
-    onProjectCreated 
+    onProjectCreated,
+    onNewProjectClick 
 }: ProjectsListProps) {
     const [openOptionsProject, setOpenOptionsProject] = useState<string | null>(null);
     const [showNewProjectModal, setShowNewProjectModal] = useState(false);
