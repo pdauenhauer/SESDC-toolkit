@@ -1,8 +1,11 @@
+import { auth } from "../utils/firebase/firebase-init";
 import type { Project } from "../database/models/metadata";
-import { useState, useMemo } from "preact/hooks";
+import { updateProject, deleteProject } from "../database/firestore";
+import { useState, useMemo, useEffect } from "preact/hooks";
 import NewProjectModal from "./NewProjectModal";
 import exitIcon from "../media/cross.png";
 import projectIcon from "../media/project.png";
+import optionIcon from "../media/option.png";
 
 interface ProjectsListProps {
     projects: Project[];
@@ -10,6 +13,7 @@ interface ProjectsListProps {
     activeProjectId?: string;
     onProjectSelect?: (projectId: string) => void;
     onProjectCreated?: () => void;
+    onNewProjectClick?: () => void;
 }
 
 function ProjectsList({ 
@@ -17,8 +21,11 @@ function ProjectsList({
     loading, 
     activeProjectId, 
     onProjectSelect, 
-    onProjectCreated 
+    onProjectCreated,
+    onNewProjectClick 
 }: ProjectsListProps) {
+    const [openOptionsProject, setOpenOptionsProject] = useState<string | null>(null);
+    const [infoProject, setInfoProject] = useState<Project | null>(null);
     const [showNewProjectModal, setShowNewProjectModal] = useState(false);
     const [query, setQuery] = useState("");
 
@@ -28,6 +35,67 @@ function ProjectsList({
         if (!q) return projects;
         return projects.filter((p) => p.name.toLowerCase().includes(q));
     }, [projects, query]);
+
+    useEffect(() => {
+        if (!openOptionsProject) return;
+        const handleClickOutside = () => setOpenOptionsProject(null);
+        document.addEventListener("click", handleClickOutside);
+        return () => document.removeEventListener("click", handleClickOutside);
+    }, [openOptionsProject]);
+
+    const userPermission = () => {
+        const user = auth.currentUser;
+        if(!user) {
+            alert("You must be logged in");
+            return null;
+        }
+        return user;
+    };
+
+    const renameHandler = async (project: Project) => {
+        const user = userPermission();
+        if(!user) return;
+
+        const newName = window.prompt("Rename project:",project.name);
+        if(!newName) return;
+
+        const name = newName.trim();
+        if(!name) return;
+
+        try {
+            await updateProject(user.uid,project.id, {name});
+            setOpenOptionsProject(null);
+            onProjectCreated?.();//list refresh
+        } catch (err) {
+            console.error("Rename failed: ", err);
+        }
+    };
+
+    const deleteHandler = async (project: Project) => {
+        const user = userPermission();
+        if(!user) return;
+
+        const confirm = window.confirm(`Delete project ${project.name}? This cannot be undone.`);
+        if(!confirm) return;
+
+        try{
+            await deleteProject(user.uid, project.id);
+
+            if(activeProjectId === project.id){
+                onProjectSelect?.("");
+            }
+
+            setOpenOptionsProject(null);
+            onProjectCreated?.();
+        } catch (err){
+            console.error("Delete failed: ", err);
+        }
+    };
+
+    const infoHandler = (project: Project) => {
+        setInfoProject(project);
+        setOpenOptionsProject(null);
+    }
 
     return (
         <>
@@ -79,6 +147,45 @@ function ProjectsList({
                                 >
                                     <img src={projectIcon} alt="" class="projects-item-icon" />
                                     <span class="projects-item-label">{project.name}</span>
+
+                                    <button
+                                    type="button"
+                                    class="projects-item-options"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setOpenOptionsProject((prev) => (prev === project.id ? null : project.id));
+                                    }}
+                                        aria-label="Options"
+                                        >
+                                          <img src={optionIcon} alt="" class="projects-item-icon" />
+
+                                        </button>
+                                        
+                                        {openOptionsProject === project.id && (
+                                          <div
+                                            class="projects-item-menu"
+                                            onClick={(e) => e.stopPropagation()} 
+                                          >
+                                            <button type="button" class="projects-item-menu-item" 
+                                              onClick={() => renameHandler(project)}
+                                              >
+                                              Rename
+                                            </button>
+
+                                            <button type="button" class="projects-item-menu-item"
+                                              onClick={() => infoHandler(project)}
+                                              >
+                                              Project Info
+                                            </button>
+
+                                            <div class="projects-item-menu-divider" />
+                                            <button type="button" class="projects-item-menu-item is-danger"
+                                              onClick={() => deleteHandler(project)}
+                                              >
+                                              Delete
+                                            </button>
+                                        </div>
+                                    )}
                                 </button>
                             ))
                         )}
@@ -88,21 +195,57 @@ function ProjectsList({
 
             {/* New Project button at bottom */}
             <div class="projects-sidebar-footer">
-                <button
-                    type="button"
-                    class="projects-new-btn"
-                    onClick={() => setShowNewProjectModal(true)}
-                >
-                    <span class="projects-new-plus">＋</span>
-                    New Project
-                </button>
+                {!showNewProjectModal ? (
+                    <button
+                       type="button"
+                       class="projects-new-btn"
+                       onClick={() => setShowNewProjectModal(true)}
+                    >
+                        <span class="projects-new-plus">＋</span>
+                        New Project
+                    </button>
+                    ) : (
+                        <NewProjectModal
+                        onClose={() => setShowNewProjectModal(false)}
+                        onProjectCreated={() => {
+                        onProjectCreated?.();
+                        setShowNewProjectModal(false);
+                        }}
+                    />
+                )}
             </div>
 
-            {showNewProjectModal && (
-                <NewProjectModal 
-                    onClose={() => setShowNewProjectModal(false)}
-                    onProjectCreated={onProjectCreated}
-                />
+            {infoProject && (
+            <div
+                class="projects-modal-backdrop"
+                onClick={() => setInfoProject(null)}
+            >
+                <div
+                class="projects-modal"
+                onClick={(e) => e.stopPropagation()}
+                >
+                <div class="projects-modal-header">
+                    <div class="projects-modal-title">{infoProject.name}</div>
+                    <button
+                    type="button"
+                    class="projects-modal-close"
+                    onClick={() => setInfoProject(null)}
+                    aria-label="Close"
+                    >
+                    ✕
+                    </button>
+                </div>
+
+                <div class="projects-modal-body">
+                    <div style="font-weight: 600; margin-bottom: 8px;">Description</div>
+                    <div style="opacity: 0.9;">
+                    {infoProject.description?.toString().trim()
+                        ? infoProject.description?.toString()
+                        : "No description yet."}
+                    </div>
+                </div>
+                </div>
+            </div>
             )}
         </>
     );
