@@ -1,4 +1,6 @@
+import { auth } from "../utils/firebase/firebase-init";
 import type { Project } from "../database/models/metadata";
+import { updateProject, deleteProject } from "../database/firestore";
 import { useState, useMemo, useEffect } from "preact/hooks";
 import NewProjectModal from "./NewProjectModal";
 import exitIcon from "../media/cross.png";
@@ -23,6 +25,7 @@ function ProjectsList({
     onNewProjectClick 
 }: ProjectsListProps) {
     const [openOptionsProject, setOpenOptionsProject] = useState<string | null>(null);
+    const [infoProject, setInfoProject] = useState<Project | null>(null);
     const [showNewProjectModal, setShowNewProjectModal] = useState(false);
     const [query, setQuery] = useState("");
 
@@ -40,6 +43,59 @@ function ProjectsList({
         return () => document.removeEventListener("click", handleClickOutside);
     }, [openOptionsProject]);
 
+    const userPermission = () => {
+        const user = auth.currentUser;
+        if(!user) {
+            alert("You must be logged in");
+            return null;
+        }
+        return user;
+    };
+
+    const renameHandler = async (project: Project) => {
+        const user = userPermission();
+        if(!user) return;
+
+        const newName = window.prompt("Rename project:",project.name);
+        if(!newName) return;
+
+        const name = newName.trim();
+        if(!name) return;
+
+        try {
+            await updateProject(user.uid,project.id, {name});
+            setOpenOptionsProject(null);
+            onProjectCreated?.();//list refresh
+        } catch (err) {
+            console.error("Rename failed: ", err);
+        }
+    };
+
+    const deleteHandler = async (project: Project) => {
+        const user = userPermission();
+        if(!user) return;
+
+        const confirm = window.confirm(`Delete project ${project.name}? This cannot be undone.`);
+        if(!confirm) return;
+
+        try{
+            await deleteProject(user.uid, project.id);
+
+            if(activeProjectId === project.id){
+                onProjectSelect?.("");
+            }
+
+            setOpenOptionsProject(null);
+            onProjectCreated?.();
+        } catch (err){
+            console.error("Delete failed: ", err);
+        }
+    };
+
+    const infoHandler = (project: Project) => {
+        setInfoProject(project);
+        setOpenOptionsProject(null);
+    }
 
     return (
         <>
@@ -110,16 +166,22 @@ function ProjectsList({
                                             class="projects-item-menu"
                                             onClick={(e) => e.stopPropagation()} 
                                           >
-                                            <button type="button" class="projects-item-menu-item">
+                                            <button type="button" class="projects-item-menu-item" 
+                                              onClick={() => renameHandler(project)}
+                                              >
                                               Rename
                                             </button>
 
-                                            <button type="button" class="projects-item-menu-item">
+                                            <button type="button" class="projects-item-menu-item"
+                                              onClick={() => infoHandler(project)}
+                                              >
                                               Project Info
                                             </button>
 
                                             <div class="projects-item-menu-divider" />
-                                            <button type="button" class="projects-item-menu-item is-danger">
+                                            <button type="button" class="projects-item-menu-item is-danger"
+                                              onClick={() => deleteHandler(project)}
+                                              >
                                               Delete
                                             </button>
                                         </div>
@@ -152,6 +214,39 @@ function ProjectsList({
                     />
                 )}
             </div>
+
+            {infoProject && (
+            <div
+                class="projects-modal-backdrop"
+                onClick={() => setInfoProject(null)}
+            >
+                <div
+                class="projects-modal"
+                onClick={(e) => e.stopPropagation()}
+                >
+                <div class="projects-modal-header">
+                    <div class="projects-modal-title">{infoProject.name}</div>
+                    <button
+                    type="button"
+                    class="projects-modal-close"
+                    onClick={() => setInfoProject(null)}
+                    aria-label="Close"
+                    >
+                    ✕
+                    </button>
+                </div>
+
+                <div class="projects-modal-body">
+                    <div style="font-weight: 600; margin-bottom: 8px;">Description</div>
+                    <div style="opacity: 0.9;">
+                    {infoProject.description?.toString().trim()
+                        ? infoProject.description?.toString()
+                        : "No description yet."}
+                    </div>
+                </div>
+                </div>
+            </div>
+            )}
         </>
     );
 }
