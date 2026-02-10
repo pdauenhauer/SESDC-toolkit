@@ -16,7 +16,14 @@ import WindStep from './steps/WindStep';
 import GeneratorStep from './steps/GeneratorStep';
 import LoadsStep from './steps/LoadsStep';
 
+// Import Tutorial Overlay
+import TutorialOverlay from './TutorialOverlay';
+import { TUTORIAL_CONTENT } from './tutorialData';
+
 export default function ProjectWizard({ onClose, onFinish }: ProjectWizardProps) {
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [tutorialMode, setTutorialMode] = useState<'tour' | 'help'>('help');
+  
   const [step, setStep] = useState<WizardStep>('NAME');
   const [data, setData] = useState<ProjectData>(INITIAL_PROJECT_DATA);
 
@@ -25,7 +32,7 @@ export default function ProjectWizard({ onClose, onFinish }: ProjectWizardProps)
   const updateSection = (section: keyof ProjectData, field: string, value: any) => {
     setData(prev => ({
       ...prev,
-      [section]: { ...prev[section] as any, [field]: value }
+      [section]: { ...(prev[section] as any), [field]: value }
     }));
   };
 
@@ -33,10 +40,9 @@ export default function ProjectWizard({ onClose, onFinish }: ProjectWizardProps)
     setData(prev => ({
       ...prev,
       [section]: { 
-        ...(prev[section] as any)[category], 
+        ...(prev[section] as any),
         [category]: {
-          // @ts-ignore (Handling nested dynamic keys in TS can be tricky, ignore for now)
-          ...prev[section][category],
+          ...(prev[section] as any)[category],
           [field]: value
         } 
       }
@@ -55,6 +61,18 @@ export default function ProjectWizard({ onClose, onFinish }: ProjectWizardProps)
   return (
     <div class="wizard-overlay">
       <div class="wizard-card">
+        {/* Help Button */}
+        <button 
+            class="help-btn" 
+            onClick={() => {
+              setTutorialMode('help');
+              setShowTutorial(true);
+            }}
+            title="Need Help?"
+          >
+            ?
+        </button>
+
         <button class="close-btn" onClick={onClose}>&times;</button>
 
         {/* Step Components Rendering Based on Current Step */}
@@ -90,6 +108,12 @@ export default function ProjectWizard({ onClose, onFinish }: ProjectWizardProps)
           />
         )}
 
+        <TutorialOverlay
+          steps={TUTORIAL_CONTENT[step as string] || []} 
+          isVisible={showTutorial} 
+          mode={tutorialMode}
+          onClose={() => setShowTutorial(false)}
+        />
       </div>
     </div>
   );

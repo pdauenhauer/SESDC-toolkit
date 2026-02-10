@@ -61,3 +61,17 @@
   font-size: 24px;
   cursor: pointer;
 }
+
+.help-btn {
+  position: absolute;
+  top: 15px;
+  right: 50px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #f0f9ff;
+  border: 1px solid #0088cc;
+  color: #0088cc;
+  font-weight: bold;
+  cursor: pointer;
+}
