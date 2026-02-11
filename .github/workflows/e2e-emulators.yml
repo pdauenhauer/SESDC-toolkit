@@ -1,0 +1,35 @@
+name: E2E (Auth + Firestore emulators)
+
+on:
+  pull_request:
+    branches: [test]
+  push:
+    branches: [test]
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # Firestore emulator requires Java
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run emulator E2E tests
+        run: npm run test:e2e
