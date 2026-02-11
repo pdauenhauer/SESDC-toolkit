@@ -70,7 +70,7 @@ import {
         },
       });
   
-      // keep your existing indexing style working
+      // keep existing indexing style working
       await updateDoc(doc(db, "users", uid), {
         projectids: arrayUnion(projectId),
         numprojects: increment(1),
