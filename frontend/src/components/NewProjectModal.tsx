@@ -3,7 +3,7 @@ import { createProject } from "../database/firestore";
 import { auth } from "../utils/firebase/firebase-init";
 import "../css/project-new-project.css";
 
-
+//
 
 interface NewProjectModalProps {
     onClose: () => void;
