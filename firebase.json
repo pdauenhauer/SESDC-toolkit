@@ -21,7 +21,7 @@
   ],
   "hosting": {
     "site": "sesdc-toolkit2",
-    "public": "frontend/build",
+    "public": "frontend/dist",
     "ignore": [
       "firebase.json",
       "**/.*",
