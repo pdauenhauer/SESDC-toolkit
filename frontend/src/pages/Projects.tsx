@@ -6,7 +6,7 @@ import ProjectsList from "../components/ProjectsList";
 import ProjectCraftArea, { type CraftTabId } from "../components/ProjectCraftArea";
 import type { Load } from "../database/models/load";
 import type { Project } from "../database/models/metadata";
-import { createNewLoad } from "../utils/loadUtils";
+// import { createNewLoad } from "../utils/loadUtils";
 import { auth } from "../utils/firebase/firebase-init";
 import ProjectWizard from '../components/ProjectWizard';
 import { addDoc, collection } from "firebase/firestore";
