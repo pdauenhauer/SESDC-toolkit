@@ -2,7 +2,6 @@ import SESDCHeader from "../components/SESDCHeader";
 import SESDCFooter from "../components/SESDCFooter";
 import graph from '../media/graph.png';
 import '../css/homepage.css';
-import ProjectsList from "../components/ProjectsList";
 
 
 function Home () {

@@ -63,9 +63,9 @@ export default function Projects() {
 
   const HEADER_H = 80;
 
-  const handleAddComponent = () => {
-    setWorkbenchLoads((prev) => [...prev, createNewLoad(`Load ${prev.length + 1}`)]);
-  };
+  // const handleAddComponent = () => {
+  //   setWorkbenchLoads((prev) => [...prev, createNewLoad(`Load ${prev.length + 1}`)]);
+  // };
 
   // 1) fetch projects
   useEffect(() => {

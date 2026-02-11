@@ -52,14 +52,14 @@ export async function createProject(uid: string, data: Omit<Partial<Project>, "c
 
 export async function getProject(uid: string, projectId: string) {
   const snap = await getDoc(projectRef(uid, projectId));
-  return snap.exists() ? ({ id: snap.id, ...(snap.data() as Project) }) : null;
+  return snap.exists() ? ({ ...(snap.data() as Project), id: snap.id }) : null;
 }
 
-export async function listProjects(uid: string, max = 50) {
+export async function listProjects(uid: string, _max = 50) {
   // orderBy requires createdAt/updatedAt to be Timestamp (serverTimestamp is fine)
   const q = query(projectsCol(uid), orderBy("updatedAt", "desc"));
   const snaps = await getDocs(q);
-  return snaps.docs.map((d) => ({ id: d.id, ...(d.data() as Project) }));
+  return snaps.docs.map((d) => ({ ...(d.data() as Project), id: d.id }));
 }
 
 export async function updateProject(uid: string, projectId: string, patch: Partial<Project>) {

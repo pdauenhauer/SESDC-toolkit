@@ -21,8 +21,7 @@ function ProjectsList({
     loading, 
     activeProjectId, 
     onProjectSelect, 
-    onProjectCreated,
-    onNewProjectClick 
+    onProjectCreated
 }: ProjectsListProps) {
     const [openOptionsProject, setOpenOptionsProject] = useState<string | null>(null);
     const [infoProject, setInfoProject] = useState<Project | null>(null);

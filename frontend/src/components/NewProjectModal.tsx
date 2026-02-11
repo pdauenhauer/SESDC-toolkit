@@ -1,7 +1,6 @@
 import { useState } from "preact/hooks";
 import { createProject } from "../database/firestore";
 import { auth } from "../utils/firebase/firebase-init";
-import exitIcon from "../media/cross.png";
 import "../css/project-new-project.css";
 
 
