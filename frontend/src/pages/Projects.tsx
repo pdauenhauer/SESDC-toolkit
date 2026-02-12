@@ -6,7 +6,7 @@ import ProjectsList from "../components/ProjectsList";
 import ProjectCraftArea, { type CraftTabId } from "../components/ProjectCraftArea";
 import type { Load } from "../database/models/load";
 import type { Project } from "../database/models/metadata";
-// import { createNewLoad } from "../utils/loadUtils";
+import { createNewLoad } from "../utils/loadUtils";
 import { auth } from "../utils/firebase/firebase-init";
 import ProjectWizard from '../components/ProjectWizard';
 import { addDoc, collection } from "firebase/firestore";
@@ -63,9 +63,9 @@ export default function Projects() {
 
   const HEADER_H = 80;
 
-  // const handleAddComponent = () => {
-  //   setWorkbenchLoads((prev) => [...prev, createNewLoad(`Load ${prev.length + 1}`)]);
-  // };
+  const handleAddComponent = () => {
+    setWorkbenchLoads((prev) => [...prev, createNewLoad(`Load ${prev.length + 1}`)]);
+  };
 
   // 1) fetch projects
   useEffect(() => {
@@ -185,11 +185,11 @@ export default function Projects() {
           <div class="projects-toolbar">
             <div class="projects-toolbar-row">
               {activeCraftTab === "workbench" && (
-                <button type="button" class="projects-btn projects-btn-add" onClick={() => setWizardOpen(true)}>
+                <button type="button" class="projects-btn projects-btn-add" onClick={handleAddComponent}>
+                  <span class="projects-btn-plus">＋</span>
                   Add new Component
                 </button>
               )}
-                  <span class="projects-btn-plus">＋</span>
               <div class="projects-currentLoad">
                 Current Total Load: <span class="projects-currentLoad-strong"> </span>
               </div>
@@ -215,6 +215,7 @@ export default function Projects() {
       </div>
       {isWizardOpen && (
         <ProjectWizard 
+          projectName=""
           onClose={() => setWizardOpen(false)}
           onFinish={async (wizardData) => {
             console.log("Wizard Completed with Data:", wizardData);
