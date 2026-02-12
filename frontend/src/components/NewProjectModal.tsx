@@ -7,7 +7,7 @@ import "../css/project-new-project.css";
 
 interface NewProjectModalProps {
     onClose: () => void;
-    onProjectCreated?: () => void;
+    onProjectCreated?: (project: any) => void;
 }
 
 function NewProjectModal({ onClose, onProjectCreated }: NewProjectModalProps) {
@@ -32,14 +32,14 @@ function NewProjectModal({ onClose, onProjectCreated }: NewProjectModalProps) {
 
         setLoading(true);
         setError("");
-
+        
         try {
-            await createProject(user.uid, {
+            const newProject = await createProject(user.uid,{
                 name: projectName.trim(),
                 description: projectDescription.trim(),
                 ownerId: user.uid,
             });
-            onProjectCreated?.();
+            onProjectCreated?.(newProject);
             onClose();
         } catch (err) {
             console.error("Error creating project:", err);

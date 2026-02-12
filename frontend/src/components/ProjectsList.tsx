@@ -7,6 +7,8 @@ import exitIcon from "../media/cross.png";
 import projectIcon from "../media/project.png";
 import optionIcon from "../media/option.png";
 
+import ProjectWizard from "./ProjectWizard";
+
 interface ProjectsListProps {
     projects: Project[];
     loading: boolean;
@@ -21,19 +23,39 @@ function ProjectsList({
     loading, 
     activeProjectId, 
     onProjectSelect, 
-    onProjectCreated
-}: ProjectsListProps) {
+    onProjectCreated,
+}: 
+ProjectsListProps) {
     const [openOptionsProject, setOpenOptionsProject] = useState<string | null>(null);
     const [infoProject, setInfoProject] = useState<Project | null>(null);
     const [showNewProjectModal, setShowNewProjectModal] = useState(false);
     const [query, setQuery] = useState("");
 
+    const [showWizard, setShowWizard] = useState(false);
+    const [justCreatedProject, setJustCreatedProject] = useState<Project | null>(null);
     // Filter projects based on search query
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
         if (!q) return projects;
         return projects.filter((p) => p.name.toLowerCase().includes(q));
     }, [projects, query]);
+
+    const handleWizardFinish = async (wizardData: any) => {
+        if (!justCreatedProject || !auth.currentUser) return;
+
+        try {
+            await updateProject(auth.currentUser.uid, justCreatedProject.id, wizardData);
+            
+            // Refresh list
+            onProjectCreated?.(); 
+        } catch (error) {
+            console.error("Failed to save wizard data", error);
+        }
+        
+        setShowWizard(false);
+        setJustCreatedProject(null);
+    };
+
 
     useEffect(() => {
         if (!openOptionsProject) return;
@@ -98,7 +120,7 @@ function ProjectsList({
 
     return (
         <>
-            {/* Header with title and search */}
+            {/* Header with title and search*/ }
             <div class="projects-sidebar-header">
                 <div class="projects-sidebar-title">Projects</div>
                 <div class="projects-search">
@@ -120,7 +142,7 @@ function ProjectsList({
                 </div>
             </div>
 
-            {/* Projects list */}
+            {/* Projects list*/ }
             <div class="projects-sidebar-content">
                 <div class="projects-group">
                     <div class="projects-group-title">My Projects</div>
@@ -192,7 +214,7 @@ function ProjectsList({
                 </div>
             </div>
 
-            {/* New Project button at bottom */}
+            {/* New Project button at bottom*/ }
             <div class="projects-sidebar-footer">
                 {!showNewProjectModal ? (
                     <button
@@ -206,13 +228,29 @@ function ProjectsList({
                     ) : (
                         <NewProjectModal
                         onClose={() => setShowNewProjectModal(false)}
-                        onProjectCreated={() => {
+                        onProjectCreated={(newProject: any) => {
                         onProjectCreated?.();
-                        setShowNewProjectModal(false);
+                        if(newProject){
+                            setJustCreatedProject(newProject);
+                            setShowNewProjectModal(false);
+                            setShowWizard(true);
+                        } else {
+                            setShowNewProjectModal(false);
+                        }
                         }}
                     />
                 )}
             </div>
+            {showWizard && justCreatedProject && (
+                <ProjectWizard 
+                    projectName={justCreatedProject.name}
+                    onClose={() => {
+                        setShowWizard(false);
+                        setJustCreatedProject(null);
+                    }}
+                    onFinish={handleWizardFinish}
+                />
+            )}
 
             {infoProject && (
             <div
