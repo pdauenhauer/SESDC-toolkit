@@ -1,6 +1,6 @@
 // src/components/ProjectWizard/index.tsx
 
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import '../../css/ProjectWizard.css';
 
 // Import Types and Constants
@@ -8,7 +8,6 @@ import { ProjectWizardProps, WizardStep, ProjectData } from './types';
 import { INITIAL_PROJECT_DATA } from './constants';
 
 // Import Step Components
-import NameStep from './steps/NameStep';
 import StartStep from './steps/StartStep';
 import SolarStep from './steps/SolarStep';
 import BatteryStep from './steps/BatteryStep';
@@ -20,12 +19,25 @@ import LoadsStep from './steps/LoadsStep';
 import TutorialOverlay from './TutorialOverlay';
 import { TUTORIAL_CONTENT } from './tutorialData';
 
-export default function ProjectWizard({ onClose, onFinish }: ProjectWizardProps) {
+interface ExtendedWizardProps extends ProjectWizardProps {
+  projectName: string;
+}
+
+export default function ProjectWizard({ onClose, onFinish, projectName }: ExtendedWizardProps) {
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialMode, setTutorialMode] = useState<'tour' | 'help'>('help');
   
-  const [step, setStep] = useState<WizardStep>('NAME');
-  const [data, setData] = useState<ProjectData>(INITIAL_PROJECT_DATA);
+  const [step, setStep] = useState<WizardStep>('ONBOARDING_PROMPT');
+  const [data, setData] = useState<ProjectData>({
+    ...INITIAL_PROJECT_DATA,
+    name: projectName
+  });
+
+  useEffect(() => {
+    if(projectName) {
+      setData(prev => ({ ...prev, name: projectName }));
+    }
+  }, [projectName]);
 
   // --- Shared Helper Functions ---
 
@@ -76,9 +88,6 @@ export default function ProjectWizard({ onClose, onFinish }: ProjectWizardProps)
         <button class="close-btn" onClick={onClose}>&times;</button>
 
         {/* Step Components Rendering Based on Current Step */}
-        {step === 'NAME' && (
-          <NameStep {...commonProps} setData={setData} onClose={onClose} />
-        )}
 
         {step === 'ONBOARDING_PROMPT' && (
            <StartStep {...commonProps} onFinishManually={() => { onFinish(data); onClose(); }} />
