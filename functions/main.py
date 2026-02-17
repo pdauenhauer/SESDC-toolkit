@@ -1,28 +1,9 @@
-import io
+# Lightweight top-level imports only — heavy deps (numpy, pandas, calculations)
+# are lazy-loaded inside the handler to avoid Firebase's 10s discovery timeout.
+
 import json
 
-import requests
-import numpy as np
-import pandas as pd
-
 from firebase_functions import https_fn, options
-
-from calculations import (
-    calculate_hourly_solar_energy,
-    calculate_hourly_wind_energy,
-    net_energy_for_graph,
-    calculate_net_energy,
-    calc_load_not_serviced,
-    calc_daily_energy,
-    predict20years,
-    calculate_20_year_expenses,
-    compute_20_year_revenue,
-    EnergyStorageSystem,
-    STCIrr,
-    STCTemp,
-    coef,
-    diesel_losses,
-)
 
 
 cors_settings = options.CorsOptions(
@@ -34,12 +15,6 @@ cors_settings = options.CorsOptions(
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-def _df_to_csv(df: pd.DataFrame) -> str:
-    buf = io.StringIO()
-    df.to_csv(buf, index=False)
-    return buf.getvalue()
-
 
 def _safe_float(val, default=0.0):
     try:
@@ -56,7 +31,7 @@ def _safe_int(val, default=10):
 
 
 # ---------------------------------------------------------------------------
-# NREL data fetch
+# NREL data fetch  (imports lazily)
 # ---------------------------------------------------------------------------
 
 def fetch_nrel_data(
@@ -72,6 +47,10 @@ def fetch_nrel_data(
         Datetime, Irradiance (W/m2), Temp_C (oC), Wind_speed(m/s)
     Returns None on failure.
     """
+    import io
+    import requests
+    import pandas as pd
+
     url = "https://developer.nrel.gov/api/nsrdb/v2/solar/nsrdb-msg-v1-0-0-download.csv"
     wkt = f"POINT({longitude} {latitude})"
     params = {
@@ -116,7 +95,7 @@ def fetch_nrel_data(
 
 
 # ---------------------------------------------------------------------------
-# Core simulation  –  returns dict of CSV strings
+# Core simulation  –  returns dict of CSV strings  (imports lazily)
 # ---------------------------------------------------------------------------
 
 def run_simulation(
@@ -131,15 +110,40 @@ def run_simulation(
     """Run the full energy-system simulation and return a dict of CSV strings.
 
     Keys in the returned dict (any may be None when not applicable):
-        input_data            – raw NREL + load data
-        hourly_simulation     – per-timestep simulation results
-        daily_averages        – daily-averaged values
-        twenty_year_daily     – 20-year daily load-serviced projection
-        financial_expenses    – 20-year CAPEX/OPEX breakdown
-        revenue               – 20-year revenue projection
-        solar_heatmap         – 365×24 hourly solar matrix
-        monthly_heatmap       – 12×31 avg-daily solar matrix
+        input_data            - raw NREL + load data
+        hourly_simulation     - per-timestep simulation results
+        daily_averages        - daily-averaged values
+        twenty_year_daily     - 20-year daily load-serviced projection
+        financial_expenses    - 20-year CAPEX/OPEX breakdown
+        revenue               - 20-year revenue projection
+        solar_heatmap         - 365x24 hourly solar matrix
+        monthly_heatmap       - 12x31 avg-daily solar matrix
     """
+    import io
+    import numpy as np
+    import pandas as pd
+    from calculations import (
+        calculate_hourly_solar_energy,
+        calculate_hourly_wind_energy,
+        net_energy_for_graph,
+        calculate_net_energy,
+        calc_load_not_serviced,
+        calc_daily_energy,
+        predict20years,
+        calculate_20_year_expenses,
+        compute_20_year_revenue,
+        EnergyStorageSystem,
+        STCIrr,
+        STCTemp,
+        coef,
+        diesel_losses,
+    )
+
+    def _df_to_csv(df: pd.DataFrame) -> str:
+        buf = io.StringIO()
+        df.to_csv(buf, index=False)
+        return buf.getvalue()
+
     n_rows = len(nrel_df)
     time_points = np.arange(n_rows)
 
@@ -164,7 +168,7 @@ def run_simulation(
             solar_inputs["losses"],
             coef, STCIrr, STCTemp,
         )
-        solar_power = np.array(raw, dtype=float) / 1000.0  # W → kW
+        solar_power = np.array(raw, dtype=float) / 1000.0  # W -> kW
         print("[run_simulation] Solar done, total kWh=", np.sum(solar_power))
 
     # Wind
@@ -178,7 +182,7 @@ def run_simulation(
             wind_inputs["rated_speed"],
             wind_inputs["cut_out_speed"],
         )
-        wind_power = np.array(raw, dtype=float) / 1000.0  # W → kW
+        wind_power = np.array(raw, dtype=float) / 1000.0  # W -> kW
         print("[run_simulation] Wind done, total kWh=", np.sum(wind_power))
 
     # Diesel / Generator  (simple load-following dispatch)
@@ -186,14 +190,14 @@ def run_simulation(
     if using_generator and generator_inputs:
         gen_capacity = _safe_float(generator_inputs.get("capacity"))
         loss_vals = list(diesel_losses.values())
-        max_output_kw = (gen_capacity * np.prod(loss_vals)) / 1000.0  # W → kW
+        max_output_kw = (gen_capacity * np.prod(loss_vals)) / 1000.0  # W -> kW
         for i in range(n_rows):
             deficit = load_values[i] - solar_power[i] - wind_power[i]
             if deficit > 0:
                 diesel_power[i] = min(deficit, max_output_kw)
         print("[run_simulation] Diesel done, total kWh=", np.sum(diesel_power))
 
-    # Net energy  (solar + wind + diesel − load)
+    # Net energy  (solar + wind + diesel - load)
     net_energy = net_energy_for_graph(solar_power, load_values, wind_power, diesel_power)
 
     # Battery
@@ -366,7 +370,7 @@ def run_simulation(
         print("[run_simulation] revenue error:", str(e))
         csvs["revenue"] = None
 
-    # 7. Solar heatmap (365 × 24 matrix)
+    # 7. Solar heatmap (365 x 24 matrix)
     if using_solar and len(solar_power) >= 8760:
         try:
             reshaped = solar_power[:8760].reshape((365, 24))
@@ -380,7 +384,7 @@ def run_simulation(
     else:
         csvs["solar_heatmap"] = None
 
-    # 8. Monthly heatmap (12 × 31 avg-daily solar)
+    # 8. Monthly heatmap (12 x 31 avg-daily solar)
     if using_solar and daily_solar and len(daily_solar) >= 365:
         try:
             days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
