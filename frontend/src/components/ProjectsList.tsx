@@ -6,6 +6,7 @@ import NewProjectModal from "./NewProjectModal";
 import exitIcon from "../media/cross.png";
 import projectIcon from "../media/project.png";
 import optionIcon from "../media/option.png";
+import rejectIcon from "../media/reject.png";
 
 import ProjectWizard from "./ProjectWizard";
 
@@ -16,6 +17,7 @@ interface ProjectsListProps {
     onProjectSelect?: (projectId: string) => void;
     onProjectCreated?: () => void;
     onNewProjectClick?: () => void;
+    onHideSidebar?: () => void;
 }
 
 function ProjectsList({ 
@@ -24,6 +26,8 @@ function ProjectsList({
     activeProjectId, 
     onProjectSelect, 
     onProjectCreated,
+    onHideSidebar,
+
 }: 
 ProjectsListProps) {
     const [openOptionsProject, setOpenOptionsProject] = useState<string | null>(null);
@@ -122,7 +126,18 @@ ProjectsListProps) {
         <>
             {/* Header with title and search*/ }
             <div class="projects-sidebar-header">
-                <div class="projects-sidebar-title">Projects</div>
+                <div class="projects-sidebar-header-row">
+                    <div class="projects-sidebar-title">Projects</div>
+                    <button
+                        type="button"
+                        class="projects-sidebar-toggle-btn"
+                        onClick={() => onHideSidebar?.()}
+                        aria-label="Hide projects"
+                        title="Hide projects"
+                    >
+                        <img src={rejectIcon} alt="" class="projects-sidebar-toggle-icon" />
+                    </button>
+                </div>
                 <div class="projects-search">
                     <input
                         class="projects-search-input"

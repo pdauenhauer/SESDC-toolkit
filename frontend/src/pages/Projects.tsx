@@ -12,6 +12,8 @@ import ProjectWizard from '../components/ProjectWizard';
 import { addDoc, collection } from "firebase/firestore";
 import { db } from "../utils/firebase/firebase-init";
 import { listProjects, getProjectLoads, saveProjectLoads } from "../database/firestore";
+import menuIcon from "../media/menu.png";
+import settingIcon from "../media/setting.png";
 import "../css/projects.css";
 
 // Set to true to use hardcoded dummy projects instead of fetching from DB
@@ -60,6 +62,7 @@ export default function Projects() {
   const [workbenchLoads, setWorkbenchLoads] = useState<Load[]>([]);
   const hydratedProjectIdRef = useRef<string | null>(null);
   const [isWizardOpen, setWizardOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const HEADER_H = 80;
 
@@ -170,20 +173,35 @@ export default function Projects() {
       <SESDCHeader />
 
       <div class="projects-layout" style={{ height: `calc(100vh - ${HEADER_H}px)` }}>
-        <aside class="projects-sidebar">
-          <ProjectsList
-            projects={projects}
-            loading={loading}
-            activeProjectId={activeProjectId}
-            onProjectSelect={(id) => setActiveProjectId(id)}
-            onProjectCreated={refreshProjects}
-            onNewProjectClick={() => setWizardOpen(true)}
-          />
-        </aside>
+        {sidebarOpen && (
+          <aside class="projects-sidebar">
+            <ProjectsList
+              projects={projects}
+              loading={loading}
+              activeProjectId={activeProjectId}
+              onProjectSelect={(id) => setActiveProjectId(id)}
+              onProjectCreated={refreshProjects}
+              onNewProjectClick={() => setWizardOpen(true)}
+              onHideSidebar={() => setSidebarOpen(false)}
+            />
+          </aside>
+        )}
 
         <section class="projects-main">
           <div class="projects-toolbar">
             <div class="projects-toolbar-row">
+              {!sidebarOpen && (
+                <button
+                  type="button"
+                  class="projects-sidebar-inline-toggle"
+                  onClick={() => setSidebarOpen(true)}
+                  aria-label="Show projects"
+                  title="Show projects"
+                >
+                  <img src={menuIcon} alt="" class="projects-sidebar-toggle-icon" />
+                </button>
+              )}
+
               {activeCraftTab === "workbench" && (
                 <button type="button" class="projects-btn projects-btn-add" onClick={handleAddComponent}>
                   <span class="projects-btn-plus">＋</span>
@@ -199,6 +217,15 @@ export default function Projects() {
               <button type="button" class="projects-btn projects-btn-run" onClick={() => console.log("Run Simulation")}>
                 <span class="projects-btn-play">▶</span>
                 Run Simulation
+              </button>
+              <button
+                type="button"
+                class="projects-toolbar-icon-btn"
+                onClick={() => console.log("Open Settings")}
+                aria-label="Settings"
+                title="Settings"
+              >
+                <img src={settingIcon} alt="" class="projects-toolbar-icon" />
               </button>
             </div>
           </div>
