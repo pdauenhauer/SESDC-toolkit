@@ -1,5 +1,7 @@
 import type { Load } from "../database/models/load";
+import type { SimulationResult } from "../services/simulation";
 import Workbench from "./Workbench";
+import SimulationResults from "./SimulationResults";
 
 export type CraftTabId = "data" | "workbench" | "graphs";
 
@@ -14,6 +16,8 @@ interface ProjectCraftAreaProps {
   onTabChange: (tab: CraftTabId) => void;
   workbenchLoads: Load[];
   setWorkbenchLoads: (value: Load[] | ((prev: Load[]) => Load[])) => void;
+  simulationResult?: SimulationResult | null;
+  onClearSimulationResult?: () => void;
 }
 
 export default function ProjectCraftArea({
@@ -21,6 +25,8 @@ export default function ProjectCraftArea({
   onTabChange,
   workbenchLoads,
   setWorkbenchLoads,
+  simulationResult = null,
+  onClearSimulationResult,
 }: ProjectCraftAreaProps) {
   return (
     <div class="project-craft-area">
@@ -43,7 +49,16 @@ export default function ProjectCraftArea({
       <div class="project-craft-content">
         {activeTab === "data" && (
           <div class="project-craft-panel">
-            <p class="project-craft-placeholder">Data view — inputs and parameters (loads model coming next).</p>
+            {simulationResult ? (
+              <SimulationResults
+                result={simulationResult}
+                onClear={onClearSimulationResult}
+              />
+            ) : (
+              <p class="project-craft-placeholder">
+                Data — run a simulation from the toolbar to see CSV results here.
+              </p>
+            )}
           </div>
         )}
         {activeTab === "workbench" && (
@@ -53,7 +68,7 @@ export default function ProjectCraftArea({
         )}
         {activeTab === "graphs" && (
           <div class="project-craft-panel">
-            <p class="project-craft-placeholder">Graphs — simulation results and charts.</p>
+            <p class="project-craft-placeholder">Graphs — simulation charts and visualizations.</p>
           </div>
         )}
       </div>
