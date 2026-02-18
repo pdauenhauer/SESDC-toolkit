@@ -23,7 +23,8 @@ export default function SimulationResults({ result, onClear }: SimulationResults
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
 
   const entries = Object.entries(result).filter(
-    ([, csv]) => csv != null && csv.length > 0
+    (entry): entry is [string, string] =>
+      entry[1] != null && entry[1].length > 0
   );
 
   if (entries.length === 0) {
