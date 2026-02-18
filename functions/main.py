@@ -1,501 +1,570 @@
-# Welcome to Cloud Functions for Firebase for Python!
-# To get started, simply uncomment the below code or create your own.
-# Deploy with `firebase deploy`
+# Lightweight top-level imports only — heavy deps (numpy, pandas, calculations)
+# are lazy-loaded inside the handler to avoid Firebase's 10s discovery timeout.
 
-import os
-import sys
-import requests
-import io
-import csv
-import firebase_admin
+import json
 
 from firebase_functions import https_fn, options
-from firebase_storage_setup import get_storage_bucket
-from firebase_admin import storage
 
-from calculations import (
-    EnergyStorageSystem,
-    process_csv, coef, STCIrr, STCTemp, panel_char, calculate_hourly_solar_energy, calculate_solar_energy,
-    calculate_net_energy, net_energy_for_graph,
-    calculate_hourly_wind_energy, calculate_power_output, 
-    calculate_hourly_diesel_energy, diesel_losses,
-    calc_daily_load_serviced, calc_load_not_serviced, calc_daily_energy,
-    predict20years,
-    calculate_20_year_expenses,
-    compute_20_year_revenue
-)
-from graph import (
-    generate_power_graph, 
-    generate_solar_heatmap,
-    generate_monthly_heatmap,
-    plot_load_profile, 
-    plot_wind_energy, 
-    plot_generic, 
-    plot_net_energy, 
-    plot_battery_soc, 
-    plot20year,
-    plot_20yr_financials,
-    plot_annual_revenue
-)
-
-import pandas as pd
-import numpy as np
 
 cors_settings = options.CorsOptions(
     cors_origins=["*"],
     cors_methods=["POST", "OPTIONS"],
 )
 
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _safe_float(val, default=0.0):
+    try:
+        return float(val) if val is not None else default
+    except (TypeError, ValueError):
+        return default
+
+
+def _safe_int(val, default=10):
+    try:
+        return int(val) if val is not None else default
+    except (TypeError, ValueError):
+        return default
+
+
+# ---------------------------------------------------------------------------
+# NREL data fetch  (imports lazily)
+# ---------------------------------------------------------------------------
+
+def fetch_nrel_data(
+    latitude,
+    longitude,
+    api_key="5gZjfefi1adVzrZPYNirDhSk24BQcDEaYyWnxPdy",
+    year="2022",
+    interval="30",
+):
+    """Fetch NREL weather/irradiance data and return a parsed DataFrame.
+
+    Columns returned:
+        Datetime, Irradiance (W/m2), Temp_C (oC), Wind_speed(m/s)
+    Returns None on failure.
+    """
+    import io
+    import requests
+    import pandas as pd
+
+    url = "https://developer.nrel.gov/api/nsrdb/v2/solar/nsrdb-msg-v1-0-0-download.csv"
+    wkt = f"POINT({longitude} {latitude})"
+    params = {
+        "api_key": api_key,
+        "wkt": wkt,
+        "attributes": "dni,wind_speed,air_temperature",
+        "names": year,
+        "utc": "false",
+        "leap_day": "false",
+        "interval": interval,
+        "full_name": "Peter Dauenhauer",
+        "email": "peter.dauenhauer@gmail.com",
+    }
+
+    print("[fetch_nrel_data] Requesting NREL", "lat=", latitude, "lon=", longitude)
+    response = requests.get(url, params=params)
+
+    if response.status_code != 200:
+        print(
+            "[fetch_nrel_data] NREL failed",
+            "status=", response.status_code,
+            "body=", response.text[:500],
+        )
+        return None
+
+    print("[fetch_nrel_data] NREL OK, parsing CSV...")
+    csv_data = io.StringIO(response.text)
+    df = pd.read_csv(csv_data, skiprows=2)
+
+    ts = df.iloc[:, :5].copy()
+    ts["Timestamp"] = pd.to_datetime(ts[["Year", "Month", "Day", "Hour", "Minute"]])
+    ts["Datetime"] = ts["Timestamp"].dt.strftime("%m/%d/%Y %H:%M")
+
+    result = pd.DataFrame()
+    result["Datetime"] = ts["Datetime"].values
+    result["Irradiance (W/m2)"] = df["DNI"].values
+    result["Temp_C (oC)"] = df["Temperature"].values
+    result["Wind_speed(m/s)"] = df["Wind Speed"].values
+
+    print("[fetch_nrel_data] Parsed", len(result), "rows")
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Core simulation  –  returns dict of CSV strings  (imports lazily)
+# ---------------------------------------------------------------------------
+
+def run_simulation(
+    nrel_df,
+    load_list,
+    using_solar, solar_inputs,
+    using_wind, wind_inputs,
+    using_generator, generator_inputs,
+    using_battery, battery_inputs,
+    financial_inputs,
+):
+    """Run the full energy-system simulation and return a dict of CSV strings.
+
+    Keys in the returned dict (any may be None when not applicable):
+        input_data            - raw NREL + load data
+        hourly_simulation     - per-timestep simulation results
+        daily_averages        - daily-averaged values
+        twenty_year_daily     - 20-year daily load-serviced projection
+        financial_expenses    - 20-year CAPEX/OPEX breakdown
+        revenue               - 20-year revenue projection
+        solar_heatmap         - 365x24 hourly solar matrix
+        monthly_heatmap       - 12x31 avg-daily solar matrix
+    """
+    import io
+    import numpy as np
+    import pandas as pd
+    from calculations import (
+        calculate_hourly_solar_energy,
+        calculate_hourly_wind_energy,
+        net_energy_for_graph,
+        calculate_net_energy,
+        calc_load_not_serviced,
+        calc_daily_energy,
+        predict20years,
+        calculate_20_year_expenses,
+        compute_20_year_revenue,
+        EnergyStorageSystem,
+        STCIrr,
+        STCTemp,
+        coef,
+        diesel_losses,
+    )
+
+    def _df_to_csv(df: pd.DataFrame) -> str:
+        buf = io.StringIO()
+        df.to_csv(buf, index=False)
+        return buf.getvalue()
+
+    n_rows = len(nrel_df)
+    time_points = np.arange(n_rows)
+
+    # --- Repeat load pattern to fill the year ---
+    if load_list and len(load_list) > 0:
+        repeats_needed = (n_rows // len(load_list)) + 1
+        repeated = (load_list * repeats_needed)[:n_rows]
+    else:
+        repeated = [0] * n_rows
+    load_values = np.array(repeated, dtype=float)
+
+    # ---------------------------------------------------------------
+    # Hourly generation calculations
+    # ---------------------------------------------------------------
+
+    # Solar
+    solar_power = np.zeros(n_rows)
+    if using_solar and solar_inputs:
+        raw = calculate_hourly_solar_energy(
+            nrel_df,
+            solar_inputs["solar_array_size"],
+            solar_inputs["losses"],
+            coef, STCIrr, STCTemp,
+        )
+        solar_power = np.array(raw, dtype=float) / 1000.0  # W -> kW
+        print("[run_simulation] Solar done, total kWh=", np.sum(solar_power))
+
+    # Wind
+    wind_power = np.zeros(n_rows)
+    if using_wind and wind_inputs:
+        raw = calculate_hourly_wind_energy(
+            nrel_df,
+            wind_inputs["nameplate_capacity"],
+            wind_inputs["rated_power"],
+            wind_inputs["cut_in_speed"],
+            wind_inputs["rated_speed"],
+            wind_inputs["cut_out_speed"],
+        )
+        wind_power = np.array(raw, dtype=float) / 1000.0  # W -> kW
+        print("[run_simulation] Wind done, total kWh=", np.sum(wind_power))
+
+    # Diesel / Generator  (simple load-following dispatch)
+    diesel_power = np.zeros(n_rows)
+    if using_generator and generator_inputs:
+        gen_capacity = _safe_float(generator_inputs.get("capacity"))
+        loss_vals = list(diesel_losses.values())
+        max_output_kw = (gen_capacity * np.prod(loss_vals)) / 1000.0  # W -> kW
+        for i in range(n_rows):
+            deficit = load_values[i] - solar_power[i] - wind_power[i]
+            if deficit > 0:
+                diesel_power[i] = min(deficit, max_output_kw)
+        print("[run_simulation] Diesel done, total kWh=", np.sum(diesel_power))
+
+    # Net energy  (solar + wind + diesel - load)
+    net_energy = net_energy_for_graph(solar_power, load_values, wind_power, diesel_power)
+
+    # Battery
+    battery_soc = np.zeros(n_rows)
+    load_not_serviced = np.zeros(n_rows)
+    if using_battery and battery_inputs:
+        batt = EnergyStorageSystem(
+            capacity=_safe_float(battery_inputs.get("charge_capacity")),
+            max_storage=_safe_float(battery_inputs.get("maximum_storage")),
+            battery_type=battery_inputs.get("battery_type", "lithium-ion"),
+        )
+        battery_soc = np.array(calculate_net_energy(batt, net_energy.tolist()))
+        load_not_serviced = np.array(calc_load_not_serviced(
+            time_points, battery_soc,
+            battery_inputs.get("battery_type", "lithium-ion"),
+            _safe_float(battery_inputs.get("maximum_storage")),
+            net_energy,
+        ))
+        print("[run_simulation] Battery done")
+
+    # Hourly load serviced
+    hourly_load_serviced = load_values - load_not_serviced
+
+    # ---------------------------------------------------------------
+    # Build CSV dict
+    # ---------------------------------------------------------------
+    csvs: dict[str, str | None] = {}
+
+    # 1. Input data (raw NREL + load)
+    input_df = nrel_df.copy()
+    input_df["load_values"] = load_values
+    csvs["input_data"] = _df_to_csv(input_df)
+
+    # 2. Hourly simulation
+    hourly_df = pd.DataFrame({
+        "Datetime": nrel_df["Datetime"].values,
+        "load_kW": load_values,
+        "solar_kW": solar_power,
+        "wind_kW": wind_power,
+        "diesel_kW": diesel_power,
+        "net_energy_kW": net_energy,
+        "battery_soc_kWh": battery_soc,
+        "load_not_serviced_kW": load_not_serviced,
+        "load_serviced_kW": hourly_load_serviced,
+    })
+    csvs["hourly_simulation"] = _df_to_csv(hourly_df)
+
+    # 3. Daily averages  (trim to a multiple of 24 rows)
+    daily_load_serviced = None
+    daily_solar = None
+    try:
+        trim = (n_rows // 24) * 24
+        daily_load = calc_daily_energy(0, load_values[:trim].tolist())
+        daily_solar = calc_daily_energy(0, solar_power[:trim].tolist())
+        daily_wind = calc_daily_energy(0, wind_power[:trim].tolist())
+        daily_diesel = calc_daily_energy(0, diesel_power[:trim].tolist())
+        daily_net = calc_daily_energy(0, net_energy[:trim].tolist())
+        daily_lns = calc_daily_energy(0, load_not_serviced[:trim].tolist())
+        daily_load_serviced = calc_daily_energy(0, hourly_load_serviced[:trim].tolist())
+
+        daily_df = pd.DataFrame({
+            "day": np.arange(len(daily_load)),
+            "avg_load_kW": daily_load,
+            "avg_solar_kW": daily_solar,
+            "avg_wind_kW": daily_wind,
+            "avg_diesel_kW": daily_diesel,
+            "avg_net_kW": daily_net,
+            "avg_load_serviced_kW": daily_load_serviced,
+            "avg_load_not_serviced_kW": daily_lns,
+        })
+        csvs["daily_averages"] = _df_to_csv(daily_df)
+        print("[run_simulation] Daily averages done, days=", len(daily_load))
+    except Exception as e:
+        print("[run_simulation] daily_averages error:", str(e))
+        csvs["daily_averages"] = None
+
+    # 4. 20-year daily projection
+    try:
+        if daily_load_serviced and len(daily_load_serviced) > 0:
+            ls_20yr = predict20years(daily_load_serviced)
+            csvs["twenty_year_daily"] = _df_to_csv(pd.DataFrame({
+                "day": np.arange(len(ls_20yr)),
+                "load_serviced_kW": ls_20yr,
+            }))
+            print("[run_simulation] 20yr daily done, rows=", len(ls_20yr))
+        else:
+            csvs["twenty_year_daily"] = None
+    except Exception as e:
+        print("[run_simulation] twenty_year_daily error:", str(e))
+        csvs["twenty_year_daily"] = None
+
+    # 5. Financial expenses (20 years)
+    inflation_raw = _safe_float(financial_inputs.get("inflation", 3.0), 3.0)
+    inflation_rate = inflation_raw / 100.0 if inflation_raw > 1 else inflation_raw
+    try:
+        years_arr = np.arange(20)
+        battery_exp = np.zeros(20)
+        generator_exp = np.zeros(20)
+        solar_exp = np.zeros(20)
+        wind_exp = np.zeros(20)
+
+        if using_battery and battery_inputs:
+            battery_exp = calculate_20_year_expenses(
+                inflation_rate,
+                _safe_float(battery_inputs.get("capex")),
+                _safe_float(battery_inputs.get("opex")),
+                _safe_float(battery_inputs.get("replacement_cost")),
+                _safe_int(battery_inputs.get("lifespan")),
+            )
+        if using_generator and generator_inputs:
+            generator_exp = calculate_20_year_expenses(
+                inflation_rate,
+                _safe_float(generator_inputs.get("capex")),
+                _safe_float(generator_inputs.get("opex")),
+                _safe_float(generator_inputs.get("replacement_cost")),
+                _safe_int(generator_inputs.get("lifespan")),
+            )
+        if using_solar and solar_inputs:
+            solar_exp = calculate_20_year_expenses(
+                inflation_rate,
+                _safe_float(solar_inputs.get("capex")),
+                _safe_float(solar_inputs.get("opex")),
+                _safe_float(solar_inputs.get("replacement_cost")),
+                _safe_int(solar_inputs.get("lifespan")),
+            )
+        if using_wind and wind_inputs:
+            wind_exp = calculate_20_year_expenses(
+                inflation_rate,
+                _safe_float(wind_inputs.get("capex")),
+                _safe_float(wind_inputs.get("opex")),
+                _safe_float(wind_inputs.get("replacement_cost")),
+                _safe_int(wind_inputs.get("lifespan")),
+            )
+
+        total_exp = battery_exp + generator_exp + solar_exp + wind_exp
+        cumulative_exp = np.cumsum(total_exp)
+
+        fin_df = pd.DataFrame({
+            "year": years_arr,
+            "battery_expenses": battery_exp,
+            "generator_expenses": generator_exp,
+            "solar_expenses": solar_exp,
+            "wind_expenses": wind_exp,
+            "total_expenses": total_exp,
+            "cumulative_expenses": cumulative_exp,
+        })
+        csvs["financial_expenses"] = _df_to_csv(fin_df)
+        print("[run_simulation] Financial expenses done")
+    except Exception as e:
+        print("[run_simulation] financial_expenses error:", str(e))
+        csvs["financial_expenses"] = None
+
+    # 6. Revenue (20 years)
+    try:
+        energy_price = _safe_float(financial_inputs.get("energy_price", 0.15), 0.15)
+        if daily_load_serviced and len(daily_load_serviced) > 0 and energy_price > 0:
+            revenue_yearly = compute_20_year_revenue(
+                daily_load_serviced, energy_price, inflation_raw,
+            )
+            cumulative_rev = list(np.cumsum(revenue_yearly))
+            csvs["revenue"] = _df_to_csv(pd.DataFrame({
+                "year": np.arange(len(revenue_yearly)),
+                "annual_revenue": revenue_yearly,
+                "cumulative_revenue": cumulative_rev,
+            }))
+            print("[run_simulation] Revenue done")
+        else:
+            csvs["revenue"] = None
+    except Exception as e:
+        print("[run_simulation] revenue error:", str(e))
+        csvs["revenue"] = None
+
+    # 7. Solar heatmap (365 x 24 matrix)
+    if using_solar and len(solar_power) >= 8760:
+        try:
+            reshaped = solar_power[:8760].reshape((365, 24))
+            hm_df = pd.DataFrame(reshaped, columns=[f"hour_{h}" for h in range(24)])
+            hm_df.insert(0, "day", np.arange(365))
+            csvs["solar_heatmap"] = _df_to_csv(hm_df)
+            print("[run_simulation] Solar heatmap done")
+        except Exception as e:
+            print("[run_simulation] solar_heatmap error:", str(e))
+            csvs["solar_heatmap"] = None
+    else:
+        csvs["solar_heatmap"] = None
+
+    # 8. Monthly heatmap (12 x 31 avg-daily solar)
+    if using_solar and daily_solar and len(daily_solar) >= 365:
+        try:
+            days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+            month_names = [
+                "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+            ]
+            heatmap = np.full((12, 31), np.nan)
+            day_idx = 0
+            for m, nd in enumerate(days_in_month):
+                for d in range(nd):
+                    heatmap[m, d] = daily_solar[day_idx]
+                    day_idx += 1
+            mh_df = pd.DataFrame(heatmap, columns=[f"day_{d+1}" for d in range(31)])
+            mh_df.insert(0, "month", month_names)
+            csvs["monthly_heatmap"] = _df_to_csv(mh_df)
+            print("[run_simulation] Monthly heatmap done")
+        except Exception as e:
+            print("[run_simulation] monthly_heatmap error:", str(e))
+            csvs["monthly_heatmap"] = None
+    else:
+        csvs["monthly_heatmap"] = None
+
+    return csvs
+
+
+# ---------------------------------------------------------------------------
+# HTTP entry-point
+# ---------------------------------------------------------------------------
+
 @https_fn.on_request(cors=cors_settings)
 def fetch_solar_data_function(req: https_fn.Request) -> https_fn.Response:
+    print("[fetch_solar_data_function] Request received", "method=", req.method, "path=", req.path)
+
     if req.path == "/__/health":
         return https_fn.Response("OK", status=200)
 
     if req.method == "OPTIONS":
         return https_fn.Response("", status=204)
-    
+
     if req.method != "POST":
+        print("[fetch_solar_data_function] Rejected: method not allowed")
         return https_fn.Response("Method Not Allowed", status=405)
-    
+
     try:
         data = req.get_json(silent=True)
 
         if not data:
-            return https_fn.Response(
-                "Invalid request: No JSON data provided", 
-                status=400
-            )
+            print("[fetch_solar_data_function] Rejected: no JSON body")
+            return https_fn.Response("Invalid request: No JSON data provided", status=400)
 
-        userId = data.get('userId')
-        projectId = data.get('projectId')
+        userId = data.get("userId")
+        projectId = data.get("projectId")
 
         if not userId or not projectId:
-            return https_fn.Response(
-                "Missing userId or projectId", 
-                status=400
-            )
+            print("[fetch_solar_data_function] Rejected: missing userId or projectId")
+            return https_fn.Response("Missing userId or projectId", status=400)
 
-        load = data.get('loadInputs', [])
-        load_inputs = {
-            "load_inputs": load
-        }
+        print("[fetch_solar_data_function] userId=", userId, "projectId=", projectId)
 
-        latitude = data.get('latitude')
-        longitude = data.get('longitude')
-        location_inputs = {
-            "latitude": latitude,
-            "longitude": longitude,
-        }
+        # ---- Location ----
+        latitude = data.get("latitude")
+        longitude = data.get("longitude")
 
-        using_battery = data.get('usingBattery')
-        charge_capacity = data.get('chargeCapacity')
-        maximum_storage = data.get('maximumStorage')
-        bat_type = data.get('batteryType')
-        battery_capex = data.get('batteryCapex')
-        battery_opex = data.get('batteryOpex')
-        battery_lifespan = data.get('batteryLifespan')
-        battery_replacement = data.get('batteryReplacement') 
-        battery_inputs = {
-            "charge_capacity": charge_capacity,
-            "maximum_storage": maximum_storage, 
-            "battery_type": bat_type,
-            "capex": battery_capex,
-            "opex": battery_opex,
-            "lifespan": battery_lifespan,
-            "replacement_cost": battery_replacement
-        }
-        
-        using_generator = data.get('usingGenerator')
-        generator_capacity = data.get('generatorCapacity')
-        generator_capex = data.get('generatorCapex')
-        generator_opex = data.get('generatorOpex')
-        generator_lifespan = data.get('generatorLifespan')
-        generator_replacement = data.get('generatorReplacement')
-        generator_inputs = {
-            "capacity": generator_capacity,
-            "capex": generator_capex,
-            "opex": generator_opex,
-            "lifespan": generator_lifespan,
-            "replacement_cost": generator_replacement
-        }
-        
-        using_solar_panel = data.get('usingSolarPanel')
-        solar_array_size = data.get('solarArraySize')
-        wire_losses = data.get('wireLosses')
-        module_mismatch = data.get('moduleMismatch')
-        module_aging = data.get('moduleAging')
-        dust_dirt = data.get('dustDirt')
-        converter = data.get('converter')
-        solar_capex = data.get('solarCapex')
-        solar_opex = data.get('solarOpex')
-        solar_lifespan = data.get('solarLifespan')
-        solar_replacement = data.get('solarReplacement')
+        # ---- Load ----
+        load_list = data.get("loadInputs", [])
 
+        # ---- Technology flags ----
+        using_solar = bool(data.get("usingSolarPanel"))
+        using_wind = bool(data.get("usingWindTurbine"))
+        using_generator = bool(data.get("usingGenerator"))
+        using_battery = bool(data.get("usingBattery"))
 
-        losses = [
-            float(wire_losses / 100), 
-            float(module_mismatch / 100), 
-            float(module_aging / 100), 
-            float(dust_dirt / 100), 
-            float(converter / 100)
-        ]
-        solar_inputs = {
-            "losses": losses,
-            "solar_array_size": solar_array_size,
-            "capex": solar_capex,
-            "opex": solar_opex,
-            "lifespan": solar_lifespan,
-            "replacement_cost": solar_replacement
-        }
-        
-        using_wind_turbine = data.get('usingWindTurbine')
-        nameplate_capacity = data.get('namePlateCapacity')
-        rated_power = data.get('ratedPower')
-        cut_in_speed = data.get('cutInSpeed')
-        rated_speed = data.get('ratedSpeed')
-        cut_out_speed = data.get('cutOutSpeed')
-        wind_capex = data.get('windCapex')
-        wind_opex = data.get('windOpex')
-        wind_lifespan = data.get('windLifespan')
-        wind_replacement = data.get('windReplacement')
+        # ---- Solar (only parse when enabled) ----
+        solar_inputs = None
+        if using_solar:
+            wire_losses = _safe_float(data.get("wireLosses"))
+            module_mismatch = _safe_float(data.get("moduleMismatch"))
+            module_aging = _safe_float(data.get("moduleAging"))
+            dust_dirt = _safe_float(data.get("dustDirt"))
+            converter_loss = _safe_float(data.get("converter"))
+            losses = [
+                wire_losses / 100.0,
+                module_mismatch / 100.0,
+                module_aging / 100.0,
+                dust_dirt / 100.0,
+                converter_loss / 100.0,
+            ]
+            solar_inputs = {
+                "losses": losses,
+                "solar_array_size": _safe_float(data.get("solarArraySize")),
+                "capex": _safe_float(data.get("solarCapex")),
+                "opex": _safe_float(data.get("solarOpex")),
+                "lifespan": _safe_int(data.get("solarLifespan")),
+                "replacement_cost": _safe_float(data.get("solarReplacement")),
+            }
 
-        wind_inputs = {
-            "nameplate_capacity": nameplate_capacity,
-            "rated_power": rated_power,
-            "cut_in_speed": cut_in_speed,
-            "rated_speed": rated_speed,
-            "cut_out_speed": cut_out_speed,
-            "capex": wind_capex,
-            "opex": wind_opex,
-            "lifespan": wind_lifespan,
-            "replacement_cost": wind_replacement
-        }
-        
-        inflation = data.get('inflation', 3.0)
-        laborCost = data.get('laborCost', 0)
-        landLeasingCost = data.get('landLeasingCost', 0)
-        licensingCost = data.get('licensingCost', 0)
-        otherCapex = data.get('otherCapex', 0)
-        energyPrice = data.get('energyPrice', 0.15)
+        # ---- Wind (only parse when enabled) ----
+        wind_inputs = None
+        if using_wind:
+            wind_inputs = {
+                "nameplate_capacity": _safe_float(data.get("namePlateCapacity")),
+                "rated_power": _safe_float(data.get("ratedPower")),
+                "cut_in_speed": _safe_float(data.get("cutInSpeed")),
+                "rated_speed": _safe_float(data.get("ratedSpeed")),
+                "cut_out_speed": _safe_float(data.get("cutOutSpeed")),
+                "capex": _safe_float(data.get("windCapex")),
+                "opex": _safe_float(data.get("windOpex")),
+                "lifespan": _safe_int(data.get("windLifespan")),
+                "replacement_cost": _safe_float(data.get("windReplacement")),
+            }
 
+        # ---- Generator (only parse when enabled) ----
+        generator_inputs = None
+        if using_generator:
+            generator_inputs = {
+                "capacity": _safe_float(data.get("generatorCapacity")),
+                "capex": _safe_float(data.get("generatorCapex")),
+                "opex": _safe_float(data.get("generatorOpex")),
+                "lifespan": _safe_int(data.get("generatorLifespan")),
+                "replacement_cost": _safe_float(data.get("generatorReplacement")),
+            }
+
+        # ---- Battery (only parse when enabled) ----
+        battery_inputs = None
+        if using_battery:
+            battery_inputs = {
+                "charge_capacity": _safe_float(data.get("chargeCapacity")),
+                "maximum_storage": _safe_float(data.get("maximumStorage")),
+                "battery_type": data.get("batteryType", "lithium-ion"),
+                "capex": _safe_float(data.get("batteryCapex")),
+                "opex": _safe_float(data.get("batteryOpex")),
+                "lifespan": _safe_int(data.get("batteryLifespan")),
+                "replacement_cost": _safe_float(data.get("batteryReplacement")),
+            }
+
+        # ---- Financial ----
         financial_inputs = {
-            "inflation": inflation,
-            "labor_cost": laborCost,
-            "land_leasing_cost": landLeasingCost,
-            "licensing_cost": licensingCost,
-            "other_capex": otherCapex,
-            "energy_price": energyPrice
+            "inflation": _safe_float(data.get("inflation", 3.0), 3.0),
+            "labor_cost": _safe_float(data.get("laborCost")),
+            "land_leasing_cost": _safe_float(data.get("landLeasingCost")),
+            "licensing_cost": _safe_float(data.get("licensingCost")),
+            "other_capex": _safe_float(data.get("otherCapex")),
+            "energy_price": _safe_float(data.get("energyPrice", 0.15), 0.15),
         }
 
-        fetch_solar_data(load_inputs, location_inputs, battery_inputs, generator_inputs, solar_inputs, wind_inputs, financial_inputs, userId, projectId)
-        
+        # ---- Fetch NREL data ----
+        print("[fetch_solar_data_function] Fetching NREL data...")
+        nrel_df = fetch_nrel_data(latitude, longitude)
+
+        if nrel_df is None:
+            print("[fetch_solar_data_function] NREL fetch failed")
+            return https_fn.Response("Failed to fetch NREL data (check logs)", status=502)
+
+        # ---- Run simulation ----
+        print("[fetch_solar_data_function] Running simulation...")
+        csv_dict = run_simulation(
+            nrel_df,
+            load_list,
+            using_solar, solar_inputs,
+            using_wind, wind_inputs,
+            using_generator, generator_inputs,
+            using_battery, battery_inputs,
+            financial_inputs,
+        )
+
+        print("[fetch_solar_data_function] Simulation complete, returning JSON of CSVs")
+
         return https_fn.Response(
-            "Data fetched successfully",
-            status=200
+            json.dumps(csv_dict),
+            status=200,
+            headers={
+                "Content-Type": "application/json; charset=utf-8",
+            },
         )
     except Exception as e:
-        print(f"Error in fetch_solar_data_function: {str(e)}")
+        print("[fetch_solar_data_function] Error:", str(e))
+        import traceback
+        traceback.print_exc()
         return https_fn.Response(
             f"Error processing request: {str(e)}",
-            status=500
+            status=500,
         )
-
-def fetch_solar_data(load_inputs, location_inputs, battery_inputs, generator_inputs, solar_inputs, wind_inputs, financial_inputs, userId, projectId, api_key="5gZjfefi1adVzrZPYNirDhSk24BQcDEaYyWnxPdy", year="2022", interval="30"):
-    url = "https://developer.nrel.gov/api/nsrdb/v2/solar/nsrdb-msg-v1-0-0-download.csv"
-
-    latitude = location_inputs['latitude']
-    longitude = location_inputs['longitude']
-
-    # Define the WKT point using the provided coordinates
-    wkt = f"POINT({longitude} {latitude})"
-
-    # Set up the parameters
-    params = {
-        "api_key": api_key,
-        "wkt": wkt,
-        "attributes": "dni,wind_speed,air_temperature",  # attributes to download
-        "names": year,  # Year
-        "utc": "false",  # Local time instead of UTC
-        "leap_day": "false",  # Exclude leap day
-        "interval": interval,  # Data resolution interval
-        "full_name": "Peter Dauenhauer",  # Your full name
-        "email": "peter.dauenhauer@gmail.com",  # Your email address
-        # "mailing_list": "false"  # Don't add to the mailing list
-    }
-
-    response = requests.get(url, params=params)
-
-    if response.status_code == 200:
-        csv_data = io.StringIO(response.text)
-        df = pd.read_csv(csv_data, skiprows=2)
-
-        timestamp_columns = df.iloc[:, :5]
-
-        timestamp_columns['Timestamp'] = pd.to_datetime(
-            timestamp_columns[['Year', 'Month', 'Day', 'Hour', 'Minute']]
-        )
-
-        timestamp_columns['Datetime'] = timestamp_columns['Timestamp'].dt.strftime('%#m/%#d/%Y %H:%M')
-
-        additional_columns = df[['DNI', 'Temperature', 'Wind Speed']]
-
-        additional_columns = additional_columns.rename(columns={
-            'DNI': 'Irradiance (W/m2)',
-            'Temperature': 'Temp_C (oC)',
-            'Wind Speed': 'Wind_speed(km/h)'
-        })
-
-        repeated_loads = (load_inputs['load_inputs'] * 8760)[:len(df)]
-        load_values_col = pd.Series(repeated_loads, name='load_values')
-
-        new_df = pd.concat([timestamp_columns['Datetime'].reset_index(drop=True), 
-                            load_values_col,
-                            additional_columns.reset_index(drop=True)], axis=1)
-
-        csv_buffer = io.StringIO()
-        new_df.to_csv(csv_buffer, index=False)
-        csv_data = csv_buffer.getvalue().encode('utf-8')
-
-        cloud_storage_path = f"{userId}/{projectId}/test.csv"
-        bucket = storage.bucket()
-
-        temp_blob_path = f"{userId}/{projectId}/.temp"
-        temp_blob = bucket.blob(temp_blob_path)
-
-        if temp_blob.exists():
-            print(f"Deleting existing temp file at {temp_blob_path}")
-            temp_blob.delete()
-        
-        blob = bucket.blob(cloud_storage_path)
-        blob.upload_from_string(csv_data, content_type='text/csv')
-
-        if blob.exists():
-            print(f"CSV file uploaded successfully to {cloud_storage_path}")
-        else:
-            print(f"Failed to upload CSV file to {cloud_storage_path}")
-        
-        run_simulation(userId, projectId, location_inputs, battery_inputs, generator_inputs, solar_inputs, wind_inputs, financial_inputs, new_df)
-    else:
-        print(f"Error: {response.status_code}")
-        print(response.text)
-
-def run_simulation(userId, projectId, location_inputs, battery_inputs, generator_inputs, solar_inputs, wind_inputs, financial_inputs, df):
-
-    #Initialize Energy Storage System
-    chargeCapacity = battery_inputs['charge_capacity']
-    maxStorage = battery_inputs['maximum_storage']
-    batType = battery_inputs['battery_type']
-    e1 = EnergyStorageSystem(chargeCapacity, maxStorage, batType)
-
-    # Clean up the data
-    print("Cleaning data...")
-    # Ensure values are numeric and drop NaN values
-    df["Irradiance (W/m2)"] = pd.to_numeric(df["Irradiance (W/m2)"], errors="coerce")
-    df["Temp_C (oC)"] = pd.to_numeric(df["Temp_C (oC)"], errors="coerce")
-    df['Wind_speed(km/h)'] = pd.to_numeric(df['Wind_speed(km/h)'], errors='coerce')
-    print("dropping na...")
-    df.dropna(subset=['Wind_speed(km/h)'], inplace=True)
-    # Convert wind speed from km/h to m/s
-    df['Wind_speed(m/s)'] = df['Wind_speed(km/h)'] * (1000 / 3600)
-    # Extract relevant columns
-    load_values_full = df['load_values'].to_numpy()
-
-    # Calculate solar power - hourly data for details
-    solar_array_size = solar_inputs['solar_array_size']
-    solar_power_full = calculate_solar_energy(df["Irradiance (W/m2)"], df["Temp_C (oC)"],
-                          panel_name_plate_W=(solar_array_size * 1000), losses=solar_inputs["losses"], coef=coef, STCIrr=STCIrr, STCTemp=STCTemp)
-
-
-    # Grab exactly 1 year of data
-    time_points = np.arange(0, 8760)
-    year_days = np.arange(0, 365)
-
-    # Calculate daily solar power
-    solar_power_subset_kw = (1/1000) * solar_power_full[:8760]
-
-    #solar_heatmap_path = generate_solar_heatmap(solar_power_subset_kw, userId, projectId)
-    #monthly_solar_heatmap_path = generate_monthly_heatmap(solar_power_subset_kw, userId, projectId)
-
-    solar_power_daily = calc_daily_energy(year_days, solar_power_subset_kw)
-
-    # Graph the solar power - hourly data for details
-    # Set below for small graph
-    #solar_plot_path = generate_power_graph(time_points, solar_power_subset_kw, userId, projectId, 'Time (hrs)') 
-    # Set this for viewing year
-    solar_plot_path = generate_power_graph(year_days, solar_power_daily, userId, projectId, "Days")
-
-    
-    # Graph the load
-    load_profile = load_values_full.reshape(-1, 1)
-    load_profile[load_profile < 0] = 0  # Ensure no negative values
-    load_profile = load_profile.flatten()  # Flatten the result to a 1D array
-    load_profile_subset = load_profile[:8760] #:47
-    load_profile_daily = calc_daily_energy(year_days, load_profile_subset)
-    # Plot
-    #load_plot_path = plot_load_profile(time_points, load_profile_subset, userId, projectId, 'Time (hrs)')
-    load_plot_path = plot_load_profile(year_days, load_profile_daily, userId, projectId, 'Days')
-    
-    #wind
-    numTurbines = wind_inputs['nameplate_capacity']
-    ratedPower = wind_inputs['rated_power']
-    cutInSpeed = wind_inputs['cut_in_speed']
-    ratedSpeed = wind_inputs['rated_speed']
-    cutOutSpeed = wind_inputs['cut_out_speed']
-    hourly_wind_energy = calculate_hourly_wind_energy(df, numTurbines, ratedPower * 1000, cutInSpeed, ratedSpeed, cutOutSpeed)
-    # Add hourly wind energy to the dataframe
-    df['Hourly_Wind_Energy(Wh)'] = hourly_wind_energy
-    # Graph wind energy
-    wind_energy_subset_kw = (1/1000) * np.array(hourly_wind_energy[:8760])
-    wind_energy_daily = calc_daily_energy(year_days, wind_energy_subset_kw)
-    #wind_plot_path = plot_wind_energy(time_points, wind_energy_subset_kw, userId, projectId, 'Time (hrs)')
-
-    wind_plot_path = plot_wind_energy(year_days, wind_energy_daily, userId, projectId, 'Days')
-
-
-    #diesel
-    
-    fuel_consumption = [1 for i in range(8760)]
-    generator_output= 703
-    # Calculate
-    hourly_diesel_energy = calculate_hourly_diesel_energy(fuel_consumption, generator_output, list(diesel_losses.values()))  # Pass only the loss values
-    diesel_energy_subset_kw = (1/1000) * np.array(hourly_diesel_energy)
-    
-    # Graph diesel energy
-    diesel_plot_path = plot_generic(
-        time_points, diesel_energy_subset_kw, 
-        "Diesel Energy", "Diesel Energy Generation", "diesel", 
-        userId, projectId
-    )
-    print("Diesel plot generated:", diesel_plot_path)
-    
-    
-
-    # Calculate net energy
-    net_energy_subset_kw = net_energy_for_graph(solar_power_subset_kw, load_profile_subset, wind_energy_subset_kw, diesel_energy_subset_kw)
-    net_energy_daily = calc_daily_energy(year_days, net_energy_subset_kw)
-
-    
-    # Graph the net energy
-    '''
-    net_energy_plot_path = plot_net_energy(time_points, 
-                                            net_energy_subset_kw, 
-                                            load_profile_subset, 
-                                            solar_power_subset_kw, 
-                                            wind_energy_subset_kw,
-                                            diesel_energy_subset_kw,
-                                            "Net Energy: Solar, Wind, Diesel, Load",
-                                            "net_energy",
-                                            userId, projectId, "Time (hrs)")
-    
-    net_energy_plot_path = plot_net_energy(year_days, 
-                                            net_energy_daily, 
-                                            load_profile_daily, 
-                                            solar_power_daily, 
-                                            wind_energy_daily,
-                                            diesel_energy_subset_kw[:365],
-                                            "Net Energy: Solar, Wind, Diesel, Load",
-                                            "net_energy",
-                                            userId, projectId, 'Days')  
-    '''
-    #battery
-    
-    # For each hour, the net energy charges or depletes the storage system 
-    battery_charge  = calculate_net_energy(e1, net_energy_subset_kw)
-    battery_charge_daily = calc_daily_energy(year_days, battery_charge)
-
-    #calculate the load NOT serviced
-    loadNotServiced = calc_load_not_serviced(time_points, battery_charge, batType, maxStorage, net_energy_subset_kw)
-    loadNotServiced_daily = calc_daily_energy(year_days, loadNotServiced)
-
-    #plot the battery charge
-    '''
-    net_bat_plot_path = plot_battery_soc(
-        time_points, battery_charge, 
-        userId, projectId,
-        batType, maxStorage,
-        load_profile_subset,
-        "Time (hrs)"
-        )
-    '''
-    net_bat_plot_path = plot_battery_soc(
-        year_days, battery_charge_daily, 
-        userId, projectId,
-        load_profile_daily,
-        loadNotServiced_daily,
-        'Days'
-        ) 
-
-    # combo plot
-    '''
-    net_kw_path = plot_net_energy(time_points, 
-                                            battery_charge, 
-                                            load_profile_subset, 
-                                            solar_power_subset_kw, 
-                                            wind_energy_subset_kw,
-                                            diesel_energy_subset_kw,
-                                            "Energy production and Battery SOC",
-                                            "net_battery",
-                                            userId, projectId)
-
-    '''
-
-    years = np.arange(20)
-
-    daily_load_serviced = np.asarray(load_profile_daily) - np.asarray(loadNotServiced_daily)
-    
-    #20 year data
-    daily20years = np.arange(0, 7300) #days
-    load_serviced20 = predict20years(daily_load_serviced)
-
-    load_serviced_20years_path = plot20year(daily20years, load_serviced20, userId, projectId)
-
-    annual_revenue = compute_20_year_revenue(daily_load_serviced, financial_inputs['energy_price'], financial_inputs['inflation'], years=20)
-    annual_revenue_path = plot_annual_revenue(years, annual_revenue, userId, projectId)
-    
-    battery_expenses = calculate_20_year_expenses(
-        financial_inputs['inflation'],
-        battery_inputs['capex'],
-        battery_inputs['opex'],
-        battery_inputs['replacement_cost'],
-        battery_inputs['lifespan']
-    )
-
-    generator_expenses = calculate_20_year_expenses(
-        financial_inputs['inflation'],
-        generator_inputs['capex'],
-        generator_inputs['opex'],
-        generator_inputs['replacement_cost'],
-        generator_inputs['lifespan']
-    )
-    
-    solar_expenses = calculate_20_year_expenses(
-        financial_inputs['inflation'],
-        solar_inputs['capex'],
-        solar_inputs['opex'],
-        solar_inputs['replacement_cost'],
-        solar_inputs['lifespan']
-    )
-    
-    wind_expenses = calculate_20_year_expenses(
-        financial_inputs['inflation'],
-        wind_inputs['capex'],
-        wind_inputs['opex'],
-        wind_inputs['replacement_cost'],
-        wind_inputs['lifespan']
-    )
-    
-    financial_expenses_plot_path = plot_20yr_financials(years, battery_expenses, generator_expenses, solar_expenses, wind_expenses, userId, projectId)
-
-    return {
-        "message": "Graph generated!",
-        "solar_plot_url": solar_plot_path,
-        "load_plot_url": load_plot_path,
-        "wind_plot_url": wind_plot_path,
-        #"net_energy_plot_url": net_energy_plot_path,
-        "diesel_plot_url": diesel_plot_path,
-        "net_plot_url": net_bat_plot_path,
-        #"net_kw_url": net_kw_path,
-        "load_serviced_20years_url": load_serviced_20years_path,
-        "financial_expenses_plot_url": financial_expenses_plot_path,
-        "annual_revenue_plot_url": annual_revenue_path
-    }

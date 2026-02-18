@@ -186,7 +186,7 @@ export default function Load({
           onClick={onRemove}
           aria-label="Remove load"
         >
-          ×
+          x
         </button>
       </div>
 
@@ -201,7 +201,7 @@ export default function Load({
               onClick={() => setMenuOpen(false)}
               aria-label="Close"
             >
-              ×
+              x
             </button>
           </div>
           <div class="load-profile-editor-grid">
