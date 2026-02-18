@@ -327,6 +327,15 @@
   background: #57f476;
 }
 
+.projects-btn-run:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.projects-btn-run:disabled:hover {
+  background: #69cb7c;
+}
+
 .projects-btn-plus,
 .projects-btn-play {
   font-weight: 900;

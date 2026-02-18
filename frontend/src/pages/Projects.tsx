@@ -12,6 +12,11 @@ import ProjectWizard from '../components/ProjectWizard';
 import { addDoc, collection } from "firebase/firestore";
 import { db } from "../utils/firebase/firebase-init";
 import { listProjects, getProjectLoads, saveProjectLoads } from "../database/firestore";
+import {
+  buildSimulationPayload,
+  runSimulation,
+  type SimulationResult,
+} from "../services/simulation";
 import menuIcon from "../media/menu.png";
 import settingIcon from "../media/setting.png";
 import "../css/projects.css";
@@ -60,6 +65,8 @@ export default function Projects() {
   const [loading, setLoading] = useState(true);
   const [activeCraftTab, setActiveCraftTab] = useState<CraftTabId>("workbench");
   const [workbenchLoads, setWorkbenchLoads] = useState<Load[]>([]);
+  const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
+  const [simulationLoading, setSimulationLoading] = useState(false);
   const hydratedProjectIdRef = useRef<string | null>(null);
   const [isWizardOpen, setWizardOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -68,6 +75,31 @@ export default function Projects() {
 
   const handleAddComponent = () => {
     setWorkbenchLoads((prev) => [...prev, createNewLoad(`Load ${prev.length + 1}`)]);
+  };
+
+  const handleRunSimulation = async () => {
+    const user = auth.currentUser;
+    if (!user || !activeProjectId) {
+      alert("Please sign in and select a project.");
+      return;
+    }
+    setSimulationLoading(true);
+    setSimulationResult(null);
+    try {
+      const payload = buildSimulationPayload(
+        user.uid,
+        activeProjectId,
+        workbenchLoads
+      );
+      const result = await runSimulation(payload);
+      setSimulationResult(result);
+      setActiveCraftTab("data");
+    } catch (err) {
+      console.error("Simulation error:", err);
+      alert(err instanceof Error ? err.message : "Simulation failed. Check console.");
+    } finally {
+      setSimulationLoading(false);
+    }
   };
 
   // 1) fetch projects
@@ -214,9 +246,14 @@ export default function Projects() {
 
               <div class="projects-spacer" />
 
-              <button type="button" class="projects-btn projects-btn-run" onClick={() => console.log("Run Simulation")}>
+              <button
+                type="button"
+                class="projects-btn projects-btn-run"
+                onClick={handleRunSimulation}
+                disabled={simulationLoading}
+              >
                 <span class="projects-btn-play">▶</span>
-                Run Simulation
+                {simulationLoading ? "Running…" : "Run Simulation"}
               </button>
               <button
                 type="button"
@@ -236,6 +273,8 @@ export default function Projects() {
               onTabChange={setActiveCraftTab}
               workbenchLoads={workbenchLoads}
               setWorkbenchLoads={setWorkbenchLoads}
+              simulationResult={simulationResult}
+              onClearSimulationResult={() => setSimulationResult(null)}
             />
           </main>
         </section>

@@ -172,57 +172,61 @@ ProjectsListProps) {
                             </div>
                         ) : (
                             filtered.map((project) => (
-                                <button
+                                <div
                                     key={project.id}
-                                    type="button"
+                                    role="button"
+                                    tabIndex={0}
                                     class={[
                                         "projects-item",
                                         project.id === activeProjectId ? "is-active" : "",
                                     ].join(" ")}
                                     onClick={() => onProjectSelect?.(project.id)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" || e.key === " ") {
+                                            e.preventDefault();
+                                            onProjectSelect?.(project.id);
+                                        }
+                                    }}
                                 >
                                     <img src={projectIcon} alt="" class="projects-item-icon" />
                                     <span class="projects-item-label">{project.name}</span>
 
                                     <button
-                                    type="button"
-                                    class="projects-item-options"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setOpenOptionsProject((prev) => (prev === project.id ? null : project.id));
-                                    }}
+                                        type="button"
+                                        class="projects-item-options"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setOpenOptionsProject((prev) => (prev === project.id ? null : project.id));
+                                        }}
                                         aria-label="Options"
-                                        >
-                                          <img src={optionIcon} alt="" class="projects-item-icon" />
+                                    >
+                                        <img src={optionIcon} alt="" class="projects-item-icon" />
+                                    </button>
 
-                                        </button>
-                                        
-                                        {openOptionsProject === project.id && (
-                                          <div
+                                    {openOptionsProject === project.id && (
+                                        <div
                                             class="projects-item-menu"
-                                            onClick={(e) => e.stopPropagation()} 
-                                          >
-                                            <button type="button" class="projects-item-menu-item" 
-                                              onClick={() => renameHandler(project)}
-                                              >
-                                              Rename
-                                            </button>
-
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
                                             <button type="button" class="projects-item-menu-item"
-                                              onClick={() => infoHandler(project)}
-                                              >
-                                              Project Info
+                                                onClick={() => renameHandler(project)}
+                                            >
+                                                Rename
                                             </button>
-
+                                            <button type="button" class="projects-item-menu-item"
+                                                onClick={() => infoHandler(project)}
+                                            >
+                                                Project Info
+                                            </button>
                                             <div class="projects-item-menu-divider" />
                                             <button type="button" class="projects-item-menu-item is-danger"
-                                              onClick={() => deleteHandler(project)}
-                                              >
-                                              Delete
+                                                onClick={() => deleteHandler(project)}
+                                            >
+                                                Delete
                                             </button>
                                         </div>
                                     )}
-                                </button>
+                                </div>
                             ))
                         )}
                     </div>

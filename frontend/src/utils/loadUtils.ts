@@ -57,3 +57,16 @@ export function updateLoadInTree(roots: Load[], loadId: string, patch: Partial<L
 export function addChildToLoad(roots: Load[], parentId: string, newLoad: Load): Load[] {
   return addChildToList(roots, parentId, newLoad);
 }
+
+export function combined24hProfile(loads: Load[]): number[] {
+  const out = Array.from({ length: 24 }, () => 0);
+  function add(list: Load[]) {
+    for (const load of list) {
+      const p = load.profile ?? [];
+      for (let h = 0; h < 24 && h < p.length; h++) out[h] += p[h];
+      if (load.children?.length) add(load.children);
+    }
+  }
+  add(loads);
+  return out;
+}
