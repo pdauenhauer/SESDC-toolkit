@@ -39,7 +39,7 @@ export default function SolarStep({ data, updateSection, updateNested, nextStep,
         </div>
 
         <label style={{marginTop: '15px'}}>System Size (kW) <span style={{color:'red'}}>*</span></label>
-        <input type="number" class="big-input" placeholder="0.0" 
+        <input id="input-solar-size" type="number" class="big-input" placeholder="0.0" 
           value={data.solar.sizeKw || ''}
           onInput={(e) => { 
             const val = Number(e.currentTarget.value);
@@ -56,7 +56,7 @@ export default function SolarStep({ data, updateSection, updateNested, nextStep,
 
         {showAdvanced && (
           <div>
-            <div class="advanced-section" style={{marginBottom: '10px'}}>
+            <div id="input-solar-losses" class="advanced-section" style={{marginBottom: '10px'}}>
                <h4>System Losses (%)</h4>
                <div class="grid-3">
                   <label>Wire: <input type="number" value={data.solar.losses.wire} onChange={(e) => updateNested('solar','losses','wire',e.currentTarget.value)}/></label>
