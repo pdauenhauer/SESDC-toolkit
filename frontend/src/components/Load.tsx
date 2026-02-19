@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "preact/hooks";
 import type { Load } from "../database/models/load";
 import { LOAD_LABELS, getLoadLabelById } from "../data/loadLabels";
+import Tooltip from "./Tooltip";
 
 interface LoadProps {
   load: Load;
@@ -125,13 +126,15 @@ export default function Load({
             onKeyDown={(e) => e.key === "Enter" && setEditingName(false)}
           />
         ) : (
-          <button
-            type="button"
-            class="load-card-name"
-            onClick={() => setEditingName(true)}
-          >
-            {load.name}
-          </button>
+          <Tooltip text="Edit Name" position="right">
+            <button
+              type="button"
+              class="load-card-name"
+              onClick={() => setEditingName(true)}
+            >
+              {load.name}
+            </button>
+          </Tooltip>
         )}
 
         {/* Label dropdown */}
@@ -165,29 +168,33 @@ export default function Load({
       <div class="load-card-actions">
         {/* Parent loads: no edit icon; profile = own + children. Child/leaf loads: show edit. */}
         {!canNest && (
+          <Tooltip text="Edit Load" position="bottom">
+            <button
+              type="button"
+              class="load-card-menu-btn"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setMenuOpen((open) => !open);
+              }}
+              aria-label="Edit 24h profile"
+              aria-expanded={menuOpen}
+            >
+              <i class="bx bx-pencil" aria-hidden="true" />
+            </button>
+          </Tooltip>
+        )}
+        <Tooltip text="Delete" position="bottom">
           <button
             type="button"
-            class="load-card-menu-btn"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setMenuOpen((open) => !open);
-            }}
-            aria-label="Edit 24h profile"
-            aria-expanded={menuOpen}
+            class="load-card-remove"
+            onClick={onRemove}
+            aria-label="Remove load"
           >
-            <i class="bx bx-pencil" aria-hidden="true" />
+            x
           </button>
-        )}
-        <button
-          type="button"
-          class="load-card-remove"
-          onClick={onRemove}
-          aria-label="Remove load"
-        >
-          x
-        </button>
+        </Tooltip>
       </div>
 
       {/* 24h profile editor popover */}
