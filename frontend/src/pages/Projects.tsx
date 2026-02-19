@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "preact/hooks";
 import { Timestamp } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import SESDCHeader from "../components/SESDCHeader";
-import ProjectsList from "../components/ProjectsList";
+import ProjectsSidebar from "../components/ProjectsSidebar";
 import ProjectCraftArea, { type CraftTabId } from "../components/ProjectCraftArea";
 import type { Load } from "../database/models/load";
 import type { Project } from "../database/models/metadata";
@@ -20,6 +20,7 @@ import {
 import menuIcon from "../media/menu.png";
 import settingIcon from "../media/setting.png";
 import "../css/projects.css";
+import Tooltip from "../components/Tooltip";
 
 // Set to true to use hardcoded dummy projects instead of fetching from DB
 const USE_DUMMY_DATA = false;
@@ -203,11 +204,11 @@ export default function Projects() {
   return (
     <div class="projects-page" style={{ paddingTop: `${HEADER_H}px` }}>
       <SESDCHeader />
-
+      
       <div class="projects-layout" style={{ height: `calc(100vh - ${HEADER_H}px)` }}>
         {sidebarOpen && (
           <aside class="projects-sidebar">
-            <ProjectsList
+            <ProjectsSidebar
               projects={projects}
               loading={loading}
               activeProjectId={activeProjectId}
@@ -223,15 +224,17 @@ export default function Projects() {
           <div class="projects-toolbar">
             <div class="projects-toolbar-row">
               {!sidebarOpen && (
-                <button
-                  type="button"
-                  class="projects-sidebar-inline-toggle"
-                  onClick={() => setSidebarOpen(true)}
-                  aria-label="Show projects"
-                  title="Show projects"
-                >
-                  <img src={menuIcon} alt="" class="projects-sidebar-toggle-icon" />
-                </button>
+                <Tooltip text="Show Projects" position="right">
+                  <button
+                    type="button"
+                    class="projects-sidebar-inline-toggle"
+                    onClick={() => setSidebarOpen(true)}
+                    aria-label="Show Projects"
+                  
+                  >
+                    <img src={menuIcon} alt="" class="projects-sidebar-toggle-icon" />
+                  </button>
+                </Tooltip>
               )}
 
               {activeCraftTab === "workbench" && (
