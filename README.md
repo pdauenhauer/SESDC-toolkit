@@ -8,5 +8,5 @@ Bryan Kim, Evan Mickens, Jackson Gibbs, Victor Wong
 ## Tools and Languages used
 <img src="https://img.shields.io/badge/Python-FFD43B?style=for-the-badge&logo=python&logoColor=blue" />
 <img src="https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white" />
-<img src="https://img.shields.io/badge/firebase-ffca28?style=for-the-badge&logo=firebase&logoColor=black" />
-<img src="https://img.shields.io/badge/preact-000000?style=for-the-badge&logo=preact&logoColor=white" />
+<img src="https://img.shields.io/badge/firebase-ffca28?style=for-the-badge&logo=firebase&logoColor=orange" />
+<img src="https://img.shields.io/badge/preact-12bde1?style=for-the-badge&logo=preact&logoColor=white" />
