@@ -1,5 +1,5 @@
 # SESDC-toolkit
-## A lightweight and simple toolkit for designing microgrids, Courtesy of Kilowatts for Humanity
+### A lightweight and simple toolkit for designing microgrids, Courtesy of Kilowatts for Humanity
 
 ## 2025-2026 Team
 Bryan Kim, Evan Mickens, Jackson Gibbs, Victor Wong
