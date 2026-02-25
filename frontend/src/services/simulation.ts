@@ -2,12 +2,19 @@ import type { Load } from "../database/models/load";
 import { combined24hProfile } from "../utils/loadUtils";
 
 const REGION = "us-central1";
-const FUNCTION_NAME = "fetch_solar_data_function";
+const POST_FUNCTION = "run_simulation_post";
+const METADATA_FUNCTION = "simulation_metadata_get";
 
-function getFunctionUrl(): string {
+function getPostUrl(): string {
   const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
   if (!projectId) throw new Error("VITE_FIREBASE_PROJECT_ID is not set");
-  return `https://${REGION}-${projectId}.cloudfunctions.net/${FUNCTION_NAME}`;
+  return `https://${REGION}-${projectId}.cloudfunctions.net/${POST_FUNCTION}`;
+}
+
+export function getMetadataUrl(): string {
+  const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
+  if (!projectId) throw new Error("VITE_FIREBASE_PROJECT_ID is not set");
+  return `https://${REGION}-${projectId}.cloudfunctions.net/${METADATA_FUNCTION}`;
 }
 
 export type SimulationPayload = {
@@ -178,10 +185,16 @@ export function buildSimulationPayload(
 
 export type SimulationResult = Record<string, string | null>;
 
+export type SimulationPostResponse = {
+  storagePath?: string | null;
+  csvKeys?: string[];
+  csvBundle: SimulationResult;
+};
+
 export async function runSimulation(
   payload: SimulationPayload
 ): Promise<SimulationResult> {
-  const url = getFunctionUrl();
+  const url = getPostUrl();
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -193,6 +206,9 @@ export async function runSimulation(
     throw new Error(`Simulation failed (${res.status}): ${text}`);
   }
 
-  const json = (await res.json()) as SimulationResult;
-  return json;
+  const json = (await res.json()) as SimulationPostResponse;
+  if (json && typeof json.csvBundle === "object") {
+    return json.csvBundle;
+  }
+  return json as unknown as SimulationResult;
 }
