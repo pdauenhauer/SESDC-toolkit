@@ -15,7 +15,7 @@ export default function BatteryStep({ data, updateSection, updateNested, nextSte
       </div>
       <div class="wizard-content">
          <label>Battery Technology</label>
-         <div class="preset-cards">
+         <div id="input-battery-type" class="preset-cards">
            <div class="card" onClick={() => {
               updateSection('battery', 'type', 'Lithium-Ion');
               updateNested('battery', 'costs', 'capital', (data.battery.storageKwh || 1) * BATTERY_PRESETS.lithium.costPerKwh);
@@ -33,7 +33,7 @@ export default function BatteryStep({ data, updateSection, updateNested, nextSte
          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginTop:'15px'}}>
             <div>
               <label>Capacity (kWh)</label>
-              <input type="number" class="big-input" placeholder="0.0" 
+              <input id="input-battery-capacity" type="number" class="big-input" placeholder="0.0" 
                  value={data.battery.storageKwh || ''}
                  onInput={(e) => {
                     const val = Number(e.currentTarget.value);

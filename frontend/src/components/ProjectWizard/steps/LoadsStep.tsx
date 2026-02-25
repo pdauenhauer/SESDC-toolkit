@@ -23,7 +23,7 @@ export default function LoadsStep({ data, setData, onFinish }: LoadsStepProps) {
       <h2>Smart Load Profiler</h2>
       <div class="wizard-content">
         <label>Step 1: Choose a usage pattern</label>
-        <div class="preset-cards">
+        <div id="input-loads-presets" class="preset-cards">
            <div class="card" onClick={() => {
               const peak = Number(prompt("What is the Peak Load (kW)?", "50"));
               if(peak) generateLoadProfile('residential', peak);
@@ -39,7 +39,7 @@ export default function LoadsStep({ data, setData, onFinish }: LoadsStepProps) {
         </div>
         
         <label style={{marginTop: '20px', display: 'block'}}>Step 2: Manual Override (Hourly kW)</label>
-        <div style={{
+        <div id="input-loads-manual" style={{
            display: 'grid', 
            gridTemplateColumns: 'repeat(6, 1fr)', 
            gap: '5px',
