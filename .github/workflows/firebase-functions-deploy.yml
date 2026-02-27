@@ -3,7 +3,9 @@ name: Deploy Firebase Functions (manual)
 on:
   push:
     branches:
-      - test 
+      - test
+    paths:
+      - "functions/**"
 
 jobs:
   deploy-functions:
