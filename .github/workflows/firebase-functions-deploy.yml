@@ -1,7 +1,9 @@
 name: Deploy Firebase Functions (manual)
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - test 
 
 jobs:
   deploy-functions:
