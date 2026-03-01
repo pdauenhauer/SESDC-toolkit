@@ -7,6 +7,7 @@ import {
   createNewLoad,
 } from "../utils/loadUtils";
 import LoadCard from "./Load";
+import "../css/ProjectsPage/workbench.css";
 
 interface WorkbenchProps {
   loads: Load[];

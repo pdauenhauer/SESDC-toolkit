@@ -1,0 +1,83 @@
+.workbench {
+  min-height: 100%;
+}
+
+.workbench-empty {
+  padding: 32px;
+  text-align: center;
+  color: #64748b;
+  font-size: 16px;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+}
+
+.workbench-empty p {
+  margin: 0;
+}
+
+.workbench-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.workbench-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 180px;
+  padding: 12px 14px;
+  background: #ffffff;
+  border: 2px solid #cdd8e6;
+  border-radius: 10px;
+  cursor: grab;
+  user-select: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.workbench-card:active {
+  cursor: grabbing;
+}
+
+.workbench-card.is-dragging {
+  opacity: 0.6;
+  cursor: grabbing;
+}
+
+.workbench-card.is-drag-over {
+  border-color: var(--green-main);
+  background: #f0fdf9;
+}
+
+.workbench-card-grip {
+  color: #94a3b8;
+  font-size: 14px;
+  letter-spacing: -2px;
+}
+
+.workbench-card-name {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.workbench-card-remove {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.workbench-card-remove:hover {
+  color: #ef4444;
+  background: #fef2f2;
+}
