@@ -1,29 +1,17 @@
 """HTTP handlers for simulation GET and POST (import firebase_functions here)."""
 
 import json
+import time
 import traceback
 
 from firebase_functions import https_fn
 
-from config import SIMULATION_METADATA, cors_settings
+from config import cors_settings
+from firestore_helpers import get_last_simulation_run, save_last_simulation_run
 from nrel import fetch_nrel_data
 from simulation import run_simulation
-from storage import upload_csv
+from storage import download_csv, upload_csv_bundle
 from utils import safe_float, safe_int
-
-
-@https_fn.on_request(cors=cors_settings)
-def simulation_metadata_get(req: https_fn.Request) -> https_fn.Response:
-    """GET only: return simulation schema and CSV output descriptions."""
-    if req.method == "OPTIONS":
-        return https_fn.Response("", status=204)
-    if req.method != "GET":
-        return https_fn.Response("Method Not Allowed", status=405)
-    return https_fn.Response(
-        json.dumps(SIMULATION_METADATA, indent=2),
-        status=200,
-        headers={"Content-Type": "application/json; charset=utf-8"},
-    )
 
 
 @https_fn.on_request(cors=cors_settings)
@@ -138,15 +126,16 @@ def run_simulation_post(req: https_fn.Request) -> https_fn.Response:
             financial_inputs,
         )
 
+        run_id = int(time.time())
         storage_path = None
-        primary_csv = csv_dict.get("hourly_simulation") if isinstance(csv_dict.get("hourly_simulation"), str) else None
-        if primary_csv:
-            try:
-                storage_path = upload_csv(userId, projectId, primary_csv, suffix="hourly")
-            except Exception as up_err:
-                print("[run_simulation_post] Upload failed:", str(up_err))
-                traceback.print_exc()
-                return https_fn.Response("Failed to upload CSV to storage", status=500)
+        try:
+            paths = upload_csv_bundle(userId, projectId, run_id, csv_dict)
+            save_last_simulation_run(userId, projectId, run_id, paths)
+            storage_path = paths.get("hourly_simulation")
+        except Exception as up_err:
+            print("[run_simulation_post] Upload failed:", str(up_err))
+            traceback.print_exc()
+            return https_fn.Response("Failed to upload CSV to storage", status=500)
 
         csv_keys = [k for k, v in csv_dict.items() if v is not None and len(str(v)) > 0]
         payload = {
@@ -164,3 +153,48 @@ def run_simulation_post(req: https_fn.Request) -> https_fn.Response:
         print("[run_simulation_post] Error:", str(e))
         traceback.print_exc()
         return https_fn.Response(f"Error processing request: {str(e)}", status=500)
+
+
+@https_fn.on_request(cors=cors_settings)
+def get_stored_simulation(req: https_fn.Request) -> https_fn.Response:
+    """GET: return stored simulation CSVs for a project (userId, projectId query params)."""
+    if req.method == "OPTIONS":
+        return https_fn.Response("", status=204)
+    if req.method != "GET":
+        return https_fn.Response("Method Not Allowed", status=405)
+
+    try:
+        userId = req.args.get("userId")
+        projectId = req.args.get("projectId")
+        if not userId or not projectId:
+            return https_fn.Response(
+                "Missing userId or projectId query params",
+                status=400,
+                headers={"Content-Type": "application/json; charset=utf-8"},
+            )
+
+        last_run = get_last_simulation_run(userId, projectId)
+        if not last_run or not last_run.get("paths"):
+            return https_fn.Response(
+                json.dumps({"csvBundle": {}}),
+                status=200,
+                headers={"Content-Type": "application/json; charset=utf-8"},
+            )
+
+        paths = last_run["paths"]
+        csv_bundle = {}
+        for key, gs_url in paths.items():
+            try:
+                csv_bundle[key] = download_csv(gs_url)
+            except Exception as e:
+                print("[get_stored_simulation] Failed to download", key, str(e))
+        print("[get_stored_simulation] Returned", len(csv_bundle), "CSVs")
+        return https_fn.Response(
+            json.dumps({"csvBundle": csv_bundle}),
+            status=200,
+            headers={"Content-Type": "application/json; charset=utf-8"},
+        )
+    except Exception as e:
+        print("[get_stored_simulation] Error:", str(e))
+        traceback.print_exc()
+        return https_fn.Response(f"Error: {str(e)}", status=500)
