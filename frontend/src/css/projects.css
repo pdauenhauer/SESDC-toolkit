@@ -446,6 +446,14 @@
   margin: 0;
 }
 
+.project-craft-placeholder--loading {
+  animation: project-craft-loading-pulse 1s ease-in-out infinite;
+}
+
+@keyframes project-craft-loading-pulse {
+  50% { opacity: 0.6; }
+}
+
 /* Workbench — draggable component cards */
 .workbench {
   min-height: 120px;

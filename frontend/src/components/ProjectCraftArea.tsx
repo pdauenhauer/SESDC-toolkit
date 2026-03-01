@@ -18,6 +18,7 @@ interface ProjectCraftAreaProps {
   setWorkbenchLoads: (value: Load[] | ((prev: Load[]) => Load[])) => void;
   simulationResult?: SimulationResult | null;
   onClearSimulationResult?: () => void;
+  dataTabLoading?: boolean;
 }
 
 export default function ProjectCraftArea({
@@ -27,6 +28,7 @@ export default function ProjectCraftArea({
   setWorkbenchLoads,
   simulationResult = null,
   onClearSimulationResult,
+  dataTabLoading = false,
 }: ProjectCraftAreaProps) {
   return (
     <div class="project-craft-area">
@@ -49,7 +51,11 @@ export default function ProjectCraftArea({
       <div class="project-craft-content">
         {activeTab === "data" && (
           <div class="project-craft-panel">
-            {simulationResult ? (
+            {dataTabLoading ? (
+              <p class="project-craft-placeholder project-craft-placeholder--loading">
+                Loading stored data…
+              </p>
+            ) : simulationResult && Object.keys(simulationResult).length > 0 ? (
               <SimulationResults
                 result={simulationResult}
                 onClear={onClearSimulationResult}

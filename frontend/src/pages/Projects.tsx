@@ -14,6 +14,7 @@ import { db } from "../utils/firebase/firebase-init";
 import { listProjects, getProjectLoads, saveProjectLoads } from "../database/firestore";
 import {
   buildSimulationPayload,
+  fetchStoredSimulation,
   runSimulation,
   type SimulationResult,
 } from "../services/simulation";
@@ -67,6 +68,7 @@ export default function Projects() {
   const [workbenchLoads, setWorkbenchLoads] = useState<Load[]>([]);
   const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
   const [simulationLoading, setSimulationLoading] = useState(false);
+  const [dataTabLoading, setDataTabLoading] = useState(false);
   const hydratedProjectIdRef = useRef<string | null>(null);
   const [isWizardOpen, setWizardOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -100,6 +102,11 @@ export default function Projects() {
     } finally {
       setSimulationLoading(false);
     }
+  };
+
+  const handleCraftTabChange = (tab: CraftTabId) => {
+    setActiveCraftTab(tab);
+    if (tab !== "data") setDataTabLoading(false);
   };
 
   // 1) fetch projects
@@ -142,7 +149,28 @@ export default function Projects() {
     }
   }, [loading, projects, activeProjectId]);
 
-  // 3) load loads when active project changes
+  // 3) When on Data tab and active project changes, fetch stored data for that project only
+  useEffect(() => {
+    if (activeCraftTab !== "data") return;
+    const user = auth.currentUser;
+    if (!user?.uid || !activeProjectId) {
+      setSimulationResult(null);
+      return;
+    }
+    setDataTabLoading(true);
+    fetchStoredSimulation(user.uid, activeProjectId)
+      .then((csvBundle) => {
+        if (Object.keys(csvBundle).length > 0) setSimulationResult(csvBundle);
+        else setSimulationResult(null);
+      })
+      .catch((err) => {
+        console.warn("[Simulation GET stored] failed:", err);
+        setSimulationResult(null);
+      })
+      .finally(() => setDataTabLoading(false));
+  }, [activeCraftTab, activeProjectId]);
+
+  // 4) load loads when active project changes
   useEffect(() => {
     if (USE_DUMMY_DATA) return;
 
@@ -270,11 +298,12 @@ export default function Projects() {
           <main class="projects-workspace">
             <ProjectCraftArea
               activeTab={activeCraftTab}
-              onTabChange={setActiveCraftTab}
+              onTabChange={handleCraftTabChange}
               workbenchLoads={workbenchLoads}
               setWorkbenchLoads={setWorkbenchLoads}
               simulationResult={simulationResult}
               onClearSimulationResult={() => setSimulationResult(null)}
+              dataTabLoading={dataTabLoading}
             />
           </main>
         </section>

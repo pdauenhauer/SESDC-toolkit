@@ -3,19 +3,39 @@ import { combined24hProfile } from "../utils/loadUtils";
 
 const REGION = "us-central1";
 const POST_FUNCTION = "run_simulation_post";
-const METADATA_FUNCTION = "simulation_metadata_get";
+const STORED_FUNCTION = "get_stored_simulation";
+
+function getProjectId(): string {
+  const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
+  if (!projectId) throw new Error("VITE_FIREBASE_PROJECT_ID is not set");
+  return projectId;
+}
 
 function getPostUrl(): string {
-  const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
-  if (!projectId) throw new Error("VITE_FIREBASE_PROJECT_ID is not set");
-  return `https://${REGION}-${projectId}.cloudfunctions.net/${POST_FUNCTION}`;
+  return `https://${REGION}-${getProjectId()}.cloudfunctions.net/${POST_FUNCTION}`;
 }
 
-export function getMetadataUrl(): string {
-  const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
-  if (!projectId) throw new Error("VITE_FIREBASE_PROJECT_ID is not set");
-  return `https://${REGION}-${projectId}.cloudfunctions.net/${METADATA_FUNCTION}`;
+/** Fetch stored simulation CSVs for a project (GET); returns csvBundle for display on Data tab. */
+export async function fetchStoredSimulation(
+  userId: string,
+  projectId: string
+): Promise<SimulationResult> {
+  const base = `https://${REGION}-${getProjectId()}.cloudfunctions.net/${STORED_FUNCTION}`;
+  const url = `${base}?userId=${encodeURIComponent(userId)}&projectId=${encodeURIComponent(projectId)}`;
+  const res = await fetch(url, { method: "GET" });
+  const data = res.ok ? await res.json() : null;
+  const csvBundle = (data?.csvBundle ?? {}) as SimulationResult;
+  console.log("[Simulation GET stored] response", {
+    ok: res.ok,
+    status: res.status,
+    url,
+    csvKeys: Object.keys(csvBundle),
+  });
+  if (!res.ok) return {};
+  return csvBundle;
 }
+
+export type SimulationResult = Record<string, string | null>;
 
 export type SimulationPayload = {
   userId: string;
@@ -183,8 +203,6 @@ export function buildSimulationPayload(
   return base;
 }
 
-export type SimulationResult = Record<string, string | null>;
-
 export type SimulationPostResponse = {
   storagePath?: string | null;
   csvKeys?: string[];
@@ -207,6 +225,14 @@ export async function runSimulation(
   }
 
   const json = (await res.json()) as SimulationPostResponse;
+  console.log("[Simulation POST] response", {
+    ok: res.ok,
+    status: res.status,
+    storagePath: json?.storagePath,
+    csvKeys: json?.csvKeys,
+    csvBundleKeys: json?.csvBundle ? Object.keys(json.csvBundle) : [],
+    fullResponse: json,
+  });
   if (json && typeof json.csvBundle === "object") {
     return json.csvBundle;
   }
