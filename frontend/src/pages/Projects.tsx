@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "preact/hooks";
 import { Timestamp } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import SESDCHeader from "../components/SESDCHeader";
 import ProjectsSidebar from "../components/ProjectsSidebar";
-import ProjectCraftArea, { type CraftTabId } from "../components/ProjectCraftArea";
+import Workbench from "../components/Workbench";
+import SimulationResults from "../components/SimulationResults";
 import type { Load } from "../database/models/load";
 import type { Project } from "../database/models/metadata";
 import { createNewLoad } from "../utils/loadUtils";
@@ -17,10 +17,14 @@ import {
   runSimulation,
   type SimulationResult,
 } from "../services/simulation";
-import menuIcon from "../media/menu.png";
-import settingIcon from "../media/setting.png";
-import "../css/projects.css";
+import menuIcon from "../media/layout-grid.svg";
+import settingIcon from "../media/settings.svg";
+import houseIcon from "../media/house.svg";
+import boxesIcon from "../media/boxes.svg";
+import "../css/ProjectsPage/projects.css";
+import "../css/ProjectsPage/projectCraftArea.css";
 import Tooltip from "../components/Tooltip";
+//maybe add the ability to have more than one project open at a time and have the tab change.with a plus
 
 // Set to true to use hardcoded dummy projects instead of fetching from DB
 const USE_DUMMY_DATA = false;
@@ -60,6 +64,15 @@ const dummyProjects: Project[] = [
     updatedAt: Timestamp.now(),
   },
 ];
+
+type CraftTabId = "data" | "workbench" | "graphs";
+
+const TABS: { id: CraftTabId; label: string }[] = [
+  { id: "data", label: "Data" },
+  { id: "workbench", label: "Workbench" },
+  { id: "graphs", label: "Graphs" },
+];
+
 export default function Projects() {
   const [activeProjectId, setActiveProjectId] = useState<string>("");
   const [projects, setProjects] = useState<Project[]>([]);
@@ -71,8 +84,6 @@ export default function Projects() {
   const hydratedProjectIdRef = useRef<string | null>(null);
   const [isWizardOpen, setWizardOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-
-  const HEADER_H = 80;
 
   const handleAddComponent = () => {
     setWorkbenchLoads((prev) => [...prev, createNewLoad(`Load ${prev.length + 1}`)]);
@@ -201,11 +212,14 @@ export default function Projects() {
     }
   };
 
+  const activeProjectName =
+    projects.find((project) => project.id === activeProjectId)?.name ?? "No Project Selected";
+
   return (
-    <div class="projects-page" style={{ paddingTop: `${HEADER_H}px` }}>
-      <SESDCHeader />
+    <div class="projects-page">
       
-      <div class="projects-layout" style={{ height: `calc(100vh - ${HEADER_H}px)` }}>
+      
+      <div class="projects-layout">
         {sidebarOpen && (
           <aside class="projects-sidebar">
             <ProjectsSidebar
@@ -221,46 +235,44 @@ export default function Projects() {
         )}
 
         <section class="projects-main">
-          <div class="projects-toolbar">
-            <div class="projects-toolbar-row">
-              {!sidebarOpen && (
+          <div class="projects-project-header">
+            <div class="projects-project-header-side projects-project-header-side--left">
+              <>
                 <Tooltip text="Show Projects" position="right">
-                  <button
-                    type="button"
-                    class="projects-sidebar-inline-toggle"
-                    onClick={() => setSidebarOpen(true)}
-                    aria-label="Show Projects"
-                  
-                  >
+                    <button
+                      type="button"
+                      class="projects-sidebar-inline-toggle projects-top-icon-btn"
+                      onClick={() => setSidebarOpen(true)}
+                      aria-label="Show Projects"
+                    >
                     <img src={menuIcon} alt="" class="projects-sidebar-toggle-icon" />
                   </button>
                 </Tooltip>
-              )}
-
-              {activeCraftTab === "workbench" && (
-                <button type="button" class="projects-btn projects-btn-add" onClick={handleAddComponent}>
-                  <span class="projects-btn-plus">＋</span>
-                  Add new Component
-                </button>
-              )}
-              <div class="projects-currentLoad">
-                Current Total Load: <span class="projects-currentLoad-strong"> </span>
+                <Tooltip text="Home" position="right">
+                  <button
+                    type="button"
+                    class="projects-toolbar-icon-btn projects-top-icon-btn"
+                    onClick={() => (window.location.href = "/")}
+                    aria-label="Home"
+                    title="Home"
+                  >
+                    <img src={houseIcon} alt="" class="projects-toolbar-icon" />
+                  </button>
+                </Tooltip>
+              </>
+            </div>
+            <div class="projects-project-header-title-wrap">
+              <span class="projects-project-header-outer-box projects-project-header-outer-box--left" />
+              <span class="projects-project-header-outer-box projects-project-header-outer-box--right" />
+              <div class="projects-project-header-title" title={activeProjectName}>
+                <img src={boxesIcon} alt="" class="projects-project-header-title-icon" />
+                {activeProjectName}
               </div>
-
-              <div class="projects-spacer" />
-
+            </div>
+            <div class="projects-project-header-side projects-project-header-side--right">
               <button
                 type="button"
-                class="projects-btn projects-btn-run"
-                onClick={handleRunSimulation}
-                disabled={simulationLoading}
-              >
-                <span class="projects-btn-play">▶</span>
-                {simulationLoading ? "Running…" : "Run Simulation"}
-              </button>
-              <button
-                type="button"
-                class="projects-toolbar-icon-btn"
+                class="projects-toolbar-icon-btn projects-top-icon-btn"
                 onClick={() => console.log("Open Settings")}
                 aria-label="Settings"
                 title="Settings"
@@ -270,15 +282,73 @@ export default function Projects() {
             </div>
           </div>
 
+          <div class="projects-toolbar">
+            <div class="projects-toolbar-row">
+              <div class="project-craft-tabs project-craft-tabs--toolbar">
+                {TABS.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    class={[
+                      "project-craft-tab",
+                      activeCraftTab === tab.id ? "is-active" : "",
+                    ].join(" ")}
+                    onClick={() => setActiveCraftTab(tab.id)}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              <div class="projects-spacer" />
+
+              {activeCraftTab === "workbench" && (
+                <button type="button" class="projects-btn projects-btn-add" onClick={handleAddComponent}>
+                  <span class="projects-btn-plus">＋</span>
+                  Add new Component
+                </button>
+              )}
+              <button
+                type="button"
+                class="projects-btn projects-btn-run"
+                onClick={handleRunSimulation}
+                disabled={simulationLoading}
+              >
+                <span class="projects-btn-play">▶</span>
+                {simulationLoading ? "Running…" : "Run Simulation"}
+              </button>
+            </div>
+          </div>
+
           <main class="projects-workspace">
-            <ProjectCraftArea
-              activeTab={activeCraftTab}
-              onTabChange={setActiveCraftTab}
-              workbenchLoads={workbenchLoads}
-              setWorkbenchLoads={setWorkbenchLoads}
-              simulationResult={simulationResult}
-              onClearSimulationResult={() => setSimulationResult(null)}
-            />
+            <div class="project-craft-content">
+              {activeCraftTab === "data" && (
+                <div class="project-craft-panel">
+                  {simulationResult ? (
+                    <SimulationResults
+                      result={simulationResult}
+                      onClear={() => setSimulationResult(null)}
+                    />
+                  ) : (
+                    <p class="project-craft-placeholder">
+                      Data — run a simulation from the toolbar to see CSV results here.
+                    </p>
+                  )}
+                </div>
+              )}
+              {activeCraftTab === "workbench" && (
+                <div class="project-craft-panel project-craft-panel--workbench">
+                  <Workbench loads={workbenchLoads} setLoads={setWorkbenchLoads} />
+                </div>
+              )}
+              {activeCraftTab === "graphs" && (
+                <div class="project-craft-panel">
+                  <p class="project-craft-placeholder">
+                    Graphs — simulation charts and visualizations.
+                  </p>
+                </div>
+              )}
+            </div>
           </main>
         </section>
       </div>

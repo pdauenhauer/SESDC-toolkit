@@ -4,12 +4,12 @@ import { updateProject, deleteProject } from "../database/firestore";
 import { useState, useMemo, useEffect } from "preact/hooks";
 import NewProjectModal from "./NewProjectModal";
 import exitIcon from "../media/cross.png";
-import projectIcon from "../media/project.png";
+import projectIcon from "../media/boxes.svg";
 import optionIcon from "../media/option.png";
 import rejectIcon from "../media/reject.png";
 import ProjectWizard from "./ProjectWizard";
 import Tooltip from "./Tooltip";
-import "../css/ProjectsPage/SideBar.css";
+import "../css/ProjectsPage/sideBar.css";
 
 interface ProjectsSidebarProps {
     projects: Project[];
