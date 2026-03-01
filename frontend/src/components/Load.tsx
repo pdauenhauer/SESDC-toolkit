@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "preact/hooks";
 import type { Load } from "../database/models/load";
 import { LOAD_LABELS, getLoadLabelById } from "../data/loadLabels";
 import Tooltip from "./Tooltip";
+import "../css/ProjectsPage/load.css";
 
 interface LoadProps {
   load: Load;
