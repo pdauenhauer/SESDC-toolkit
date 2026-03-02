@@ -15,7 +15,7 @@ export default function WindStep({ data, updateSection, updateNested, nextStep, 
          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px'}}>
             <div>
                <label>Nameplate (kW) <span style={{color:'red'}}>*</span></label>
-               <input type="number" class="big-input" placeholder="0.0" 
+               <input id="input-wind-nameplate" type="number" class="big-input" placeholder="0.0" 
                  value={data.wind.nameplateKw || ''}
                  onInput={(e) => {
                     const val = Number(e.currentTarget.value);
@@ -32,7 +32,7 @@ export default function WindStep({ data, updateSection, updateNested, nextStep, 
             </div>
          </div>
 
-         <button class="toggle-advanced" onClick={() => setShowAdvanced(!showAdvanced)}>
+         <button id="input-wind-advanced" class="toggle-advanced" onClick={() => setShowAdvanced(!showAdvanced)}>
             {showAdvanced ? 'Hide Details' : 'Fine Tune (Speeds & Costs)'}
          </button>
 

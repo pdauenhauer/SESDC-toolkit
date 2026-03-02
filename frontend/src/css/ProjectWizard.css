@@ -65,7 +65,7 @@
 .help-btn {
   position: absolute;
   top: 15px;
-  right: 50px;
+  right: 90px;
   width: 30px;
   height: 30px;
   border-radius: 50%;
@@ -74,4 +74,21 @@
   color: #0088cc;
   font-weight: bold;
   cursor: pointer;
+}
+
+.tour-btn {
+  position: absolute;
+  top: 15px;
+  right: 50px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  background: #0088cc;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.tour-btn:hover {
+  background: #006699;
 }

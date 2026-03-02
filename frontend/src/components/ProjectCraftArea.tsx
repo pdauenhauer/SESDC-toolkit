@@ -2,6 +2,7 @@ import type { Load } from "../database/models/load";
 import type { SimulationResult } from "../services/simulation";
 import Workbench from "./Workbench";
 import SimulationResults from "./SimulationResults";
+import "../css/ProjectsPage/projectCraftArea.css";
 
 export type CraftTabId = "data" | "workbench" | "graphs";
 
