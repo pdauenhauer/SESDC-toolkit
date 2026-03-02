@@ -321,7 +321,7 @@ export default function Projects() {
                       "project-craft-tab",
                       activeCraftTab === tab.id ? "is-active" : "",
                     ].join(" ")}
-                    onClick={() => setActiveCraftTab(tab.id)}
+                    onClick={() => handleCraftTabChange(tab.id)}
                   >
                     {tab.label}
                   </button>
@@ -352,7 +352,15 @@ export default function Projects() {
             <div class="project-craft-content">
               {activeCraftTab === "data" && (
                 <div class="project-craft-panel">
-                  {simulationResult ? (
+                  {simulationLoading ? (
+                    <p class="project-craft-placeholder project-craft-placeholder--loading">
+                      Running simulation…
+                    </p>
+                  ) : dataTabLoading ? (
+                    <p class="project-craft-placeholder project-craft-placeholder--loading">
+                      Loading stored data…
+                    </p>
+                  ) : simulationResult && Object.keys(simulationResult).length > 0 ? (
                     <SimulationResults
                       result={simulationResult}
                       onClear={() => setSimulationResult(null)}
