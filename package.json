@@ -15,6 +15,7 @@
   },
   "scripts": {
     "test:unit": "vitest run",
+    "test:functions": "cd functions && python -m pytest tests/ -v",
     "test:e2e": "firebase emulators:exec --only auth,firestore --project demo-sesdc-toolkit \"npm run test:unit\"",
     "test:emulators": "npm run test:e2e"
   }
