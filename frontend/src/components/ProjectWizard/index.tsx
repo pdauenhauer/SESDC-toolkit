@@ -1,6 +1,8 @@
 // src/components/ProjectWizard/index.tsx
 
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useRef } from 'preact/hooks';
+import { createPortal } from 'preact/compat';
+import { render } from 'preact';
 import '../../css/ProjectWizard.css';
 
 // Import Types and Constants
@@ -26,7 +28,8 @@ interface ExtendedWizardProps extends ProjectWizardProps {
 export default function ProjectWizard({ onClose, onFinish, projectName }: ExtendedWizardProps) {
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialMode, setTutorialMode] = useState<'tour' | 'help'>('help');
-  
+  const wizardCardRef = useRef<HTMLDivElement>(null);
+
   const [step, setStep] = useState<WizardStep>('ONBOARDING_PROMPT');
   const [data, setData] = useState<ProjectData>({
     ...INITIAL_PROJECT_DATA,
@@ -70,19 +73,68 @@ export default function ProjectWizard({ onClose, onFinish, projectName }: Extend
     nextStep: setStep
   };
 
+  const startSmartSetupWithTutorial = () => {
+    setStep('SOLAR');
+    setShowTutorial(true);
+    setTutorialMode('tour');
+  };
+
+  /** When user clicks Done on the last tutorial step: advance to next wizard step and keep tutorial open (dimming + highlight). */
+  const onTutorialLastStepDone = () => {
+    if (step === 'SOLAR') setStep('BATTERY');
+    else if (step === 'BATTERY') setStep('WIND');
+    else if (step === 'WIND') setStep('GENERATOR');
+    else if (step === 'GENERATOR') setStep('LOADS');
+    else if (step === 'LOADS') setShowTutorial(false);
+  };
+
+  // Portal container so the tutorial mounts in document.body (outside the popup)
+  const tutorialPortalRef = useRef<HTMLDivElement | null>(null);
+  const [tutorialPortalRoot, setTutorialPortalRoot] = useState<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (showTutorial) {
+      if (!tutorialPortalRef.current) {
+        const el = document.createElement('div');
+        el.id = 'tutorial-portal-root';
+        document.body.appendChild(el);
+        tutorialPortalRef.current = el;
+        setTutorialPortalRoot(el);
+      }
+    }
+    return () => {
+      if (!showTutorial && tutorialPortalRef.current) {
+        render(null, tutorialPortalRef.current);
+        tutorialPortalRef.current.remove();
+        tutorialPortalRef.current = null;
+        setTutorialPortalRoot(null);
+      }
+    };
+  }, [showTutorial]);
+
   return (
     <div class="wizard-overlay">
-      <div class="wizard-card">
-        {/* Help Button */}
-        <button 
-            class="help-btn" 
+      <div class="wizard-card" ref={wizardCardRef}>
+        {/* Help: quick tips. Tour: step-by-step with dimmed screen */}
+        <button
+            class="help-btn"
             onClick={() => {
               setTutorialMode('help');
               setShowTutorial(true);
             }}
-            title="Need Help?"
+            title="Quick help"
           >
             ?
+        </button>
+        <button
+            class="tour-btn"
+            onClick={() => {
+              setTutorialMode('tour');
+              setShowTutorial(true);
+            }}
+            title="Step-by-step tutorial"
+          >
+            Tour
         </button>
 
         <button class="close-btn" onClick={onClose}>&times;</button>
@@ -90,7 +142,11 @@ export default function ProjectWizard({ onClose, onFinish, projectName }: Extend
         {/* Step Components Rendering Based on Current Step */}
 
         {step === 'ONBOARDING_PROMPT' && (
-           <StartStep {...commonProps} onFinishManually={() => { onFinish(data); onClose(); }} />
+           <StartStep
+             {...commonProps}
+             onFinishManually={() => { onFinish(data); onClose(); }}
+             onStartSmartSetup={startSmartSetupWithTutorial}
+           />
         )}
 
         {step === 'SOLAR' && (
@@ -117,13 +173,23 @@ export default function ProjectWizard({ onClose, onFinish, projectName }: Extend
           />
         )}
 
-        <TutorialOverlay
-          steps={TUTORIAL_CONTENT[step as string] || []} 
-          isVisible={showTutorial} 
-          mode={tutorialMode}
-          onClose={() => setShowTutorial(false)}
-        />
       </div>
+
+      {/* Tutorial rendered outside the popup via portal into document.body */}
+      {showTutorial &&
+        tutorialPortalRoot &&
+        createPortal(
+          <TutorialOverlay
+            steps={TUTORIAL_CONTENT[step as string] || []}
+            isVisible={showTutorial}
+            mode={tutorialMode}
+            onClose={() => setShowTutorial(false)}
+            wizardCardRef={wizardCardRef}
+            onLastStepDone={onTutorialLastStepDone}
+            projectData={data as unknown as Record<string, unknown>}
+          />,
+          tutorialPortalRoot
+        )}
     </div>
   );
 }

@@ -13,7 +13,7 @@ export default function GeneratorStep({ data, updateSection, updateNested, nextS
       </div>
       <div class="wizard-content">
          <label>Capacity (kW)</label>
-         <input type="number" class="big-input" placeholder="0.0" 
+         <input id="input-generator-capacity" type="number" class="big-input" placeholder="0.0" 
             value={data.generator.capacityKw || ''}
             onInput={(e) => {
                const val = Number(e.currentTarget.value);

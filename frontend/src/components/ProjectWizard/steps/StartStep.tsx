@@ -2,9 +2,10 @@ import { StepProps } from '../types';
 
 interface PromptProps extends StepProps {
   onFinishManually: () => void;
+  onStartSmartSetup: () => void;
 }
 
-export default function OnboardingPrompt({ nextStep, onFinishManually }: PromptProps) {
+export default function OnboardingPrompt({ onFinishManually, onStartSmartSetup }: PromptProps) {
   return (
     <div class="step-container">
       <h2>Success! Project Created.</h2>
@@ -13,7 +14,7 @@ export default function OnboardingPrompt({ nextStep, onFinishManually }: PromptP
       </div>
       <div class="wizard-actions">
         <button class="btn-secondary" onClick={onFinishManually}>I'll do it manually</button>
-        <button class="btn-primary" onClick={() => nextStep('SOLAR')}>Start Smart Setup</button>
+        <button class="btn-primary" onClick={onStartSmartSetup}>Start Smart Setup</button>
       </div>
     </div>
   );

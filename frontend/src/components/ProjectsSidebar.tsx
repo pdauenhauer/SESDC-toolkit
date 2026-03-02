@@ -4,13 +4,14 @@ import { updateProject, deleteProject } from "../database/firestore";
 import { useState, useMemo, useEffect } from "preact/hooks";
 import NewProjectModal from "./NewProjectModal";
 import exitIcon from "../media/cross.png";
-import projectIcon from "../media/project.png";
+import projectIcon from "../media/boxes.svg";
 import optionIcon from "../media/option.png";
 import rejectIcon from "../media/reject.png";
-
 import ProjectWizard from "./ProjectWizard";
+import Tooltip from "./Tooltip";
+import "../css/ProjectsPage/sideBar.css";
 
-interface ProjectsListProps {
+interface ProjectsSidebarProps {
     projects: Project[];
     loading: boolean;
     activeProjectId?: string;
@@ -29,7 +30,7 @@ function ProjectsList({
     onHideSidebar,
 
 }: 
-ProjectsListProps) {
+ProjectsSidebarProps) {
     const [openOptionsProject, setOpenOptionsProject] = useState<string | null>(null);
     const [infoProject, setInfoProject] = useState<Project | null>(null);
     const [showNewProjectModal, setShowNewProjectModal] = useState(false);
@@ -128,15 +129,16 @@ ProjectsListProps) {
             <div class="projects-sidebar-header">
                 <div class="projects-sidebar-header-row">
                     <div class="projects-sidebar-title">Projects</div>
-                    <button
-                        type="button"
-                        class="projects-sidebar-toggle-btn"
-                        onClick={() => onHideSidebar?.()}
-                        aria-label="Hide projects"
-                        title="Hide projects"
-                    >
-                        <img src={rejectIcon} alt="" class="projects-sidebar-toggle-icon" />
-                    </button>
+                    <Tooltip text="Hide Projects" position="bottom">
+                        <button
+                            type="button"
+                            class="projects-sidebar-toggle-btn"
+                            onClick={() => onHideSidebar?.()}
+                            aria-label="Hide Projects"
+                        >
+                            <img src={rejectIcon} alt="" class="projects-sidebar-toggle-icon" />
+                        </button>
+                    </Tooltip>
                 </div>
                 <div class="projects-search">
                     <input
@@ -150,7 +152,6 @@ ProjectsListProps) {
                         class="projects-search-clear"
                         onClick={() => setQuery("")}
                         aria-label="Clear search"
-                        title="Clear"
                     >
                         <img src={exitIcon} alt="Clear search" class="projects-search-clear-icon" />
                     </button>

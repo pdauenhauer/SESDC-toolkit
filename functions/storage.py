@@ -58,14 +58,14 @@ def upload_csv_bundle(
 
 def download_csv(gs_url: str) -> str:
     """Download a single CSV from GCS by gs:// URL; return content as string."""
+    from google.cloud import storage
+
     if not gs_url.startswith("gs://"):
         raise ValueError("Invalid gs URL: " + gs_url)
-    from google.cloud import storage as gcs_storage
-
     parts = gs_url.removeprefix("gs://").split("/", 1)
     bucket_name = parts[0]
     blob_path = parts[1] if len(parts) > 1 else ""
-    client = gcs_storage.Client()
+    client = storage.Client()
     bucket = client.bucket(bucket_name)
     blob = bucket.blob(blob_path)
     return blob.download_as_string().decode("utf-8")

@@ -1,61 +1,159 @@
-/* src/components/ProjectWizard/TutorialOverlay.css */
+/* src/css/TutorialOverlay.css */
 
-.tutorial-layer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none; /* Lets clicks pass through to inputs underneath */
+/* Full viewport overlay*/
+.tutorial-layer.tutorial-layer-viewport {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
   z-index: 10000;
   overflow: hidden;
 }
 
-.tutorial-backdrop {
-  position: absolute;
+.tutorial-layer > * {
+  pointer-events: auto;
+}
+
+/* Dimmed backdrop panels (create a "cutout" around the highlighted element) */
+.tutorial-dim {
+  position: fixed;
+  background: rgba(0, 0, 0, 0.55);
+  pointer-events: all;
+  transition: background 0.2s ease;
+}
+
+.tutorial-dim-top {
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  pointer-events: all; /* Catches clicks */
+  right: 0;
 }
 
-.tutorial-bubble {
-  position: absolute;
-  background: #7e8182; /* Grey rn*/
-  color: white;
-  padding: 15px;
+.tutorial-dim-bottom {
+  position: fixed;
+}
+
+.tutorial-dim-left,
+.tutorial-dim-right {
+  position: fixed;
+}
+
+/* Highlight ring around the focused input (viewport fixed) */
+.tutorial-highlight-ring {
+  position: fixed;
+  border: 2px solid rgba(0, 136, 204, 0.9);
   border-radius: 8px;
-  width: 240px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  box-shadow: 0 0 0 4px rgba(0, 136, 204, 0.2);
+  pointer-events: none;
+  transition: top 0.2s ease, left 0.2s ease, width 0.2s ease, height 0.2s ease;
+}
+
+/* Side panel — fixed to the right of the wizard card, not on the popup */
+.tutorial-panel {
+  position: fixed;
+  background: #2d3748;
+  color: #e2e8f0;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
   pointer-events: all;
-  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: tutorialPopIn 0.25s ease-out;
+  z-index: 10001;
+  overflow-y: auto;
 }
 
-.tutorial-bubble h4 {
-  margin: 0 0 5px 0;
-  font-size: 1rem;
+.tutorial-panel h4 {
+  margin: 0 0 8px 0;
+  font-size: 1.05rem;
+  color: #fff;
 }
 
-.tutorial-bubble p {
-  margin: 0;
+.tutorial-panel p {
+  margin: 0 0 14px 0;
   font-size: 0.9rem;
-  line-height: 1.4;
-  opacity: 0.9;
+  line-height: 1.45;
+  opacity: 0.95;
 }
 
-/* Hardcoded positions for now, can make dyanmic later */
-.position-center { top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
-.position-top { top: 10%; left: 50%; transform: translateX(-50%); }
-.position-bottom { bottom: 15%; left: 50%; transform: translateX(-50%); }
-.position-right { top: 40%; right: 5%; }
-.position-left { top: 40%; left: 5%; }
+.tutorial-required-hint {
+  margin: 0 0 10px 0 !important;
+  font-size: 0.85rem !important;
+  color: rgba(255, 200, 100, 0.95);
+}
 
+.tutorial-step-indicator {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 8px;
+}
+
+.tutorial-bubble-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.tutorial-btn {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.tutorial-btn-next {
+  background: #0088cc;
+  color: white;
+}
+
+.tutorial-btn-next:hover {
+  background: #006699;
+}
+
+.tutorial-btn-prev {
+  background: rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+}
+
+.tutorial-btn-prev:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.tutorial-btn-prev:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tutorial-end-btn {
+  display: block;
+  width: 100%;
+  padding: 6px 0;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.15s;
+}
+
+.tutorial-end-btn:hover {
+  color: #fff;
+}
+
+@keyframes tutorialPopIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Exit tour — fixed to viewport corner */
 .tutorial-close-btn {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
   pointer-events: all;
   background: white;
   color: #333;
@@ -64,10 +162,10 @@
   border-radius: 20px;
   font-weight: bold;
   cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 10002;
 }
 
-@keyframes popIn {
-  from { opacity: 0; transform: scale(0.8) translate(-50%, -50%); }
-  to { opacity: 1; transform: scale(1) translate(0, 0); } 
+.tutorial-close-btn:hover {
+  background: #f0f0f0;
 }
