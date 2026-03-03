@@ -23,14 +23,15 @@ import { TUTORIAL_CONTENT } from './tutorialData';
 
 interface ExtendedWizardProps extends ProjectWizardProps {
   projectName: string;
+  initialStep?: WizardStep;
 }
 
-export default function ProjectWizard({ onClose, onFinish, projectName }: ExtendedWizardProps) {
+export default function ProjectWizard({ onClose, onFinish, projectName, initialStep }: ExtendedWizardProps) {
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialMode, setTutorialMode] = useState<'tour' | 'help'>('help');
   const wizardCardRef = useRef<HTMLDivElement>(null);
 
-  const [step, setStep] = useState<WizardStep>('ONBOARDING_PROMPT');
+  const [step, setStep] = useState<WizardStep>(initialStep ?? 'ONBOARDING_PROMPT');
   const [data, setData] = useState<ProjectData>({
     ...INITIAL_PROJECT_DATA,
     name: projectName
@@ -41,6 +42,10 @@ export default function ProjectWizard({ onClose, onFinish, projectName }: Extend
       setData(prev => ({ ...prev, name: projectName }));
     }
   }, [projectName]);
+
+  useEffect(() => {
+    if (initialStep) setStep(initialStep);
+  }, [initialStep]);
 
   // --- Shared Helper Functions ---
 
