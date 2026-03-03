@@ -9,6 +9,7 @@ import type { Project } from "../database/models/metadata";
 import { createNewLoad } from "../utils/loadUtils";
 import { auth } from "../utils/firebase/firebase-init";
 import ProjectWizard from '../components/ProjectWizard';
+import type { WizardStep } from "../components/ProjectWizard/types";
 import { addDoc, collection } from "firebase/firestore";
 import { db } from "../utils/firebase/firebase-init";
 import { listProjects, getProjectLoads, saveProjectLoads } from "../database/firestore";
@@ -20,8 +21,19 @@ import {
 } from "../services/simulation";
 import menuIcon from "../media/layout-grid.svg";
 import settingIcon from "../media/settings.svg";
-import houseIcon from "../media/house.svg";
-import boxesIcon from "../media/boxes.svg";
+import homeIcon from "../media/house.svg";
+import projectsIcon from "../media/boxes.svg";
+import runIcon from "../media/play-green.svg";
+import showProjectsIcon from "../media/grid-2x2-plus.svg";
+import rightArrowIcon from "../media/chevron-right.svg";
+import leftArrowIcon from "../media/chevron-left.svg";
+import configIcon from "../media/cog.svg";
+import windIcon from "../media/wind.svg";
+import generatorIcon from "../media/zap.svg";
+import solarPanelIcon from "../media/solar-panel.svg";
+import batteryIcon from "../media/battery-medium.svg";
+import helpIcon from "../media/circle-question-mark.svg";
+import accountIcon from "../media/user.svg";
 import "../css/ProjectsPage/projects.css";
 import "../css/ProjectsPage/projectCraftArea.css";
 import Tooltip from "../components/Tooltip";
@@ -85,6 +97,7 @@ export default function Projects() {
   const [dataTabLoading, setDataTabLoading] = useState(false);
   const hydratedProjectIdRef = useRef<string | null>(null);
   const [isWizardOpen, setWizardOpen] = useState(false);
+  const [wizardInitialStep, setWizardInitialStep] = useState<WizardStep>("ONBOARDING_PROMPT");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const handleAddComponent = () => {
@@ -276,15 +289,14 @@ export default function Projects() {
                     <img src={menuIcon} alt="" class="projects-sidebar-toggle-icon" />
                   </button>
                 </Tooltip>
-                <Tooltip text="Home" position="right">
+                <Tooltip text="Home" position="bottom">
                   <button
                     type="button"
                     class="projects-toolbar-icon-btn projects-top-icon-btn"
                     onClick={() => (window.location.href = "/")}
                     aria-label="Home"
-                    title="Home"
                   >
-                    <img src={houseIcon} alt="" class="projects-toolbar-icon" />
+                    <img src={homeIcon} alt="" class="projects-toolbar-icon" />
                   </button>
                 </Tooltip>
               </>
@@ -293,17 +305,36 @@ export default function Projects() {
               <span class="projects-project-header-outer-box projects-project-header-outer-box--left" />
               <span class="projects-project-header-outer-box projects-project-header-outer-box--right" />
               <div class="projects-project-header-title" title={activeProjectName}>
-                <img src={boxesIcon} alt="" class="projects-project-header-title-icon" />
+                <img src={projectsIcon} alt="" class="projects-project-header-title-icon" />
                 {activeProjectName}
               </div>
             </div>
             <div class="projects-project-header-side projects-project-header-side--right">
+              <Tooltip text="User Guide" position="bottom">
+                <button
+                  type="button"
+                  class="projects-toolbar-icon-btn projects-top-icon-btn projects-top-icon-btn--front"
+                  onClick={() => (window.location.href = "/guide")}
+                  aria-label="User Guide"
+                >
+                  <img src={helpIcon} alt="" class="projects-toolbar-icon" />
+                </button>
+              </Tooltip>
+              <Tooltip text="Account" position="bottom">
+                <button
+                  type="button" //NEED TO FIX ACCOUNT PAGE ROUTE
+                  class="projects-toolbar-icon-btn projects-top-icon-btn"
+                  onClick={() => (window.location.href = "/account")}
+                  aria-label="Account"
+                >
+                  <img src={accountIcon} alt="" class="projects-toolbar-icon" />
+                </button>
+              </Tooltip>
               <button
                 type="button"
                 class="projects-toolbar-icon-btn projects-top-icon-btn"
                 onClick={() => console.log("Open Settings")}
                 aria-label="Settings"
-                title="Settings"
               >
                 <img src={settingIcon} alt="" class="projects-toolbar-icon" />
               </button>
@@ -328,23 +359,89 @@ export default function Projects() {
                 ))}
               </div>
 
+              {activeCraftTab === "workbench" && (
+                <>
+                  <span class="projects-toolbar-divider" aria-hidden="true" />
+                  <button type="button" class="projects-btn projects-btn-add" onClick={handleAddComponent}>
+                    <img src={showProjectsIcon} alt="" class="projects-btn-add-icon" />
+                    Create Component
+                  </button>
+                  <div class={`projects-config-wrap ${configOpen ? "is-open" : ""}`}>
+                    <button
+                      type="button"
+                      class="projects-btn projects-btn-config"
+                      onClick={() => setConfigOpen((open) => !open)}
+                      aria-expanded={configOpen}
+                    >
+                      <img src={configIcon} alt="" class="projects-btn-config-left-icon" />
+                      System Configuration
+                      <img
+                        src={configOpen ? leftArrowIcon : rightArrowIcon}
+                        alt=""
+                      class="projects-btn-config-icon"
+                    />
+                  </button>
+                    {configOpen && (
+                      <div class="projects-config-icons" aria-label="System Configuration Options">
+                        <Tooltip text="Generator" position="bottom">
+                          <button
+                            type="button"
+                            class="projects-config-option-btn"
+                            onClick={() => openWizardAtStep("GENERATOR")}
+                            aria-label="Open Generator Setup"
+                          >
+                            <img src={generatorIcon} alt="Generator" class="projects-config-option-icon" />
+                          </button>
+                        </Tooltip>
+                        <Tooltip text="Battery" position="bottom">
+                          <button
+                            type="button"
+                            class="projects-config-option-btn"
+                            onClick={() => openWizardAtStep("BATTERY")}
+                            aria-label="Open Battery Setup"
+                          >
+                            <img src={batteryIcon} alt="Battery" class="projects-config-option-icon" />
+                          </button>
+                        </Tooltip>
+                        <Tooltip text="Solar" position="bottom">
+                          <button
+                            type="button"
+                            class="projects-config-option-btn"
+                            onClick={() => openWizardAtStep("SOLAR")}
+                            aria-label="Open Solar Setup"
+                          >
+                            <img src={solarPanelIcon} alt="Solar" class="projects-config-option-icon" />
+                          </button>
+                        </Tooltip>
+                        <Tooltip text="Wind" position="bottom">
+                          <button
+                            type="button"
+                            class="projects-config-option-btn"
+                            onClick={() => openWizardAtStep("WIND")}
+                            aria-label="Open Wind Setup"
+                          >
+                            <img src={windIcon} alt="Wind" class="projects-config-option-icon" />
+                          </button>
+                        </Tooltip>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
               <div class="projects-spacer" />
 
               {activeCraftTab === "workbench" && (
-                <button type="button" class="projects-btn projects-btn-add" onClick={handleAddComponent}>
-                  <span class="projects-btn-plus">＋</span>
-                  Add new Component
+                <button
+                  type="button"
+                  class="projects-btn projects-btn-run"
+                  onClick={handleRunSimulation}
+                  disabled={simulationLoading}
+                >
+                  <img src={runIcon} alt="" class="projects-btn-run-icon" />
+                  {simulationLoading ? "Running…" : "Run Simulation"}
                 </button>
               )}
-              <button
-                type="button"
-                class="projects-btn projects-btn-run"
-                onClick={handleRunSimulation}
-                disabled={simulationLoading}
-              >
-                <span class="projects-btn-play">▶</span>
-                {simulationLoading ? "Running…" : "Run Simulation"}
-              </button>
             </div>
           </div>
 
@@ -391,8 +488,14 @@ export default function Projects() {
       {isWizardOpen && (
         <ProjectWizard 
           projectName=""
+          initialStep={wizardInitialStep}
           onClose={() => setWizardOpen(false)}
           onFinish={async (wizardData) => {
+            if (wizardInitialStep !== "ONBOARDING_PROMPT") {
+              setWizardOpen(false);
+              setWizardInitialStep("ONBOARDING_PROMPT");
+              return;
+            }
             console.log("Wizard Completed with Data:", wizardData);
             setWizardOpen(false);
 
