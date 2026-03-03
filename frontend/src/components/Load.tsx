@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "preact/hooks";
 import type { Load } from "../database/models/load";
 import { LOAD_LABELS, getLoadLabelById } from "../data/loadLabels";
 import Tooltip from "./Tooltip";
+import trashIcon from "../media/trash.svg";
+import trashRedIcon from "../media/trash-red.svg";
 import "../css/ProjectsPage/load.css";
 
 interface LoadProps {
@@ -193,7 +195,18 @@ export default function Load({
             onClick={onRemove}
             aria-label="Remove load"
           >
-            x
+            <img
+              src={trashIcon}
+              alt=""
+              aria-hidden="true"
+              class="load-card-remove-icon load-card-remove-icon--default"
+            />
+            <img
+              src={trashRedIcon}
+              alt=""
+              aria-hidden="true"
+              class="load-card-remove-icon load-card-remove-icon--hover"
+            />
           </button>
         </Tooltip>
       </div>

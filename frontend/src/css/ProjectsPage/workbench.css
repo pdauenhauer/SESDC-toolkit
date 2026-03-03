@@ -5,10 +5,10 @@
 .workbench-empty {
   padding: 32px;
   text-align: center;
-  color: #64748b;
+  color: var(--dark-cool);
   font-size: 16px;
-  background: #f8fafc;
-  border: 2px dashed #cbd5e1;
+  background: var(--dashed-inside);
+  border: 2px dashed var(--light-cool);
   border-radius: 12px;
 }
 
@@ -29,8 +29,8 @@
   gap: 10px;
   min-width: 180px;
   padding: 12px 14px;
-  background: #ffffff;
-  border: 2px solid #cdd8e6;
+  background: var(--white-main);
+  border: 2px solid #973f1f;
   border-radius: 10px;
   cursor: grab;
   user-select: none;
@@ -52,7 +52,7 @@
 }
 
 .workbench-card-grip {
-  color: #94a3b8;
+  color: #214d8c;
   font-size: 14px;
   letter-spacing: -2px;
 }

@@ -3,8 +3,8 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  background: #e9eff6;
-  border-right: 1px solid #cdd8e6;
+  background: var(--dashed-inside);
+  border-right: 1px solid #e6e6e6;
 }
 
 .projects-sidebar-header {
@@ -24,10 +24,10 @@
   align-items: center;
   gap: 10px;
   background: #ffffff;
-  border: 2px solid #63e6c2;
+  border: 2px solid var(--light-grey);
   border-radius: 10px;
   padding: 10px 12px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 .projects-search-input {
@@ -79,7 +79,9 @@
   font-size: 18px;
   font-weight: 800;
   color: #334155;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #dbe3ee;
 }
 
 .projects-list {
@@ -106,7 +108,7 @@
 }
 
 .projects-item:hover {
-  background: rgba(255, 255, 255, 0.55);
+  background: #e4e8ea;
 }
 
 .projects-item.is-active {
@@ -204,9 +206,9 @@
   width: 100%;
   height: 44px;
   border-radius: 9px;
-  border: 1px solid #000000;
-  background: #40ba7f;
-  color: #0f172a;
+  border: none;
+  background: var(--green-start);
+  color: var(--dashed-inside);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -218,12 +220,19 @@
 }
 
 .projects-new-btn:hover {
-  background: #3ccb9c;
+  background: var(--green-main);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16);
 }
 
 .projects-new-plus {
   font-size: 22px;
   line-height: 1;
+}
+
+.projects-new-plus-icon {
+  width: 20px;
+  height: 20px;
+  display: block;
 }
 
 .projects-sidebar-header-row {
@@ -243,16 +252,17 @@
   height: 32px;
   padding: 0;
   border-radius: 8px;
-  border: 2px solid #cdd8e6;
-  background: #ffffff;
+  border: none;
+  background: transparent;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transform: translate(6px, -10px);
 }
 
 .projects-sidebar-toggle-btn:hover {
-  border-color: var(--selection-green);
+  background: var(--light-cool);
 }
 
 .projects-sidebar-inline-toggle {
@@ -273,7 +283,11 @@
 }
 
 .projects-sidebar-toggle-icon {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   display: block;
+}
+
+.projects-hide-tooltip[data-tooltip-position="bottom"] .tooltip-content {
+  top: calc(100% + 4px);
 }

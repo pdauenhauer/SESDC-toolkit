@@ -10,9 +10,9 @@
   white-space: nowrap;
   padding: 6px 10px;
   border-radius: 16px;
-  border: 1px solid #888989;
-  background: #5c5c5c;
-  color: #f8fafc;
+  border: 1px solid var(--tooltip-light);
+  background: var(--tooltip-dark);
+  color: var(--white-main);
   font-size: 12px;
   font-weight: 600;
   line-height: 1.2;

@@ -5,7 +5,7 @@
 .sidebar {
     display: flex;
     flex-direction: column;
-    background-color: #eeeeee;
+    background-color: var(--light-grey);
     padding: 1rem;
     width: 250px;
     position: fixed;
