@@ -133,7 +133,7 @@ a.active {
 
   a.active {
     background: none;
-    color: white;
+    color: var(--white-main);
   }
 
   #check:checked ~ ul {

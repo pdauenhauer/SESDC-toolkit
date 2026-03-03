@@ -3,6 +3,11 @@
 
 :root {
   --black: #0A090C;
+  --dark-grey: #606060;
+  --light-grey: #eaeaea;
+  --light-cool: #dfe3e7;
+  --dark-cool: #64748b;
+  --dashed-inside: #f8fafc;
   --green-start: #046153;
   --blue-end: #409492;
   --green-main: #037F6F;
@@ -10,9 +15,12 @@
   --selection-green: #05B39C;
   --yellow-accent: #EDD16E;
   --orange-accent: #FFA947;
-  --white-main: #F7F9F1;
+  --white-main: #ffffff;
+  --white1: #F7F9F1;
   --gradient-bg: linear-gradient(135deg, var(--green-start), var(--green-main), var(--blue-end));
-  --gradient-yo: linear-gradient(var(--yellow-accent), var(--orange-accent))
+  --gradient-yo: linear-gradient(var(--yellow-accent), var(--orange-accent));
+  --tooltip-light: #888989;
+  --tooltip-dark: #5c5c5c;
 }
 
 * {
