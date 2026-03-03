@@ -133,6 +133,8 @@ export default function Projects() {
   const openWizardAtStep = (step: WizardStep) => {
     setWizardInitialStep(step);
     setWizardOpen(true);
+  };
+
   const handleCraftTabChange = (tab: CraftTabId) => {
     setActiveCraftTab(tab);
     if (tab !== "data") setDataTabLoading(false);
