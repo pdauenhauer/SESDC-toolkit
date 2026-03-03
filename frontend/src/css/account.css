@@ -6,20 +6,20 @@
   max-width: 1200px;
   margin: 32px auto;
   padding: 0 24px 64px;
-  background: #f6f7f2;
+  background: var(--light-grey);
 }
 
 /* Hero */
 .account-hero {
   display: flex;
   gap: 36px;
-  background: #fafcf9;
+  background: var(--white-main);
   padding: 28px;
   border-radius: 12px;
   border: 2px solid rgba(0,0,0,0.15);
   box-shadow: 0 10px 30px rgba(0,0,0,0.06);
 }
-
+/*figure out what this does*/
 .account-hero-visual {
   width: 280px;
   height: 140px;
@@ -51,7 +51,7 @@
 /* Profile card */
 .account-profile-card {
   width: 280px;
-  background: #fafcf9;
+  background: var(--white-main);
   padding: 18px;
   border-radius: 10px;
   box-shadow: 0 6px 16px rgba(0,0,0,0.05);
@@ -66,7 +66,7 @@
 .account-avatar {
   width: 56px;
   height: 56px;
-  background: #e6efe9;
+  background: var(--light-grey);
   border-radius: 8px;
 }
 
@@ -82,7 +82,7 @@
 /* Panel */
 .account-panel {
   flex: 1;
-  background: #fafcf9;
+  background: var(--white-main);
   padding: 24px;
   border-radius: 10px;
   box-shadow: 0 6px 16px rgba(0,0,0,0.05);

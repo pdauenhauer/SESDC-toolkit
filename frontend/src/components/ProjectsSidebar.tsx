@@ -3,10 +3,11 @@ import type { Project } from "../database/models/metadata";
 import { updateProject, deleteProject } from "../database/firestore";
 import { useState, useMemo, useEffect } from "preact/hooks";
 import NewProjectModal from "./NewProjectModal";
-import exitIcon from "../media/cross.png";
+import exitIcon from "../media/circle-x.svg";
+import plusIcon from "../media/plus.svg";
 import projectIcon from "../media/boxes.svg";
 import optionIcon from "../media/option.png";
-import rejectIcon from "../media/reject.png";
+import hideIcon from "../media/x.svg";
 import ProjectWizard from "./ProjectWizard";
 import Tooltip from "./Tooltip";
 import "../css/ProjectsPage/sideBar.css";
@@ -129,14 +130,14 @@ ProjectsSidebarProps) {
             <div class="projects-sidebar-header">
                 <div class="projects-sidebar-header-row">
                     <div class="projects-sidebar-title">Projects</div>
-                    <Tooltip text="Hide Projects" position="bottom">
+                    <Tooltip text="Hide Projects" position="bottom" className="projects-hide-tooltip">
                         <button
                             type="button"
                             class="projects-sidebar-toggle-btn"
                             onClick={() => onHideSidebar?.()}
                             aria-label="Hide Projects"
                         >
-                            <img src={rejectIcon} alt="" class="projects-sidebar-toggle-icon" />
+                            <img src={hideIcon} alt="" class="projects-sidebar-toggle-icon" />
                         </button>
                     </Tooltip>
                 </div>
@@ -242,7 +243,7 @@ ProjectsSidebarProps) {
                        class="projects-new-btn"
                        onClick={() => setShowNewProjectModal(true)}
                     >
-                        <span class="projects-new-plus">＋</span>
+                        <img src={plusIcon} alt="" class="projects-new-plus-icon" />
                         New Project
                     </button>
                     ) : (
