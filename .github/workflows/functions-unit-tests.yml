@@ -1,0 +1,30 @@
+name: Functions unit tests
+
+on:
+  pull_request:
+    branches: [test]
+  push:
+    branches:
+      - test
+    paths:
+      - "functions/**"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install -r functions/requirements.txt
+
+      - name: Run functions unit tests
+        run: cd functions && python -m pytest tests/ -v
