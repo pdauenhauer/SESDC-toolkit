@@ -79,13 +79,9 @@ export default function ProjectWizard({ onClose, onFinish, projectName }: Extend
     setTutorialMode('tour');
   };
 
-  /** When user clicks Done on the last tutorial step: advance to next wizard step and keep tutorial open (dimming + highlight). */
+  /** When user clicks Done on the last tutorial step: close the tutorial and let the user advance the wizard manually. */
   const onTutorialLastStepDone = () => {
-    if (step === 'SOLAR') setStep('BATTERY');
-    else if (step === 'BATTERY') setStep('WIND');
-    else if (step === 'WIND') setStep('GENERATOR');
-    else if (step === 'GENERATOR') setStep('LOADS');
-    else if (step === 'LOADS') setShowTutorial(false);
+    setShowTutorial(false);
   };
 
   // Portal container so the tutorial mounts in document.body (outside the popup)
@@ -150,26 +146,39 @@ export default function ProjectWizard({ onClose, onFinish, projectName }: Extend
         )}
 
         {step === 'SOLAR' && (
-          <SolarStep {...commonProps} onSkip={() => { updateSection('solar', 'enabled', false); setStep('BATTERY'); }} />
+          <SolarStep {...commonProps} 
+          onSkip={() => { updateSection('solar', 'enabled', false); setStep('BATTERY'); }}
+          onBack = {() => setStep('ONBOARDING_PROMPT')}
+          />
         )}
 
         {step === 'BATTERY' && (
-          <BatteryStep {...commonProps} onSkip={() => { updateSection('battery', 'enabled', false); setStep('WIND'); }} />
+          <BatteryStep {...commonProps} 
+          onSkip={() => { updateSection('battery', 'enabled', false); setStep('WIND'); }}
+          onBack = {() => setStep('SOLAR')}
+          />
         )}
 
         {step === 'WIND' && (
-          <WindStep {...commonProps} onSkip={() => { updateSection('wind', 'enabled', false); setStep('GENERATOR'); }} />
+          <WindStep {...commonProps} 
+          onSkip={() => { updateSection('wind', 'enabled', false); setStep('GENERATOR'); }}
+          onBack = {() => setStep('BATTERY')}
+          />
         )}
 
         {step === 'GENERATOR' && (
-          <GeneratorStep {...commonProps} onSkip={() => { updateSection('generator', 'enabled', false); setStep('LOADS'); }} />
+          <GeneratorStep {...commonProps} 
+          onSkip={() => { updateSection('generator', 'enabled', false); setStep('LOADS'); }}
+          onBack = {() => setStep('WIND')}
+          />
         )}
 
         {step === 'LOADS' && (
           <LoadsStep 
              {...commonProps} 
              setData={setData}
-             onFinish={() => { onFinish(data); onClose(); }} 
+             onFinish={() => { onFinish(data); onClose(); }}
+             onBack = {() => setStep('GENERATOR')}
           />
         )}
 
