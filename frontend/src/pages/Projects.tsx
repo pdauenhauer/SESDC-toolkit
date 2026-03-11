@@ -12,7 +12,7 @@ import ProjectWizard from '../components/ProjectWizard';
 import type { WizardStep } from "../components/ProjectWizard/types";
 import { addDoc, collection } from "firebase/firestore";
 import { db } from "../utils/firebase/firebase-init";
-import { listProjects, getProjectLoads, saveProjectLoads, createProject } from "../database/firestore";
+import { listProjects, getProjectLoads, saveProjectLoads, createProject, updateProject } from "../database/firestore";
 import {
   buildSimulationPayload,
   fetchStoredSimulation,
@@ -99,7 +99,7 @@ export default function Projects() {
   const [isWizardOpen, setWizardOpen] = useState(false);
   const [wizardInitialStep, setWizardInitialStep] = useState<WizardStep>("ONBOARDING_PROMPT");
   const [sidebarOpen, setSidebarOpen] = useState(true);
-
+  const [configOpen, setConfigOpen] = useState(false);
   const handleAddComponent = () => {
     setWorkbenchLoads((prev) => [...prev, createNewLoad(`Load ${prev.length + 1}`)]);
   };
@@ -499,11 +499,24 @@ export default function Projects() {
 
           onClose={() => setWizardOpen(false)}
           onFinish={async (wizardData) => {
+            if (!auth.currentUser) return;
+
             if (wizardInitialStep !== "ONBOARDING_PROMPT") {
+              try {
+                await updateProject(auth.currentUser.uid, activeProjectId, {
+                  wizardConfig: wizardData
+              });
+
+              await refreshProjects();
+            } catch (e) {
+              console.error("error updating project configuration", e);
+              alert("Failed to save changes.");
+            } finally {
               setWizardOpen(false);
               setWizardInitialStep("ONBOARDING_PROMPT");
-              return;
             }
+            return;
+          }
             console.log("Wizard Completed with Data:", wizardData);
             setWizardOpen(false);
 
