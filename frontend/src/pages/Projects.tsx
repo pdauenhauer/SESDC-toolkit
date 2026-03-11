@@ -12,7 +12,7 @@ import ProjectWizard from '../components/ProjectWizard';
 import type { WizardStep } from "../components/ProjectWizard/types";
 import { addDoc, collection } from "firebase/firestore";
 import { db } from "../utils/firebase/firebase-init";
-import { listProjects, getProjectLoads, saveProjectLoads } from "../database/firestore";
+import { listProjects, getProjectLoads, saveProjectLoads, createProject } from "../database/firestore";
 import {
   buildSimulationPayload,
   fetchStoredSimulation,
@@ -492,8 +492,11 @@ export default function Projects() {
       </div>
       {isWizardOpen && (
         <ProjectWizard 
-          projectName=""
-          initialStep={wizardInitialStep}
+          projectName = {activeProjectName}
+          initialStep = {wizardInitialStep}
+
+          initialData={(projects.find(p => p.id === activeProjectId) as any)?.wizardConfig || projects.find(p => p.id === activeProjectId)}
+
           onClose={() => setWizardOpen(false)}
           onFinish={async (wizardData) => {
             if (wizardInitialStep !== "ONBOARDING_PROMPT") {
@@ -526,6 +529,8 @@ export default function Projects() {
             } catch (e) {
               console.error("Error creating project:", e);
               alert("Failed to create project. See console for details.");
+            } finally {
+              setWizardInitialStep("ONBOARDING_PROMPT")
             }
           }} 
         />

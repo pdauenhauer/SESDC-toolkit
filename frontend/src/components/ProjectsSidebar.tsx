@@ -47,13 +47,30 @@ ProjectsSidebarProps) {
     }, [projects, query]);
 
     const handleWizardFinish = async (wizardData: any) => {
+        // Debugging logs to see exactly what we caught!
+    console.log("Data from Wizard:", wizardData);
+    console.log("Just Created Project state:", justCreatedProject);
+
         if (!justCreatedProject || !auth.currentUser) return;
+        
+        const projectId = typeof justCreatedProject === 'string' 
+        ? justCreatedProject 
+        : justCreatedProject.id;
+
+        if (!projectId) {
+        console.error("Critical Error: Missing Project ID!");
+        alert("Failed to save wizard data: Project ID is missing.");
+        return;
+        }
 
         try {
-            await updateProject(auth.currentUser.uid, justCreatedProject.id, wizardData);
+            await updateProject(auth.currentUser.uid, projectId, {
+                wizardConfig: wizardData
+            });
             
             // Refresh list
             onProjectCreated?.(); 
+            
         } catch (error) {
             console.error("Failed to save wizard data", error);
         }
@@ -263,7 +280,8 @@ ProjectsSidebarProps) {
                 )}
             </div>
             {showWizard && justCreatedProject && (
-                <ProjectWizard 
+                <ProjectWizard
+                    //projectName={typeof justCreatedProject === 'string' ? "" : justCreatedProject.name}
                     projectName={justCreatedProject.name}
                     onClose={() => {
                         setShowWizard(false);

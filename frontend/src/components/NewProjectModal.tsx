@@ -34,14 +34,21 @@ function NewProjectModal({ onClose, onProjectCreated }: NewProjectModalProps) {
         setError("");
         
         try {
-            const newProject = await createProject(user.uid,{
-                name: projectName.trim(),
-                description: projectDescription.trim(),
-                ownerId: user.uid,
-            });
-            onProjectCreated?.(newProject);
-            onClose();
-        } catch (err) {
+          const projectData = {
+            name: projectName.trim(),
+            description: projectDescription.trim(),
+            ownerId: user.uid
+          }
+          
+          const newProjectId = await createProject(user.uid, projectData);
+          
+          onProjectCreated?.({
+            ...projectData,
+            id: newProjectId
+          });
+
+          onClose();
+        }catch (err) {
             console.error("Error creating project:", err);
             setError("Failed to create project. Please try again.");
         } finally {

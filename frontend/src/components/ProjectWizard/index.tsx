@@ -24,17 +24,28 @@ import { TUTORIAL_CONTENT } from './tutorialData';
 interface ExtendedWizardProps extends ProjectWizardProps {
   projectName: string;
   initialStep?: WizardStep;
+  initialData?: any;
 }
 
-export default function ProjectWizard({ onClose, onFinish, projectName, initialStep }: ExtendedWizardProps) {
+export default function ProjectWizard({ onClose, onFinish, projectName, initialStep, initialData }: ExtendedWizardProps) {
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialMode, setTutorialMode] = useState<'tour' | 'help'>('help');
   const wizardCardRef = useRef<HTMLDivElement>(null);
 
   const [step, setStep] = useState<WizardStep>(initialStep ?? 'ONBOARDING_PROMPT');
-  const [data, setData] = useState<ProjectData>({
-    ...INITIAL_PROJECT_DATA,
-    name: projectName
+
+  const [data, setData] = useState<ProjectData>(() => {
+    if (initialData) {
+      return {
+        ...INITIAL_PROJECT_DATA,
+        ...initialData,
+        name: projectName
+      };
+    }
+    return {
+      ...INITIAL_PROJECT_DATA,
+      name: projectName
+    };
   });
 
   useEffect(() => {
@@ -188,7 +199,6 @@ export default function ProjectWizard({ onClose, onFinish, projectName, initialS
         )}
 
       </div>
-
       {/* Tutorial rendered outside the popup via portal into document.body */}
       {showTutorial &&
         tutorialPortalRoot &&
