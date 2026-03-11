@@ -280,8 +280,7 @@ ProjectsSidebarProps) {
                 )}
             </div>
             {showWizard && justCreatedProject && (
-                <ProjectWizard
-                    //projectName={typeof justCreatedProject === 'string' ? "" : justCreatedProject.name}
+                <ProjectWizard 
                     projectName={justCreatedProject.name}
                     onClose={() => {
                         setShowWizard(false);
