@@ -6,8 +6,6 @@ import {
     setDoc,
     updateDoc,
     collection,
-    query,
-    where,
     getDocs,
 } from "firebase/firestore";
 
@@ -82,9 +80,8 @@ export async function updateUserMetadata(
 }
 
 export async function getUserStats(uid: string): Promise<UserStats> {
-  const projectsRef = collection(db, "projects");
-  const q = query(projectsRef, where("ownerId", "==", uid));
-  const snap = await getDocs(q);
+  const projectsRef = collection(db, "users", uid, "projects");
+  const snap = await getDocs(projectsRef);
 
   return { projectCount: snap.size };
 }

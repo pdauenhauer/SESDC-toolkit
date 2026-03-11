@@ -312,7 +312,7 @@ export default function Projects() {
             <div class="projects-project-header-title-wrap">
               <span class="projects-project-header-outer-box projects-project-header-outer-box--left" />
               <span class="projects-project-header-outer-box projects-project-header-outer-box--right" />
-              <div class="projects-project-header-title" title={activeProjectName}>
+              <div class="projects-project-header-title">
                 <img src={projectsIcon} alt="" class="projects-project-header-title-icon" />
                 {activeProjectName}
               </div>
@@ -377,19 +377,21 @@ export default function Projects() {
                     type="button"
                     class="projects-btn projects-btn-add projects-btn-add--workbench"
                     onClick={handleAddComponent}
+                    aria-label="Create Component"
                   >
                     <img src={showProjectsIcon} alt="" class="projects-btn-add-icon" />
-                    Create Component
+                    <span class="projects-btn-label">Create Component</span>
                   </button>
                   <div class={`projects-config-wrap ${configOpen ? "is-open" : ""}`}>
                     <button
                       type="button"
                       class="projects-btn projects-btn-config"
                       onClick={() => setConfigOpen((open) => !open)}
+                      aria-label="System Configuration"
                       aria-expanded={configOpen}
                     >
                       <img src={configIcon} alt="" class="projects-btn-config-left-icon" />
-                      System Configuration
+                      <span class="projects-btn-label">System Configuration</span>
                       <img
                         src={configOpen ? leftArrowIcon : rightArrowIcon}
                         alt=""
@@ -450,10 +452,11 @@ export default function Projects() {
                     type="button"
                     class="projects-btn projects-btn-config projects-btn-config--filters"
                     onClick={() => setGraphFiltersOpen((open) => !open)}
+                    aria-label="Filters"
                     aria-expanded={graphFiltersOpen}
                   >
                     <img src={slidersHorizontalIcon} alt="" class="projects-btn-config-left-icon" />
-                    Filters
+                    <span class="projects-btn-label">Filters</span>
                     <img
                       src={graphFiltersOpen ? leftArrowIcon : rightArrowIcon}
                       alt=""
@@ -476,10 +479,13 @@ export default function Projects() {
                   type="button"
                   class="projects-btn projects-btn-run"
                   onClick={handleRunSimulation}
+                  aria-label="Run Simulation"
                   disabled={simulationLoading}
                 >
                   <img src={runIcon} alt="" class="projects-btn-run-icon" />
-                  {simulationLoading ? "Running…" : "Run Simulation"}
+                  <span class="projects-btn-label">
+                    {simulationLoading ? "Running…" : "Run Simulation"}
+                  </span>
                 </button>
               )}
             </div>

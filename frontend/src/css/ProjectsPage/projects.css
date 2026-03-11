@@ -364,8 +364,8 @@
   flex-shrink: 0;
 }
 
-.projects-btn-config-icon--filters {
-  margin-left: 4px;
+.projects-btn-label {
+  white-space: nowrap;
 }
 
 .projects-config-icons {
@@ -475,4 +475,26 @@
 .projects-page button:focus,
 .projects-page button:focus-visible {
   outline: none;
+}
+
+@media (max-width: 1180px) {
+  .projects-btn-add,
+  .projects-btn-config,
+  .projects-btn-run {
+    min-width: 40px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .projects-btn-label,
+  .projects-btn-config-icon {
+    display: none;
+  }
+
+  .projects-btn-config {
+    transform: none;
+  }
 }
