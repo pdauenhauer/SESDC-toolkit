@@ -243,7 +243,17 @@
   background: #f6f8fb;
 }
 
+.projects-btn-add--workbench {
+  margin-left: 8px;
+}
+
 .projects-config-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.projects-filters-wrap {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -272,8 +282,19 @@
   border-bottom-right-radius: 0;
 }
 
+.projects-filters-wrap.is-open .projects-btn-config--filters {
+  background: #eef2f7;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
 .projects-btn-config:hover {
   background: #f6f8fb;
+}
+
+.projects-btn-config--filters {
+  min-width: 0;
+  padding-right: 4px;
 }
 
 .projects-btn-run {
@@ -343,6 +364,10 @@
   flex-shrink: 0;
 }
 
+.projects-btn-label {
+  white-space: nowrap;
+}
+
 .projects-config-icons {
   position: absolute;
   left: 100%;
@@ -359,6 +384,10 @@
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
   box-sizing: border-box;
+}
+
+.projects-config-icons--filters {
+  min-width: 160px;
 }
 
 .projects-config-option-icon {
@@ -446,4 +475,26 @@
 .projects-page button:focus,
 .projects-page button:focus-visible {
   outline: none;
+}
+
+@media (max-width: 1180px) {
+  .projects-btn-add,
+  .projects-btn-config,
+  .projects-btn-run {
+    min-width: 40px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .projects-btn-label,
+  .projects-btn-config-icon {
+    display: none;
+  }
+
+  .projects-btn-config {
+    transform: none;
+  }
 }

@@ -25,6 +25,7 @@ import homeIcon from "../media/house.svg";
 import projectsIcon from "../media/boxes.svg";
 import runIcon from "../media/play-green.svg";
 import showProjectsIcon from "../media/grid-2x2-plus.svg";
+import slidersHorizontalIcon from "../media/sliders-horizontal.svg";
 import rightArrowIcon from "../media/chevron-right.svg";
 import leftArrowIcon from "../media/chevron-left.svg";
 import configIcon from "../media/cog.svg";
@@ -95,6 +96,7 @@ export default function Projects() {
   const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
   const [simulationLoading, setSimulationLoading] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
+  const [graphFiltersOpen, setGraphFiltersOpen] = useState(false);
   const [dataTabLoading, setDataTabLoading] = useState(false);
   const hydratedProjectIdRef = useRef<string | null>(null);
   const [isWizardOpen, setWizardOpen] = useState(false);
@@ -310,7 +312,7 @@ export default function Projects() {
             <div class="projects-project-header-title-wrap">
               <span class="projects-project-header-outer-box projects-project-header-outer-box--left" />
               <span class="projects-project-header-outer-box projects-project-header-outer-box--right" />
-              <div class="projects-project-header-title" title={activeProjectName}>
+              <div class="projects-project-header-title">
                 <img src={projectsIcon} alt="" class="projects-project-header-title-icon" />
                 {activeProjectName}
               </div>
@@ -365,22 +367,31 @@ export default function Projects() {
                 ))}
               </div>
 
+              {(activeCraftTab === "workbench" || activeCraftTab === "graphs") && (
+                <span class="projects-toolbar-divider" aria-hidden="true" />
+              )}
+
               {activeCraftTab === "workbench" && (
                 <>
-                  <span class="projects-toolbar-divider" aria-hidden="true" />
-                  <button type="button" class="projects-btn projects-btn-add" onClick={handleAddComponent}>
+                  <button
+                    type="button"
+                    class="projects-btn projects-btn-add projects-btn-add--workbench"
+                    onClick={handleAddComponent}
+                    aria-label="Create Component"
+                  >
                     <img src={showProjectsIcon} alt="" class="projects-btn-add-icon" />
-                    Create Component
+                    <span class="projects-btn-label">Create Component</span>
                   </button>
                   <div class={`projects-config-wrap ${configOpen ? "is-open" : ""}`}>
                     <button
                       type="button"
                       class="projects-btn projects-btn-config"
                       onClick={() => setConfigOpen((open) => !open)}
+                      aria-label="System Configuration"
                       aria-expanded={configOpen}
                     >
                       <img src={configIcon} alt="" class="projects-btn-config-left-icon" />
-                      System Configuration
+                      <span class="projects-btn-label">System Configuration</span>
                       <img
                         src={configOpen ? leftArrowIcon : rightArrowIcon}
                         alt=""
@@ -435,6 +446,32 @@ export default function Projects() {
                 </>
               )}
 
+              {activeCraftTab === "graphs" && (
+                <div class={`projects-filters-wrap ${graphFiltersOpen ? "is-open" : ""}`}>
+                  <button
+                    type="button"
+                    class="projects-btn projects-btn-config projects-btn-config--filters"
+                    onClick={() => setGraphFiltersOpen((open) => !open)}
+                    aria-label="Filters"
+                    aria-expanded={graphFiltersOpen}
+                  >
+                    <img src={slidersHorizontalIcon} alt="" class="projects-btn-config-left-icon" />
+                    <span class="projects-btn-label">Filters</span>
+                    <img
+                      src={graphFiltersOpen ? leftArrowIcon : rightArrowIcon}
+                      alt=""
+                      class="projects-btn-config-icon projects-btn-config-icon--filters"
+                    />
+                  </button>
+                  {graphFiltersOpen && (
+                    <div
+                      class="projects-config-icons projects-config-icons--filters"
+                      aria-label="Graph Filter Options"
+                    />
+                  )}
+                </div>
+              )}
+
               <div class="projects-spacer" />
 
               {activeCraftTab === "workbench" && (
@@ -442,10 +479,13 @@ export default function Projects() {
                   type="button"
                   class="projects-btn projects-btn-run"
                   onClick={handleRunSimulation}
+                  aria-label="Run Simulation"
                   disabled={simulationLoading}
                 >
                   <img src={runIcon} alt="" class="projects-btn-run-icon" />
-                  {simulationLoading ? "Running…" : "Run Simulation"}
+                  <span class="projects-btn-label">
+                    {simulationLoading ? "Running…" : "Run Simulation"}
+                  </span>
                 </button>
               )}
             </div>
