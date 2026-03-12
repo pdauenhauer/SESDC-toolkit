@@ -24,17 +24,28 @@ import { TUTORIAL_CONTENT } from './tutorialData';
 interface ExtendedWizardProps extends ProjectWizardProps {
   projectName: string;
   initialStep?: WizardStep;
+  initialData?: any;
 }
 
-export default function ProjectWizard({ onClose, onFinish, projectName, initialStep }: ExtendedWizardProps) {
+export default function ProjectWizard({ onClose, onFinish, projectName, initialStep, initialData }: ExtendedWizardProps) {
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialMode, setTutorialMode] = useState<'tour' | 'help'>('help');
   const wizardCardRef = useRef<HTMLDivElement>(null);
 
   const [step, setStep] = useState<WizardStep>(initialStep ?? 'ONBOARDING_PROMPT');
-  const [data, setData] = useState<ProjectData>({
-    ...INITIAL_PROJECT_DATA,
-    name: projectName
+
+  const [data, setData] = useState<ProjectData>(() => {
+    if (initialData) {
+      return {
+        ...INITIAL_PROJECT_DATA,
+        ...initialData,
+        name: projectName
+      };
+    }
+    return {
+      ...INITIAL_PROJECT_DATA,
+      name: projectName
+    };
   });
 
   useEffect(() => {
@@ -84,13 +95,9 @@ export default function ProjectWizard({ onClose, onFinish, projectName, initialS
     setTutorialMode('tour');
   };
 
-  /** When user clicks Done on the last tutorial step: advance to next wizard step and keep tutorial open (dimming + highlight). */
+  /** When user clicks Done on the last tutorial step: close the tutorial and let the user advance the wizard manually. */
   const onTutorialLastStepDone = () => {
-    if (step === 'SOLAR') setStep('BATTERY');
-    else if (step === 'BATTERY') setStep('WIND');
-    else if (step === 'WIND') setStep('GENERATOR');
-    else if (step === 'GENERATOR') setStep('LOADS');
-    else if (step === 'LOADS') setShowTutorial(false);
+    setShowTutorial(false);
   };
 
   // Portal container so the tutorial mounts in document.body (outside the popup)
@@ -155,31 +162,43 @@ export default function ProjectWizard({ onClose, onFinish, projectName, initialS
         )}
 
         {step === 'SOLAR' && (
-          <SolarStep {...commonProps} onSkip={() => { updateSection('solar', 'enabled', false); setStep('BATTERY'); }} />
+          <SolarStep {...commonProps} 
+          onSkip={() => { updateSection('solar', 'enabled', false); setStep('BATTERY'); }}
+          onBack = {() => setStep('ONBOARDING_PROMPT')}
+          />
         )}
 
         {step === 'BATTERY' && (
-          <BatteryStep {...commonProps} onSkip={() => { updateSection('battery', 'enabled', false); setStep('WIND'); }} />
+          <BatteryStep {...commonProps} 
+          onSkip={() => { updateSection('battery', 'enabled', false); setStep('WIND'); }}
+          onBack = {() => setStep('SOLAR')}
+          />
         )}
 
         {step === 'WIND' && (
-          <WindStep {...commonProps} onSkip={() => { updateSection('wind', 'enabled', false); setStep('GENERATOR'); }} />
+          <WindStep {...commonProps} 
+          onSkip={() => { updateSection('wind', 'enabled', false); setStep('GENERATOR'); }}
+          onBack = {() => setStep('BATTERY')}
+          />
         )}
 
         {step === 'GENERATOR' && (
-          <GeneratorStep {...commonProps} onSkip={() => { updateSection('generator', 'enabled', false); setStep('LOADS'); }} />
+          <GeneratorStep {...commonProps} 
+          onSkip={() => { updateSection('generator', 'enabled', false); setStep('LOADS'); }}
+          onBack = {() => setStep('WIND')}
+          />
         )}
 
         {step === 'LOADS' && (
           <LoadsStep 
              {...commonProps} 
              setData={setData}
-             onFinish={() => { onFinish(data); onClose(); }} 
+             onFinish={() => { onFinish(data); onClose(); }}
+             onBack = {() => setStep('GENERATOR')}
           />
         )}
 
       </div>
-
       {/* Tutorial rendered outside the popup via portal into document.body */}
       {showTutorial &&
         tutorialPortalRoot &&

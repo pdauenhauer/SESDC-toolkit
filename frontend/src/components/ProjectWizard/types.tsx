@@ -65,4 +65,5 @@ export interface StepProps {
   updateNested: (section: keyof ProjectData, category: string, field: string, value: any) => void;
   nextStep: (next: WizardStep) => void;
   onSkip?: () => void;
+  onBack?: () => void;
 }
