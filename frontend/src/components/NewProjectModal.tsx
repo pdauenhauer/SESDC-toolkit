@@ -1,6 +1,7 @@
 import { useState } from "preact/hooks";
 import { createProject } from "../database/firestore";
 import { auth } from "../utils/firebase/firebase-init";
+import closeIcon from "../media/x.svg";
 import "../css/ProjectsPage/new-project.css";
 
 
@@ -62,7 +63,7 @@ function NewProjectModal({ onClose, onProjectCreated }: NewProjectModalProps) {
       <h2 class="np-title">New Project</h2>
 
       <button type="button" class="np-close" onClick={onClose} aria-label="Close">
-        &times;
+        <img src={closeIcon} alt="" class="np-close-icon" />
       </button>
     </div>
 

@@ -2,7 +2,9 @@ import SESDCHeader from '../components/SESDCHeader';
 import SESDCFooter from '../components/SESDCFooter';
 
 import { useEffect, useState } from 'preact/hooks';
+import { onAuthStateChanged } from "firebase/auth";
 import "../css/account.css";
+import { auth } from "../utils/firebase/firebase-init";
 
 import placeholder_user from '../media/placeholder_user.png';
 import { deleteAccount } from "../utils/firebase/auth";
@@ -31,32 +33,43 @@ export default function Account() {
     const [message, setMessage] = useState('');
 
     useEffect(() => {
+        const loadAccount = async (uid: string) => {
+            try {
+                const [profileData, statsData] = await Promise.all([
+                    getUserProfile(uid),
+                    getUserStats(uid),
+                ]);
+
+                if (profileData) {
+                    setProfile(profileData);
+                    setMetadata(profileData.metadata);
+                }
+                setStats(statsData);
+            } catch (err) {
+                console.error(err);
+                setMessage("Failed to load account information.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
         const uid = getCurrentUserId();
-        if (!uid) {
-            setMessage("You must be logged in to view your account.");
-            setLoading(false);
+        if (uid) {
+            loadAccount(uid);
             return;
         }
 
-        (async () => {
-            try {
-            const [profileData, statsData] = await Promise.all([
-                getUserProfile(uid),
-                getUserStats(uid),
-            ]);
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            unsubscribe();
+            if (!user) {
+                setMessage("You must be logged in to view your account.");
+                setLoading(false);
+                return;
+            }
+            loadAccount(user.uid);
+        });
 
-            if (profileData) {
-                setProfile(profileData);
-                setMetadata(profileData.metadata);
-            }
-            setStats(statsData);
-            } catch (err) {
-            console.error(err);
-            setMessage("Failed to load account information.");
-            } finally {
-            setLoading(false);
-            }
-        })();
+        return () => unsubscribe();
     }, []);
 
     function toggleUpdatePassword() {
