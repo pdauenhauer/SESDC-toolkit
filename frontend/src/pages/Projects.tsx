@@ -33,7 +33,6 @@ import windIcon from "../media/wind.svg";
 import generatorIcon from "../media/zap.svg";
 import solarPanelIcon from "../media/solar-panel.svg";
 import batteryIcon from "../media/battery-medium.svg";
-import helpIcon from "../media/circle-question-mark.svg";
 import accountIcon from "../media/user.svg";
 import "../css/ProjectsPage/projects.css";
 import "../css/ProjectsPage/projectCraftArea.css";
@@ -318,16 +317,6 @@ export default function Projects() {
               </div>
             </div>
             <div class="projects-project-header-side projects-project-header-side--right">
-              <Tooltip text="User Guide" position="bottom">
-                <button
-                  type="button"
-                  class="projects-toolbar-icon-btn projects-top-icon-btn projects-top-icon-btn--front"
-                  onClick={() => (window.location.href = "/guide")}
-                  aria-label="User Guide"
-                >
-                  <img src={helpIcon} alt="" class="projects-toolbar-icon" />
-                </button>
-              </Tooltip>
               <Tooltip text="Account" position="bottom">
                 <button
                   type="button" //NEED TO FIX ACCOUNT PAGE ROUTE

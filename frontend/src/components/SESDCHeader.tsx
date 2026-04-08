@@ -38,7 +38,6 @@ function SESDCHeader() {
                         <li><a className={isActive('/projects')} href="/projects">Projects</a></li>
                         <li><a className={isActive('/about')} href="/about">About</a></li>
                         <li><a className={isActive('/contact')} href="/contact">Contact</a></li>
-                        <li><a className={isActive('/guide')} href="/guide">User Guide</a></li>
                         <li><a className={isActive('/account')} href="/account">Account</a></li>
                     </>
                 ) : (
@@ -46,7 +45,6 @@ function SESDCHeader() {
                         <li><a className={isActive('/')} href="/">Home</a></li>
                         <li><a className={isActive('/about')} href="/about">About</a></li>
                         <li><a className={isActive('/contact')} href="/contact">Contact</a></li>
-                        <li><a className={isActive('/guide')} href="/guide">User Guide</a></li>
                         <li><a className={isActive('/login')} href="/login">Login</a></li>
                     </>
                 )}
