@@ -1,11 +1,11 @@
-"""Fetch NREL NSRDB weather/irradiance data (lazy imports)."""
+"""Fetch NLR NSRDB weather/irradiance data (lazy imports)."""
 
 import os
 from pathlib import Path
 
 
-def _resolve_nrl_api_key(explicit: str | None) -> str | None:
-    """Use explicit key, else NRL_API_KEY from env (functions/.env loaded locally via dotenv)."""
+def _resolve_nlr_api_key(explicit: str | None) -> str | None:
+    """Use explicit key, else NLR_API_KEY from env (functions/.env loaded locally via dotenv)."""
     if explicit:
         return explicit
     try:
@@ -14,32 +14,32 @@ def _resolve_nrl_api_key(explicit: str | None) -> str | None:
         load_dotenv(Path(__file__).resolve().parent / ".env")
     except ImportError:
         pass
-    return os.environ.get("NRL_API_KEY")
+    return os.environ.get("NLR_API_KEY")
 
 
-def fetch_nrl_data(
+def fetch_nlr_data(
     latitude,
     longitude,
     api_key: str | None = None,
     year="2022",
     interval="30",
 ):
-    """Fetch NRL weather/irradiance data and return a parsed DataFrame.
+    """Fetch NLR weather/irradiance data and return a parsed DataFrame.
 
     Columns returned:
         Datetime, Irradiance (W/m2), Temp_C (oC), Wind_speed(m/s)
-    Returns None on failure or if NRL_API_KEY is unset.
+    Returns None on failure or if NLR_API_KEY is unset.
     """
     import io
     import requests
     import pandas as pd
 
-    key = _resolve_nrl_api_key(api_key)
+    key = _resolve_nlr_api_key(api_key)
     if not key:
-        print("[fetch_nrl_data] Missing NRL_API_KEY (set in functions/.env or Cloud Function env)")
+        print("[fetch_nlr_data] Missing NLR_API_KEY (set in functions/.env or Cloud Function env)")
         return None
 
-    url = "https://developer.nrl.gov/api/nsrdb/v2/solar/nsrdb-msg-v1-0-0-download.csv"
+    url = "https://developer.nrel.gov/api/nsrdb/v2/solar/nsrdb-msg-v1-0-0-download.csv"
     wkt = f"POINT({longitude} {latitude})"
     params = {
         "api_key": key,
@@ -53,18 +53,18 @@ def fetch_nrl_data(
         "email": "peter.dauenhauer@gmail.com",
     }
 
-    print("[fetch_nrel_data] Requesting NREL", "lat=", latitude, "lon=", longitude)
+    print("[fetch_nlr_data] Requesting NLR", "lat=", latitude, "lon=", longitude)
     response = requests.get(url, params=params)
 
     if response.status_code != 200:
         print(
-            "[fetch_nrel_data] NREL failed",
+            "[fetch_nlr_data] NLR failed",
             "status=", response.status_code,
             "body=", response.text[:500],
         )
         return None
 
-    print("[fetch_nrel_data] NREL OK, parsing CSV...")
+    print("[fetch_nlr_data] NLR OK, parsing CSV...")
     csv_data = io.StringIO(response.text)
     df = pd.read_csv(csv_data, skiprows=2)
 
@@ -78,5 +78,5 @@ def fetch_nrl_data(
     result["Temp_C (oC)"] = df["Temperature"].values
     result["Wind_speed(m/s)"] = df["Wind Speed"].values
 
-    print("[fetch_nrel_data] Parsed", len(result), "rows")
+    print("[fetch_nlr_data] Parsed", len(result), "rows")
     return result
