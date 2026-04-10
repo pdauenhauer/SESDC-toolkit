@@ -33,7 +33,7 @@
   margin-top: 20px;
   width: 420px;
   background: var(--green-main);
-  color: #fff;
+  color: var(--white-main);
   border-radius: 10px;
   padding: 30px 40px;
 }
@@ -106,7 +106,7 @@
 }
 
 .toggle-text a:hover {
-  color: #cceeff;
+  color: var(--dashed-inside);
   text-decoration: underline;
 }
 
