@@ -4,7 +4,7 @@ import { BATTERY_PRESETS } from '../constants';
 
 import CostInputs from './CostInputs';
 
-export default function BatteryStep({ data, updateSection, updateNested, nextStep, onSkip }: StepProps) {
+export default function BatteryStep({ data, updateSection, updateNested, nextStep, onSkip, onBack }: StepProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (
@@ -55,6 +55,7 @@ export default function BatteryStep({ data, updateSection, updateNested, nextSte
          {showAdvanced && <CostInputs section="battery" data={data} updateSection={updateSection} updateNested={updateNested} />}
       </div>
       <div class="wizard-actions">
+         <button class="btn-secondary" onClick={onBack}>Previous</button>
          <button class="btn-skip" onClick={onSkip}>Skip Battery</button>
          <button class="btn-primary" onClick={() => nextStep('WIND')}>Next: Wind</button>
       </div>

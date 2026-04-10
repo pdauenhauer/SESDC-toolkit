@@ -5,7 +5,7 @@ interface LoadsStepProps extends StepProps {
   onFinish: () => void;
 }
 
-export default function LoadsStep({ data, setData, onFinish }: LoadsStepProps) {
+export default function LoadsStep({ data, setData, onFinish, onBack }: LoadsStepProps) {
 
   const generateLoadProfile = (type: 'residential' | 'commercial', peak: number) => {
     let curve: number[] = [];
@@ -64,6 +64,7 @@ export default function LoadsStep({ data, setData, onFinish }: LoadsStepProps) {
         </div>
       </div>
       <div class="wizard-actions">
+         <button class="btn-secondary" onClick={onBack}>Previous</button>
          <button class="btn-skip" onClick={onFinish}>Finish</button>
          <button class="btn-primary" onClick={onFinish}>Create Project</button>
       </div>

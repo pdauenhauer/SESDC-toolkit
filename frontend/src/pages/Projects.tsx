@@ -12,7 +12,7 @@ import ProjectWizard from '../components/ProjectWizard';
 import type { WizardStep } from "../components/ProjectWizard/types";
 import { addDoc, collection } from "firebase/firestore";
 import { db } from "../utils/firebase/firebase-init";
-import { listProjects, getProjectLoads, saveProjectLoads } from "../database/firestore";
+import { listProjects, getProjectLoads, saveProjectLoads, createProject, updateProject } from "../database/firestore";
 import {
   buildSimulationPayload,
   fetchStoredSimulation,
@@ -33,7 +33,6 @@ import windIcon from "../media/wind.svg";
 import generatorIcon from "../media/zap.svg";
 import solarPanelIcon from "../media/solar-panel.svg";
 import batteryIcon from "../media/battery-medium.svg";
-import helpIcon from "../media/circle-question-mark.svg";
 import accountIcon from "../media/user.svg";
 import "../css/ProjectsPage/projects.css";
 import "../css/ProjectsPage/projectCraftArea.css";
@@ -102,7 +101,7 @@ export default function Projects() {
   const [isWizardOpen, setWizardOpen] = useState(false);
   const [wizardInitialStep, setWizardInitialStep] = useState<WizardStep>("ONBOARDING_PROMPT");
   const [sidebarOpen, setSidebarOpen] = useState(true);
-
+  const [configOpen, setConfigOpen] = useState(false);
   const handleAddComponent = () => {
     setWorkbenchLoads((prev) => [...prev, createNewLoad(`Load ${prev.length + 1}`)]);
   };
@@ -318,16 +317,6 @@ export default function Projects() {
               </div>
             </div>
             <div class="projects-project-header-side projects-project-header-side--right">
-              <Tooltip text="User Guide" position="bottom">
-                <button
-                  type="button"
-                  class="projects-toolbar-icon-btn projects-top-icon-btn projects-top-icon-btn--front"
-                  onClick={() => (window.location.href = "/guide")}
-                  aria-label="User Guide"
-                >
-                  <img src={helpIcon} alt="" class="projects-toolbar-icon" />
-                </button>
-              </Tooltip>
               <Tooltip text="Account" position="bottom">
                 <button
                   type="button" //NEED TO FIX ACCOUNT PAGE ROUTE
@@ -533,15 +522,31 @@ export default function Projects() {
       </div>
       {isWizardOpen && (
         <ProjectWizard 
-          projectName=""
-          initialStep={wizardInitialStep}
+          projectName = {activeProjectName}
+          initialStep = {wizardInitialStep}
+
+          initialData={(projects.find(p => p.id === activeProjectId) as any)?.wizardConfig || projects.find(p => p.id === activeProjectId)}
+
           onClose={() => setWizardOpen(false)}
           onFinish={async (wizardData) => {
+            if (!auth.currentUser) return;
+
             if (wizardInitialStep !== "ONBOARDING_PROMPT") {
+              try {
+                await updateProject(auth.currentUser.uid, activeProjectId, {
+                  wizardConfig: wizardData
+              });
+
+              await refreshProjects();
+            } catch (e) {
+              console.error("error updating project configuration", e);
+              alert("Failed to save changes.");
+            } finally {
               setWizardOpen(false);
               setWizardInitialStep("ONBOARDING_PROMPT");
-              return;
             }
+            return;
+          }
             console.log("Wizard Completed with Data:", wizardData);
             setWizardOpen(false);
 
@@ -567,6 +572,8 @@ export default function Projects() {
             } catch (e) {
               console.error("Error creating project:", e);
               alert("Failed to create project. See console for details.");
+            } finally {
+              setWizardInitialStep("ONBOARDING_PROMPT")
             }
           }} 
         />

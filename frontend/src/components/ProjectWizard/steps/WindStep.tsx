@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks';
 import { StepProps } from '../types';
 import CostInputs from './CostInputs';
 
-export default function WindStep({ data, updateSection, updateNested, nextStep, onSkip }: StepProps) {
+export default function WindStep({ data, updateSection, updateNested, nextStep, onSkip, onBack }: StepProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (
@@ -50,7 +50,7 @@ export default function WindStep({ data, updateSection, updateNested, nextStep, 
             </div>
          )}
       </div>
-      <div class="wizard-actions">
+      <div class="wizard-actions"><button class="btn-secondary" onClick={onBack}>Previous</button>
          <button class="btn-skip" onClick={onSkip}>Skip Wind</button>
          <button class="btn-primary" onClick={() => nextStep('GENERATOR')}>Next: Generator</button>
       </div>
