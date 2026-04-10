@@ -8,7 +8,7 @@ from firebase_functions import https_fn
 
 from config import cors_settings
 from firestore_helpers import get_last_simulation_run, save_last_simulation_run
-from nrel import fetch_nrel_data
+from nrl import fetch_nrl_data
 from simulation import run_simulation
 from storage import download_csv, upload_csv_bundle
 from utils import safe_float, safe_int
@@ -109,15 +109,15 @@ def run_simulation_post(req: https_fn.Request) -> https_fn.Response:
             "energy_price": safe_float(data.get("energyPrice", 0.15), 0.15),
         }
 
-        print("[run_simulation_post] Fetching NREL data...")
-        nrel_df = fetch_nrel_data(latitude, longitude)
-        if nrel_df is None:
-            print("[run_simulation_post] NREL fetch failed")
-            return https_fn.Response("Failed to fetch NREL data (check logs)", status=502)
+        print("[run_simulation_post] Fetching NRL data...")
+        nrl_df = fetch_nrl_data(latitude, longitude)
+        if nrl_df is None:
+            print("[run_simulation_post] NRL fetch failed")
+            return https_fn.Response("Failed to fetch NRL data (check logs)", status=502)
 
         print("[run_simulation_post] Running simulation...")
         csv_dict = run_simulation(
-            nrel_df,
+            nrl_df,
             load_list,
             using_solar, solar_inputs,
             using_wind, wind_inputs,
