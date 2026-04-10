@@ -5,7 +5,6 @@ import projectsIcon from '../media/boxes-3.svg'
 import aboutIcon from '../media/info.svg'
 import contactIcon from '../media/mail-4.svg'
 import { useState, useEffect } from 'preact/hooks'
-import Tooltip from './Tooltip'
 
 import { auth } from '../utils/firebase/firebase-init';
 import { onAuthStateChanged, User } from 'firebase/auth';
@@ -41,103 +40,87 @@ function SESDCHeader() {
                 {!isLoading && user ? (
                     <>
                         <li>
-                            <Tooltip text="Home" position="bottom">
-                                <a
-                                    className={`${isActive('/')} nav-home-link`.trim()}
-                                    href="/"
-                                    aria-label="Home"
-                                >
-                                    <img src={homeIcon} alt="" class="nav-home-icon" />
-                                    <span>Home</span>
-                                </a>
-                            </Tooltip>
+                            <a
+                                className={`${isActive('/')} nav-home-link`.trim()}
+                                href="/"
+                                aria-label="Home"
+                            >
+                                <img src={homeIcon} alt="" class="nav-home-icon" />
+                                <span>Home</span>
+                            </a>
                         </li>
                         <li>
-                            <Tooltip text="Projects" position="bottom">
-                                <a
-                                    className={`${isActive('/projects')} nav-home-link`.trim()}
-                                    href="/projects"
-                                    aria-label="Projects"
-                                >
-                                    <img src={projectsIcon} alt="" class="nav-home-icon" />
-                                    <span>Projects</span>
-                                </a>
-                            </Tooltip>
+                            <a
+                                className={`${isActive('/projects')} nav-home-link`.trim()}
+                                href="/projects"
+                                aria-label="Projects"
+                            >
+                                <img src={projectsIcon} alt="" class="nav-home-icon" />
+                                <span>Projects</span>
+                            </a>
                         </li>
                         <li>
-                            <Tooltip text="About" position="bottom">
-                                <a
-                                    className={`${isActive('/about')} nav-home-link`.trim()}
-                                    href="/about"
-                                    aria-label="About"
-                                >
-                                    <img src={aboutIcon} alt="" class="nav-home-icon" />
-                                    <span>About</span>
-                                </a>
-                            </Tooltip>
+                            <a
+                                className={`${isActive('/about')} nav-home-link`.trim()}
+                                href="/about"
+                                aria-label="About"
+                            >
+                                <img src={aboutIcon} alt="" class="nav-home-icon" />
+                                <span>About</span>
+                            </a>
                         </li>
                         <li>
-                            <Tooltip text="Contact" position="bottom">
-                                <a
-                                    className={`${isActive('/contact')} nav-home-link`.trim()}
-                                    href="/contact"
-                                    aria-label="Contact"
-                                >
-                                    <img src={contactIcon} alt="" class="nav-home-icon" />
-                                    <span>Contact</span>
-                                </a>
-                            </Tooltip>
+                            <a
+                                className={`${isActive('/contact')} nav-home-link`.trim()}
+                                href="/contact"
+                                aria-label="Contact"
+                            >
+                                <img src={contactIcon} alt="" class="nav-home-icon" />
+                                <span>Contact</span>
+                            </a>
                         </li>
                         <li>
-                            <Tooltip text="Account" position="bottom">
-                                <a
-                                    className={`${isActive('/account')} nav-home-link`.trim()}
-                                    href="/account"
-                                    aria-label="Account"
-                                >
-                                    <img src={accountIcon} alt="" class="nav-home-icon" />
-                                    <span>Account</span>
-                                </a>
-                            </Tooltip>
+                            <a
+                                className={`${isActive('/account')} nav-home-link`.trim()}
+                                href="/account"
+                                aria-label="Account"
+                            >
+                                <img src={accountIcon} alt="" class="nav-home-icon" />
+                                <span>Account</span>
+                            </a>
                         </li>
                     </>
                 ) : (
                     <>
                         <li>
-                            <Tooltip text="Home" position="bottom">
-                                <a
-                                    className={`${isActive('/')} nav-home-link`.trim()}
-                                    href="/"
-                                    aria-label="Home"
-                                >
-                                    <img src={homeIcon} alt="" class="nav-home-icon" />
-                                    <span>Home</span>
-                                </a>
-                            </Tooltip>
+                            <a
+                                className={`${isActive('/')} nav-home-link`.trim()}
+                                href="/"
+                                aria-label="Home"
+                            >
+                                <img src={homeIcon} alt="" class="nav-home-icon" />
+                                <span>Home</span>
+                            </a>
                         </li>
                         <li>
-                            <Tooltip text="About" position="bottom">
-                                <a
-                                    className={`${isActive('/about')} nav-home-link`.trim()}
-                                    href="/about"
-                                    aria-label="About"
-                                >
-                                    <img src={aboutIcon} alt="" class="nav-home-icon" />
-                                    <span>About</span>
-                                </a>
-                            </Tooltip>
+                            <a
+                                className={`${isActive('/about')} nav-home-link`.trim()}
+                                href="/about"
+                                aria-label="About"
+                            >
+                                <img src={aboutIcon} alt="" class="nav-home-icon" />
+                                <span>About</span>
+                            </a>
                         </li>
                         <li>
-                            <Tooltip text="Contact" position="bottom">
-                                <a
-                                    className={`${isActive('/contact')} nav-home-link`.trim()}
-                                    href="/contact"
-                                    aria-label="Contact"
-                                >
-                                    <img src={contactIcon} alt="" class="nav-home-icon" />
-                                    <span>Contact</span>
-                                </a>
-                            </Tooltip>
+                            <a
+                                className={`${isActive('/contact')} nav-home-link`.trim()}
+                                href="/contact"
+                                aria-label="Contact"
+                            >
+                                <img src={contactIcon} alt="" class="nav-home-icon" />
+                                <span>Contact</span>
+                            </a>
                         </li>
                         <li><a className={isActive('/login')} href="/login">Login</a></li>
                     </>
