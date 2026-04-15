@@ -24,7 +24,7 @@ We use **Firebase** for auth, data, storage, hosting, and backend logic.
   - Main entry is `functions/main.py` which exposes `fetch_solar_data_function` via `@https_fn.on_request(cors=...)`.
   - The function:
     - Accepts JSON from the frontend (project inputs, load profile, tech flags).
-    - Calls the **NREL NSRDB** API (Meteosat Prime Meridian dataset) to fetch irradiance + weather at a given WKT point.
+    - Calls the **NLR NSRDB** API (Meteosat Prime Meridian dataset) to fetch irradiance + weather at a given WKT point.
     - Runs the simulation (using `calculations.py`) and returns **JSON of CSV strings** for multiple outputs (inputs, hourly series, daily, 20‑year financials, etc.).
     - NOTE: This will be rewritten asap.
   - **Tips**:
@@ -44,4 +44,4 @@ We use **Firebase** for auth, data, storage, hosting, and backend logic.
 - **Gotchas / tips**
   - **Env vars**: The frontend relies on `VITE_FIREBASE_*` env vars; in CI these are wired via GitHub secrets. Locally, add them to `.env`.
   - **Regions**: The function is deployed to `us-central1`; when calling over HTTP from the frontend we construct the URL using `VITE_FIREBASE_PROJECT_ID` and that region.
-  - **NREL API**: The backend hard‑codes an NREL API key and dataset; if you change datasets or locations, watch the Cloud Function logs for "No data available at the provided location" style errors.
+  - **NLR API**: The API key is stored as a Firebase secret (`NLR_API_KEY`); if you change datasets or locations, watch the Cloud Function logs for "No data available at the provided location" style errors.
