@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "preact/hooks";
+import { useLocation } from "preact-iso";
 import { Timestamp } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import ProjectsSidebar from "../components/ProjectsSidebar";
@@ -10,8 +11,6 @@ import { createNewLoad } from "../utils/loadUtils";
 import { auth } from "../utils/firebase/firebase-init";
 import ProjectWizard from '../components/ProjectWizard';
 import type { WizardStep } from "../components/ProjectWizard/types";
-import { addDoc, collection } from "firebase/firestore";
-import { db } from "../utils/firebase/firebase-init";
 import { listProjects, getProjectLoads, saveProjectLoads, createProject, updateProject } from "../database/firestore";
 import {
   buildSimulationPayload,
@@ -87,6 +86,7 @@ const TABS: { id: CraftTabId; label: string }[] = [
 ];
 
 export default function Projects() {
+  const { route } = useLocation();
   const [activeProjectId, setActiveProjectId] = useState<string>("");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,10 +101,16 @@ export default function Projects() {
   const [isWizardOpen, setWizardOpen] = useState(false);
   const [wizardInitialStep, setWizardInitialStep] = useState<WizardStep>("ONBOARDING_PROMPT");
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [configOpen, setConfigOpen] = useState(false);
+  const [revealReady, setRevealReady] = useState(false);
+
   const handleAddComponent = () => {
     setWorkbenchLoads((prev) => [...prev, createNewLoad(`Load ${prev.length + 1}`)]);
   };
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setRevealReady(true), 10);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const handleRunSimulation = async () => {
     const user = auth.currentUser;
@@ -265,11 +271,11 @@ export default function Projects() {
 
   return (
     <div class="projects-page">
-      
-      
       <div class="projects-layout">
         {sidebarOpen && (
-          <aside class="projects-sidebar">
+          <aside
+            class={`projects-sidebar projects-reveal projects-reveal--sidebar ${revealReady ? "is-visible" : ""}`}
+          >
             <ProjectsSidebar
               projects={projects}
               loading={loading}
@@ -283,7 +289,9 @@ export default function Projects() {
         )}
 
         <section class="projects-main">
-          <div class="projects-project-header">
+          <div
+            class={`projects-project-header projects-reveal projects-reveal--header ${revealReady ? "is-visible" : ""}`}
+          >
             <div class="projects-project-header-side projects-project-header-side--left">
               <>
                 <Tooltip text="Show Projects" position="right">
@@ -300,7 +308,7 @@ export default function Projects() {
                   <button
                     type="button"
                     class="projects-toolbar-icon-btn projects-top-icon-btn"
-                    onClick={() => (window.location.href = "/")}
+                    onClick={() => route("/")}
                     aria-label="Home"
                   >
                     <img src={homeIcon} alt="" class="projects-toolbar-icon" />
@@ -321,7 +329,7 @@ export default function Projects() {
                 <button
                   type="button" //NEED TO FIX ACCOUNT PAGE ROUTE
                   class="projects-toolbar-icon-btn projects-top-icon-btn"
-                  onClick={() => (window.location.href = "/account")}
+                  onClick={() => route("/account")}
                   aria-label="Account"
                 >
                   <img src={accountIcon} alt="" class="projects-toolbar-icon" />
@@ -338,7 +346,9 @@ export default function Projects() {
             </div>
           </div>
 
-          <div class="projects-toolbar">
+          <div
+            class={`projects-toolbar projects-reveal projects-reveal--toolbar ${revealReady ? "is-visible" : ""}`}
+          >
             <div class="projects-toolbar-row">
               <div class="project-craft-tabs project-craft-tabs--toolbar">
                 {TABS.map((tab) => (
@@ -480,7 +490,9 @@ export default function Projects() {
             </div>
           </div>
 
-          <main class="projects-workspace">
+          <main
+            class={`projects-workspace projects-reveal projects-reveal--workspace ${revealReady ? "is-visible" : ""}`}
+          >
             <div class="project-craft-content">
               {activeCraftTab === "data" && (
                 <div class="project-craft-panel">
@@ -554,20 +566,18 @@ export default function Projects() {
 
             try {
               // 1. Create the new project in Firestore
-              const newProjectRef = await addDoc(collection(db, "projects"), {
+              const newProjectId = await createProject(auth.currentUser.uid, {
                 name: wizardData.name,
                 ownerId: auth.currentUser.uid,
                 description: "Created via Smart Wizard",
                 wizardConfig: wizardData, 
-                createdAt: Timestamp.now(),
-                updatedAt: Timestamp.now(),
               });
 
               // 2. Refresh the sidebar list to show the new project
               await refreshProjects();
 
               // 3. Automatically select the new project
-              setActiveProjectId(newProjectRef.id);
+              setActiveProjectId(newProjectId);
 
             } catch (e) {
               console.error("Error creating project:", e);

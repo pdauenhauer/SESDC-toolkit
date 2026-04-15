@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { useLocation } from 'preact-iso';
 import { loginUser } from '../utils/firebase/auth';
 
 
@@ -8,6 +9,7 @@ interface LoginFormProps {
 }
 
 export default function LoginForm({ isVisible, showRegister }: LoginFormProps) {
+  const { route } = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -18,7 +20,7 @@ export default function LoginForm({ isVisible, showRegister }: LoginFormProps) {
     setMessage(result);
 
     if (result === 'Login Successful!') {
-      window.location.href = '/';
+      route('/');
     }
   }
 

@@ -104,7 +104,13 @@ function sanitizeLoads(loads: Load[]): any[] {
 
 //For Emulator connections
 import { connectFirestoreEmulator } from "firebase/firestore";
-if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-  connectFirestoreEmulator(db, '127.0.0.1', 8080);
-  console.log("🔥 Connected to local Firestore emulator!");
+const useFirestoreEmulator = import.meta.env.VITE_USE_FIRESTORE_EMULATOR === "true";
+const firestoreEmulatorHost = import.meta.env.VITE_FIRESTORE_EMULATOR_HOST || "127.0.0.1";
+const firestoreEmulatorPort = Number(import.meta.env.VITE_FIRESTORE_EMULATOR_PORT || "8080");
+
+if (useFirestoreEmulator) {
+  connectFirestoreEmulator(db, firestoreEmulatorHost, firestoreEmulatorPort);
+  console.log(
+    ` Connected to local Firestore emulator at ${firestoreEmulatorHost}:${firestoreEmulatorPort}`
+  );
 }

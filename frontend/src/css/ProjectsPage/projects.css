@@ -25,6 +25,31 @@
   height: 100%;
 }
 
+.projects-reveal {
+  opacity: 0;
+  transition: opacity 240ms ease;
+}
+
+.projects-reveal.is-visible {
+  opacity: 1;
+}
+
+.projects-reveal--header {
+  transition-delay: 40ms;
+}
+
+.projects-reveal--sidebar {
+  transition-delay: 120ms;
+}
+
+.projects-reveal--toolbar {
+  transition-delay: 180ms;
+}
+
+.projects-reveal--workspace {
+  transition-delay: 240ms;
+}
+
 .projects-main {
   flex: 1;
   min-width: 0;
@@ -496,5 +521,12 @@
 
   .projects-btn-config {
     transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .projects-reveal {
+    opacity: 1;
+    transition: none;
   }
 }

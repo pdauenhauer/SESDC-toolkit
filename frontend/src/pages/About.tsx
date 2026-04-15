@@ -2,16 +2,11 @@ import logo from '../media/Logo.svg'
 import kwh_logo from '../media/kwh.png'
 import IEEE_logo from '../media/IEEE.png'
 import team_picture from '../media/team.png'
-import SESDCHeader from '../components/SESDCHeader'
-import SESDCFooter from '../components/SESDCFooter'
 import '../css/about.css'
 
 function About() {
     return (
         <div>
-            {/* Header */}
-            <SESDCHeader/>
-            {/* About Container */}
             <div class="about-container">
                 <h2 class="about-heading">About</h2>
                 <section class="about-section">
@@ -67,9 +62,6 @@ function About() {
                 </div>
                 </section>
             </div>
-
-            {/* Footer */}
-            <SESDCFooter/>
         </div>
     )
 }
