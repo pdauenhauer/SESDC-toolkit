@@ -10,6 +10,10 @@
     padding: 0 1rem;
 }
 
+.about-container .about-section:last-child {
+    margin-bottom: 0;
+}
+
 .about-section:nth-child(even) {
     flex-direction: row-reverse;
 }
@@ -47,5 +51,4 @@
 .about-container {
 flex: 1;
 }
-
 

@@ -12,20 +12,26 @@ import '../src/css/SESDCFooter.css'
 import '../src/css/SESDCHeader.css'
 //import './app.css'
 
-function AppShell() {
+function AppRoutes() {
   const { path } = useLocation()
-  const useGlobalHeaderFooter = path !== '/projects'
-  const disablePageScroll = path === '/' || path === '/account' || path === '/contact'
-  const shellClass = [
-    'app-shell-layout',
-    useGlobalHeaderFooter ? '' : 'app-shell-layout--projects',
-    disablePageScroll ? 'app-shell-layout--no-scroll' : '',
-  ].join(' ').trim()
+  const normalizedPath = path !== '/' ? path.replace(/\/+$/, '') : '/'
+  const staticRoutes = new Set(['/', '/about', '/contact', '/account'])
+  const noScrollStaticRoutes = new Set(['/contact', '/account'])
+  const showStaticChrome = staticRoutes.has(normalizedPath)
+  const disableStaticScroll = noScrollStaticRoutes.has(normalizedPath)
+
+  const shellClassName = showStaticChrome
+    ? `static-page-shell${disableStaticScroll ? ' static-page-shell--no-scroll' : ''}`
+    : undefined
+
+  const contentClassName = showStaticChrome
+    ? `static-page-content${disableStaticScroll ? ' static-page-content--no-scroll' : ''}`
+    : undefined
 
   return (
-    <div class={shellClass}>
-      {useGlobalHeaderFooter && <SESDCHeader />}
-      <main class={useGlobalHeaderFooter ? 'app-route-content' : ''}>
+    <div class={shellClassName}>
+      {showStaticChrome && <SESDCHeader />}
+      <div class={contentClassName}>
         <Router>
           <Route path="/" component={Home}/>
           <Route path="/projects" component={Projects} />
@@ -35,8 +41,8 @@ function AppShell() {
           <Route path="/login" component={Login}/>
           <Route path="/logout" component={Logout}/>
         </Router>
-      </main>
-      {useGlobalHeaderFooter && <SESDCFooter />}
+      </div>
+      {showStaticChrome && <SESDCFooter />}
     </div>
   )
 }
@@ -45,7 +51,7 @@ export function App() {
   return (
     <LocationProvider>
       <ErrorBoundary onError={e => alert(e)}> 
-        <AppShell />
+        <AppRoutes />
       </ErrorBoundary>
     </LocationProvider>
   )

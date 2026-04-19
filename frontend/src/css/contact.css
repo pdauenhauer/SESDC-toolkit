@@ -4,11 +4,9 @@
 .contact-page {
   background: var(--light-grey);
   min-height: calc(100vh - 60px);
-  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  padding-bottom: 48px;
 }
 
 .contact-form {

@@ -7,8 +7,8 @@ function Home () {
   const { route } = useLocation();
 
   return (
-    <div class="min-h-screen flex flex-col">
-      <main class="home-content-wrapper flex-1">
+    <div class="home-page">
+      <main class="home-content-wrapper">
         <section class="home-hero-section">
           <div class="home-content-box">
             <div class="home-hero-image">
