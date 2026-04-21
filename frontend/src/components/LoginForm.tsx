@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { loginUser } from '../utils/firebase/auth';
+import logo from '../media/Logo.svg';
 
 
 interface LoginFormProps {
@@ -19,14 +20,18 @@ export default function LoginForm({ isVisible, showRegister }: LoginFormProps) {
     const result = await loginUser(email, password);
     setMessage(result);
 
-    if (result === 'Login Successful!') {
+    if (result === 'Sign in successful!') {
       route('/');
     }
   }
 
   return (
     <div class={`login-form-container ${isVisible ? 'login-visible' : 'login-hidden'}`}>
-      <h2>Login</h2>
+      <div class="login-form-brand">
+        <img src={logo} alt="SESDC logo" class="login-form-brand-logo" />
+        <span class="login-form-brand-text">Microgrid Toolkit</span>
+      </div>
+      <h2>Sign in</h2>
 
       {message && <p class="message">{message}</p>}
 
@@ -49,7 +54,7 @@ export default function LoginForm({ isVisible, showRegister }: LoginFormProps) {
           />
         </div>
 
-        <button class="login-btn login-primary-btn" type="submit">Login</button>
+        <button class="login-btn login-primary-btn" type="submit">Sign in</button>
 
         <p class="toggle-text">
           Don't have an account?{' '}
