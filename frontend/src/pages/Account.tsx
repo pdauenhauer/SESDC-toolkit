@@ -1,7 +1,5 @@
-import SESDCHeader from '../components/SESDCHeader';
-import SESDCFooter from '../components/SESDCFooter';
-
 import { useEffect, useState } from 'preact/hooks';
+import { useLocation } from 'preact-iso';
 import { onAuthStateChanged } from "firebase/auth";
 import "../css/account.css";
 import { auth } from "../utils/firebase/firebase-init";
@@ -31,6 +29,7 @@ import {
 
 
 export default function Account() {
+    const { route } = useLocation();
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [metadata, setMetadata] = useState<UserMetadata | null>(null);
     const [stats, setStats] = useState<UserStats | null>(null);
@@ -44,19 +43,22 @@ export default function Account() {
     useEffect(() => {
         const loadAccount = async (uid: string) => {
             try {
-                const [profileData, statsData] = await Promise.all([
-                    getUserProfile(uid),
-                    getUserStats(uid),
-                ]);
-
+                const profileData = await getUserProfile(uid);
                 if (profileData) {
                     setProfile(profileData);
                     setMetadata(profileData.metadata);
                 }
-                setStats(statsData);
             } catch (err) {
                 console.error(err);
                 setMessage("Failed to load account information.");
+            }
+
+            try {
+                const statsData = await getUserStats(uid);
+                setStats(statsData);
+            } catch (err) {
+                console.warn("Failed to load account project stats:", err);
+                setStats({ projectCount: 0 });
             } finally {
                 setLoading(false);
             }
@@ -126,7 +128,7 @@ export default function Account() {
         if (result === "Account deleted successfully.") {
             setTimeout(async () => {
                 await logoutUser();
-                window.location.href = "/login";
+                route("/login");
             }, 2000);
         }
     }
@@ -137,7 +139,7 @@ export default function Account() {
 
     async function handleGoToLogin() {
         await logoutUser();
-        window.location.href = "/login";
+        route("/login");
     }
 
     function handleMetadataChange<K extends keyof UserMetadata>(
@@ -167,8 +169,6 @@ export default function Account() {
 
 return (
     <div class="account-page-shell">
-      <SESDCHeader />
-  
       <main class="account-page">
         <section class="account-panel">
           <header class="account-panel-header">
@@ -306,8 +306,6 @@ return (
             )}
         </section>
       </main>
-
-      <SESDCFooter />
     </div>
   );
 }

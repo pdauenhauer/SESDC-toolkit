@@ -1,17 +1,14 @@
-import SESDCHeader from "../components/SESDCHeader";
-import SESDCFooter from "../components/SESDCFooter";
 import graph from '../media/graph.png';
+import { useLocation } from 'preact-iso';
 import '../css/homepage.css';
 
 
 function Home () {
-  return (
-    <div class="min-h-screen flex flex-col">
-    
-    {/* navbar */}
-      <SESDCHeader />
+  const { route } = useLocation();
 
-      <main class="home-content-wrapper flex-1">
+  return (
+    <div class="home-page">
+      <main class="home-content-wrapper">
         <section class="home-hero-section">
           <div class="home-content-box">
             <div class="home-hero-image">
@@ -23,7 +20,7 @@ function Home () {
               <h3>Design, simulate, and plan your microgrid with ease.</h3>
               <button
                 class="home-design-tool-button"
-                onClick={() => (window.location.href = '/login')}
+                onClick={() => route('/login')}
               >
                 Open Design Tool
               </button>
@@ -37,15 +34,8 @@ function Home () {
             <br />
             benefits users. In addition to answering any questions you may have.
           </p>
-          <button
-            class="home-get-started"
-            onClick={() => (window.location.href = '/help')}
-          >
-            Learn More!
-          </button>
         </section>
       </main>
-      <SESDCFooter />
     </div>
   );
 };

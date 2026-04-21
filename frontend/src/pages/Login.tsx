@@ -1,5 +1,3 @@
-import SESDCHeader from '../components/SESDCHeader';
-import SESDCFooter from '../components/SESDCFooter';
 import LoginForm from '../components/LoginForm';
 import RegisterForm from '../components/RegisterForm';
 
@@ -24,9 +22,6 @@ export default function Login() {
 
   return (
     <>
-      {/* navbar */}
-      <SESDCHeader />
-
       <main class="login-main">
         <div class="login-logo-container">
           <img src={logo} alt="Logo" class="login-logo" />
@@ -40,9 +35,6 @@ export default function Login() {
           <RegisterForm isVisible={!isLoginActive} showLogin={showLogin}/>
         </div>
       </main>
-
-      <SESDCFooter />
-
     </>
   );
 }
