@@ -83,6 +83,16 @@ function SESDCHeader() {
                         </li>
                         <li>
                             <a
+                                className={`${isActive('/guide')} nav-home-link`.trim()}
+                                href="/guide"
+                                aria-label="User Guide"
+                                onClick={(event) => handleNavClick(event as MouseEvent, '/guide')}
+                            >
+                                <span>User Guide</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a
                                 className={`${isActive('/account')} nav-home-link`.trim()}
                                 href="/account"
                                 aria-label="Account"
@@ -112,6 +122,16 @@ function SESDCHeader() {
                                 onClick={(event) => handleNavClick(event as MouseEvent, '/contact')}
                             >
                                 <span>Contact</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a
+                                className={`${isActive('/guide')} nav-home-link`.trim()}
+                                href="/guide"
+                                aria-label="User Guide"
+                                onClick={(event) => handleNavClick(event as MouseEvent, '/guide')}
+                            >
+                                <span>User Guide</span>
                             </a>
                         </li>
                         <li>

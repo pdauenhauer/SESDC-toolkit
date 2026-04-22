@@ -6,6 +6,7 @@ import Account from './pages/Account'
 import Projects from './pages/Projects'
 import Login from './pages/Login'
 import Logout from './pages/Logout'
+import UserGuide from './pages/UserGuide'
 import SESDCHeader from './components/SESDCHeader'
 import SESDCFooter from './components/SESDCFooter'
 import '../src/css/SESDCFooter.css'
@@ -15,7 +16,7 @@ import '../src/css/SESDCHeader.css'
 function AppRoutes() {
   const { path } = useLocation()
   const normalizedPath = path !== '/' ? path.replace(/\/+$/, '') : '/'
-  const staticRoutes = new Set(['/', '/about', '/contact', '/account'])
+  const staticRoutes = new Set(['/', '/about', '/contact', '/account', '/guide'])
   const noScrollStaticRoutes = new Set(['/contact', '/account'])
   const showStaticChrome = staticRoutes.has(normalizedPath)
   const disableStaticScroll = noScrollStaticRoutes.has(normalizedPath)
@@ -40,6 +41,7 @@ function AppRoutes() {
           <Route path="/account" component={Account}/>
           <Route path="/login" component={Login}/>
           <Route path="/logout" component={Logout}/>
+          <Route path="/guide" component={UserGuide}/>
         </Router>
       </div>
       {showStaticChrome && <SESDCFooter />}
