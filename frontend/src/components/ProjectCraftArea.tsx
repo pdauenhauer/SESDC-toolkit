@@ -2,6 +2,7 @@ import type { Load } from "../database/models/load";
 import type { SimulationResult } from "../services/simulation";
 import Workbench from "./Workbench";
 import SimulationResults from "./SimulationResults";
+import SimulationGraphsPanel from "./graphs/SimulationGraphsPanel";
 import "../css/ProjectsPage/projectCraftArea.css";
 
 export type CraftTabId = "data" | "workbench" | "graphs";
@@ -75,7 +76,13 @@ export default function ProjectCraftArea({
         )}
         {activeTab === "graphs" && (
           <div class="project-craft-panel">
-            <p class="project-craft-placeholder">Graphs — simulation charts and visualizations.</p>
+            {simulationResult && Object.keys(simulationResult).length > 0 ? (
+              <SimulationGraphsPanel result={simulationResult} />
+            ) : (
+              <p class="project-craft-placeholder">
+                Graphs — run a simulation from the toolbar to see charted results here.
+              </p>
+            )}
           </div>
         )}
       </div>
