@@ -21,7 +21,9 @@ export default function LoginForm({ isVisible, showRegister }: LoginFormProps) {
     setMessage(result);
 
     if (result === 'Sign in successful!') {
-      route('/');
+      const next = new URLSearchParams(window.location.search).get('next');
+      const redirectTarget = next && next.startsWith('/') ? next : '/';
+      route(redirectTarget);
     }
   }
 

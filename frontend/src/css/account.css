@@ -3,7 +3,7 @@
 
 /* Page */
 .account-page-shell {
-  background: var(--light-grey);
+  background: var(--white-main);
   padding-top: 52px;
   min-height: calc(100vh - 60px);
   display: flex;
