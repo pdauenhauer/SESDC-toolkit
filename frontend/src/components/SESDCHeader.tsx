@@ -105,19 +105,19 @@ function SESDCHeader() {
                         </a>
                     </li>
                 )}
-                {user && (
-                    <li>
-                        <a
-                            className={`${isActive('/account')} nav-home-link`.trim()}
-                            href="/account"
-                            aria-label="Account"
-                            onClick={(event) => handleNavClick(event as MouseEvent, '/account')}
-                        >
-                            <img src={accountDefaultIcon} alt="" class="nav-account-icon nav-account-icon--default" />
-                            <img src={accountHoverIcon} alt="" class="nav-account-icon nav-account-icon--hover" />
-                        </a>
-                    </li>
-            <div class="nav-links">
+          {user && (
+    <li>
+        <a
+            className={`${isActive('/account')} nav-home-link`.trim()}
+            href="/account"
+            aria-label="Account"
+            onClick={(event) => handleNavClick(event as MouseEvent, '/account')}
+        >
+            <img src={accountDefaultIcon} alt="" class="nav-account-icon nav-account-icon--default" />
+            <img src={accountHoverIcon} alt="" class="nav-account-icon nav-account-icon--hover" />
+        </a>
+    </li>
+)}
                 {/* add authentication logic */}
                 {user ? (
                     <>
