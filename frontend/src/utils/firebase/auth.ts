@@ -58,9 +58,9 @@ export async function loginUser(email: string, password: string) {
             return `User is not verified. Please check ${email} for a confirmation link.`;
         }
 
-        // Successful login; cache in localStorage
+        // Successful sign in; cache in localStorage
         localStorage.setItem("loggedInUserId", user.uid);
-        return "Login Successful!"
+        return "Sign in successful!"
     } catch (error: any) {
         return errorHandling(error)
     }

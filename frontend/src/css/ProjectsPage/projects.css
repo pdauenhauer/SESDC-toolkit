@@ -134,6 +134,8 @@
 
 .projects-project-header-side--right {
   justify-content: flex-end;
+  position: relative;
+  z-index: 240;
 }
 
 .projects-project-header-title-wrap {

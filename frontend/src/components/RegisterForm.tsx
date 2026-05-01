@@ -64,7 +64,7 @@ export default function RegisterForm({ isVisible, showLogin }: RegisterFormProps
 
         <p class="toggle-text">
           Already have an account?{' '}
-          <a href="#" onClick={showLogin}>Log In</a>
+          <a href="#" onClick={showLogin}>Sign in</a>
         </p>
       </form>
     </div>

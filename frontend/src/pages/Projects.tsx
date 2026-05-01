@@ -34,6 +34,7 @@ import generatorIcon from "../media/zap.svg";
 import solarPanelIcon from "../media/solar-panel.svg";
 import batteryIcon from "../media/battery-medium.svg";
 import accountIcon from "../media/user.svg";
+import helpIcon from "../media/circle-question-mark.svg";
 import "../css/ProjectsPage/projects.css";
 import "../css/ProjectsPage/projectCraftArea.css";
 import Tooltip from "../components/Tooltip";
@@ -334,6 +335,16 @@ export default function Projects() {
                   aria-label="Account"
                 >
                   <img src={accountIcon} alt="" class="projects-toolbar-icon" />
+                </button>
+              </Tooltip>
+              <Tooltip text="Help" position="bottom">
+                <button
+                  type="button"
+                  class="projects-toolbar-icon-btn projects-top-icon-btn projects-top-icon-btn--front"
+                  onClick={() => route("/contact")}
+                  aria-label="Help"
+                >
+                  <img src={helpIcon} alt="" class="projects-toolbar-icon" />
                 </button>
               </Tooltip>
               <button

@@ -31,7 +31,7 @@ export default function Logout() {
             <main>
                 <div class="wrapper logout-wrapper">
                     <h1>You have been logged out</h1>
-                    <p>Redirecting to login...</p>
+                    <p>Redirecting to sign in...</p>
                 </div>
             </main>
         </>
