@@ -5,6 +5,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import ProjectsSidebar from "../components/ProjectsSidebar";
 import Workbench from "../components/Workbench";
 import SimulationResults from "../components/SimulationResults";
+import SimulationGraphsPanel from "../components/graphs/SimulationGraphsPanel";
 import type { Load } from "../database/models/load";
 import type { Project } from "../database/models/metadata";
 import { createNewLoad } from "../utils/loadUtils";
@@ -187,9 +188,9 @@ export default function Projects() {
     }
   }, [loading, projects, activeProjectId]);
 
-  // 3) When on Data tab and active project changes, fetch stored data for that project only
+  // 3) When on a results tab and active project changes, fetch stored data for that project
   useEffect(() => {
-    if (activeCraftTab !== "data") return;
+    if (activeCraftTab !== "data" && activeCraftTab !== "graphs") return;
     const user = auth.currentUser;
     if (!user?.uid || !activeProjectId) {
       setSimulationResult(null);
@@ -523,9 +524,21 @@ export default function Projects() {
               )}
               {activeCraftTab === "graphs" && (
                 <div class="project-craft-panel">
-                  <p class="project-craft-placeholder">
-                    Graphs — simulation charts and visualizations.
-                  </p>
+                  {simulationLoading ? (
+                    <p class="project-craft-placeholder project-craft-placeholder--loading">
+                      Running simulation…
+                    </p>
+                  ) : dataTabLoading ? (
+                    <p class="project-craft-placeholder project-craft-placeholder--loading">
+                      Loading stored graph data…
+                    </p>
+                  ) : simulationResult && Object.keys(simulationResult).length > 0 ? (
+                    <SimulationGraphsPanel result={simulationResult} />
+                  ) : (
+                    <p class="project-craft-placeholder">
+                      Graphs — run a simulation from the toolbar to see charted results here.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
