@@ -5,16 +5,19 @@ import time
 import traceback
 
 from firebase_functions import https_fn
+from firebase_functions.params import SecretParam
 
 from config import cors_settings
+
+NLR_API_KEY = SecretParam("NLR_API_KEY")
 from firestore_helpers import get_last_simulation_run, save_last_simulation_run
-from nrel import fetch_nrel_data
+from nlr import fetch_nlr_data
 from simulation import run_simulation
 from storage import download_csv, upload_csv_bundle
 from utils import safe_float, safe_int
 
 
-@https_fn.on_request(cors=cors_settings)
+@https_fn.on_request(cors=cors_settings, secrets=[NLR_API_KEY])
 def run_simulation_post(req: https_fn.Request) -> https_fn.Response:
     """POST: run simulation, upload primary CSV to GCS, return storagePath + csvBundle."""
     if req.method == "OPTIONS":
@@ -109,15 +112,15 @@ def run_simulation_post(req: https_fn.Request) -> https_fn.Response:
             "energy_price": safe_float(data.get("energyPrice", 0.15), 0.15),
         }
 
-        print("[run_simulation_post] Fetching NREL data...")
-        nrel_df = fetch_nrel_data(latitude, longitude)
-        if nrel_df is None:
-            print("[run_simulation_post] NREL fetch failed")
-            return https_fn.Response("Failed to fetch NREL data (check logs)", status=502)
+        print("[run_simulation_post] Fetching NLR data...")
+        nlr_df = fetch_nlr_data(latitude, longitude)
+        if nlr_df is None:
+            print("[run_simulation_post] NLR fetch failed")
+            return https_fn.Response("Failed to fetch NLR data (check logs)", status=502)
 
         print("[run_simulation_post] Running simulation...")
         csv_dict = run_simulation(
-            nrel_df,
+            nlr_df,
             load_list,
             using_solar, solar_inputs,
             using_wind, wind_inputs,

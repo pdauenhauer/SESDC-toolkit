@@ -11,6 +11,7 @@
       "ignore": [
         "venv",
         ".git",
+        ".env",
         "firebase-debug.log",
         "firebase-debug.*.log",
         "*.local"

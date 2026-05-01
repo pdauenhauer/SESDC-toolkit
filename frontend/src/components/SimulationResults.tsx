@@ -4,7 +4,7 @@ import "../css/simulation-results.css";
 
 const PREVIEW_LINES = 15;
 const LABELS: Record<string, string> = {
-  input_data: "Input data (NREL + load)",
+  input_data: "Input data (NLR + load)",
   hourly_simulation: "Hourly simulation",
   daily_averages: "Daily averages",
   twenty_year_daily: "20-year daily load serviced",
