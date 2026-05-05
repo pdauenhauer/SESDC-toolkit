@@ -1,16 +1,10 @@
-import { useState } from 'preact/hooks';
 import { StepProps } from '../types';
 import CostInputs from './CostInputs';
 
-export default function GeneratorStep({ data, updateSection, updateNested, nextStep, onSkip, onBack}: StepProps) {
-  const [showAdvanced, setShowAdvanced] = useState(false);
+export default function GeneratorStep({ data, updateSection, updateNested, nextStep, onSkip, onBack, showAdvanced = false, setShowAdvanced}: StepProps) {
 
   return (
      <div class="step-container">
-      <div class="step-header">
-        <h2>Diesel Generator</h2>
-        <span class="live-cost">Est. Cost: ${data.generator.costs.capital.toLocaleString()}</span>
-      </div>
       <div class="wizard-content">
          <label>Capacity (kW)</label>
          <input id="input-generator-capacity" type="number" class="big-input" placeholder="0.0" 
@@ -22,7 +16,7 @@ export default function GeneratorStep({ data, updateSection, updateNested, nextS
                updateNested('generator', 'costs', 'capital', val * 500);
             }}/>
 
-         <button class="toggle-advanced" onClick={() => setShowAdvanced(!showAdvanced)}>
+         <button class="toggle-advanced" onClick={() => setShowAdvanced?.(!showAdvanced)}>
             {showAdvanced ? 'Hide Details' : 'Fine Tune (Fuel & Costs)'}
          </button>
 

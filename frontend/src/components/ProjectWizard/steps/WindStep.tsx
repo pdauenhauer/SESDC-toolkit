@@ -1,16 +1,10 @@
-import { useState } from 'preact/hooks';
 import { StepProps } from '../types';
 import CostInputs from './CostInputs';
 
-export default function WindStep({ data, updateSection, updateNested, nextStep, onSkip, onBack }: StepProps) {
-  const [showAdvanced, setShowAdvanced] = useState(false);
+export default function WindStep({ data, updateSection, updateNested, nextStep, onSkip, onBack, showAdvanced = false, setShowAdvanced }: StepProps) {
 
   return (
     <div class="step-container">
-      <div class="step-header">
-        <h2>Wind Turbine</h2>
-        <span class="live-cost">Est. Cost: ${data.wind.costs.capital.toLocaleString()}</span>
-      </div>
       <div class="wizard-content">
          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px'}}>
             <div>
@@ -32,12 +26,12 @@ export default function WindStep({ data, updateSection, updateNested, nextStep, 
             </div>
          </div>
 
-         <button id="input-wind-advanced" class="toggle-advanced" onClick={() => setShowAdvanced(!showAdvanced)}>
+         <button id="input-wind-advanced" class="toggle-advanced" onClick={() => setShowAdvanced?.(!showAdvanced)}>
             {showAdvanced ? 'Hide Details' : 'Fine Tune (Speeds & Costs)'}
          </button>
 
          {showAdvanced && (
-            <div>
+            <div id="input-wind-advanced-fields">
                <div class="advanced-section" style={{marginBottom:'10px'}}>
                   <h4>Wind Speeds (m/s)</h4>
                   <div class="grid-3">
@@ -46,7 +40,9 @@ export default function WindStep({ data, updateSection, updateNested, nextStep, 
                       <label>Cut-out: <input type="number" placeholder="25.0" value={data.wind.speeds.cutOut} onChange={(e)=>updateNested('wind','speeds','cutOut',e.currentTarget.value)}/></label>
                   </div>
                </div>
-               <CostInputs section="wind" data={data} updateSection={updateSection} updateNested={updateNested} />
+               <div class="advanced-section">
+                 <CostInputs section="wind" data={data} updateSection={updateSection} updateNested={updateNested} />
+               </div>
             </div>
          )}
       </div>

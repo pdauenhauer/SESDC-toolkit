@@ -1,6 +1,15 @@
 /* src/css/TutorialOverlay.css */
 
-/* Full viewport overlay*/
+:root {
+  --tutorial-accent: var(--green-main, #037f6f);
+  --tutorial-accent-soft: rgba(3, 127, 111, 0.22);
+  --tutorial-panel-bg: #ffffff;
+  --tutorial-panel-border: #e2e8f0;
+  --tutorial-text: #0f172a;
+  --tutorial-text-muted: #64748b;
+  --tutorial-dim-fill: rgba(15, 23, 42, 0.52);
+}
+
 .tutorial-layer.tutorial-layer-viewport {
   position: fixed;
   inset: 0;
@@ -9,163 +18,183 @@
   overflow: hidden;
 }
 
-.tutorial-layer > * {
+/* Spotlight: SVG hole is transparent to clicks; dimmed area uses the path only */
+.tutorial-spotlight-svg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.tutorial-spotlight-path {
   pointer-events: auto;
+  fill: var(--tutorial-dim-fill);
+  fill-rule: evenodd;
+  transition: d 0.2s ease;
 }
 
-/* Dimmed backdrop panels (create a "cutout" around the highlighted element) */
-.tutorial-dim {
-  position: fixed;
-  background: rgba(0, 0, 0, 0.55);
-  pointer-events: all;
-  transition: background 0.2s ease;
-}
-
-.tutorial-dim-top {
-  top: 0;
-  left: 0;
-  right: 0;
-}
-
-.tutorial-dim-bottom {
-  position: fixed;
-}
-
-.tutorial-dim-left,
-.tutorial-dim-right {
-  position: fixed;
-}
-
-/* Highlight ring around the focused input (viewport fixed) */
 .tutorial-highlight-ring {
   position: fixed;
-  border: 2px solid rgba(0, 136, 204, 0.9);
-  border-radius: 8px;
-  box-shadow: 0 0 0 4px rgba(0, 136, 204, 0.2);
+  border: 2px solid var(--tutorial-accent);
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 4px var(--tutorial-accent-soft),
+    0 8px 28px rgba(15, 23, 42, 0.12);
   pointer-events: none;
   transition: top 0.2s ease, left 0.2s ease, width 0.2s ease, height 0.2s ease;
+  z-index: 1;
 }
 
-/* Side panel — fixed to the right of the wizard card, not on the popup */
 .tutorial-panel {
   position: fixed;
-  background: #2d3748;
-  color: #e2e8f0;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
-  pointer-events: all;
+  background: var(--tutorial-panel-bg);
+  color: var(--tutorial-text);
+  padding: 20px 22px 22px;
+  border-radius: 16px;
+  border: 1px solid var(--tutorial-panel-border);
+  box-shadow:
+    0 18px 50px rgba(15, 23, 42, 0.14),
+    0 4px 16px rgba(15, 23, 42, 0.06);
+  pointer-events: auto;
   animation: tutorialPopIn 0.25s ease-out;
-  z-index: 10001;
+  z-index: 2;
   overflow-y: auto;
 }
 
-.tutorial-panel h4 {
-  margin: 0 0 8px 0;
-  font-size: 1.05rem;
-  color: #fff;
+.tutorial-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
 }
 
-.tutorial-panel p {
+.tutorial-panel-title {
+  margin: 0 0 8px 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--tutorial-text);
+  line-height: 1.3;
+}
+
+.tutorial-panel-text {
   margin: 0 0 14px 0;
   font-size: 0.9rem;
-  line-height: 1.45;
-  opacity: 0.95;
+  line-height: 1.5;
+  color: var(--tutorial-text-muted);
+}
+
+.tutorial-panel-close {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin: -6px -6px 0 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--tutorial-text-muted);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.tutorial-panel-close:hover {
+  background: #f1f5f9;
+  color: var(--tutorial-text);
+}
+
+.tutorial-panel-close:focus-visible {
+  outline: 2px solid var(--tutorial-accent);
+  outline-offset: 2px;
 }
 
 .tutorial-required-hint {
   margin: 0 0 10px 0 !important;
   font-size: 0.85rem !important;
-  color: rgba(255, 200, 100, 0.95);
+  color: #b45309 !important;
 }
 
 .tutorial-step-indicator {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 8px;
+  letter-spacing: 0.06em;
+  color: var(--tutorial-text-muted);
+  font-weight: 600;
+  line-height: 1.3;
 }
 
 .tutorial-bubble-actions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
 }
 
 .tutorial-btn {
-  padding: 8px 14px;
+  padding: 9px 16px;
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s, opacity 0.15s;
+  transition:
+    background 0.15s,
+    opacity 0.15s,
+    box-shadow 0.15s;
 }
 
 .tutorial-btn-next {
-  background: #0088cc;
-  color: white;
+  background: var(--tutorial-accent);
+  color: #f8fafc;
+  margin-left: auto;
 }
 
-.tutorial-btn-next:hover {
-  background: #006699;
+.tutorial-btn-next:hover:not(:disabled) {
+  filter: brightness(1.05);
+  box-shadow: 0 4px 14px rgba(3, 127, 111, 0.35);
 }
 
-.tutorial-btn-prev {
-  background: rgba(255, 255, 255, 0.15);
-  color: #e2e8f0;
-}
-
-.tutorial-btn-prev:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.tutorial-btn-prev:disabled {
+.tutorial-btn-next:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.tutorial-end-btn {
-  display: block;
-  width: 100%;
-  padding: 6px 0;
-  background: transparent;
-  border: none;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.8rem;
-  cursor: pointer;
-  text-decoration: underline;
-  transition: color 0.15s;
+.tutorial-btn-prev {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
 }
 
-.tutorial-end-btn:hover {
-  color: #fff;
+.tutorial-btn-prev:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.tutorial-btn-prev:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tutorial-btn:focus-visible {
+  outline: 2px solid var(--tutorial-accent);
+  outline-offset: 2px;
 }
 
 @keyframes tutorialPopIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* Exit tour — fixed to viewport corner */
-.tutorial-close-btn {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  pointer-events: all;
-  background: white;
-  color: #333;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-weight: bold;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  z-index: 10002;
-}
-
-.tutorial-close-btn:hover {
-  background: #f0f0f0;
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

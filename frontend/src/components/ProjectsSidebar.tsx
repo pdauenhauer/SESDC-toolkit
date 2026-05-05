@@ -1,6 +1,8 @@
 import { auth } from "../utils/firebase/firebase-init";
 import type { Project } from "../database/models/metadata";
 import { updateProject, deleteProject } from "../database/firestore";
+import { projectPatchFromWizardData } from "../database/projectPayload";
+import { deleteField } from "firebase/firestore";
 import { useState, useMemo, useEffect } from "preact/hooks";
 import NewProjectModal from "./NewProjectModal";
 import exitIcon from "../media/circle-x.svg";
@@ -64,13 +66,12 @@ ProjectsSidebarProps) {
         }
 
         try {
+            const patch = projectPatchFromWizardData(wizardData);
             await updateProject(auth.currentUser.uid, projectId, {
-                wizardConfig: wizardData
-            });
-            
-            // Refresh list
-            onProjectCreated?.(); 
-            
+              ...patch,
+              wizardConfig: deleteField()
+            } as Partial<Project>);
+            onProjectCreated?.();
         } catch (error) {
             console.error("Failed to save wizard data", error);
         }

@@ -2,19 +2,24 @@ import { StepProps } from '../types';
 
 interface PromptProps extends StepProps {
   onFinishManually: () => void;
-  onStartSmartSetup: () => void;
+  onStartTutorial: () => void;
 }
 
-export default function OnboardingPrompt({ onFinishManually, onStartSmartSetup }: PromptProps) {
+export default function OnboardingPrompt({ onFinishManually, onStartTutorial }: PromptProps) {
   return (
     <div class="step-container">
-      <h2>Success! Project Created.</h2>
-      <div class="wizard-content center-text">
-        <p>Do you want to run the <b>Smart Setup Wizard</b> to configure your components?</p>
+      <div class="wizard-content wizard-prompt-copy">
+        <p class="wizard-lead">
+          Do you want to run the <strong>Tutorial</strong> to configure your components?
+        </p>
       </div>
-      <div class="wizard-actions">
-        <button class="btn-secondary" onClick={onFinishManually}>I'll do it manually</button>
-        <button class="btn-primary" onClick={onStartSmartSetup}>Start Smart Setup</button>
+      <div class="wizard-actions wizard-actions-onboarding">
+        <button type="button" class="btn-secondary" onClick={onFinishManually}>
+          I'll do it manually
+        </button>
+        <button type="button" class="btn-primary" onClick={onStartTutorial}>
+          Start Tutorial
+        </button>
       </div>
     </div>
   );
