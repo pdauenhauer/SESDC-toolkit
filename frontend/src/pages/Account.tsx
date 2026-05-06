@@ -128,7 +128,7 @@ export default function Account() {
         if (result === "Account deleted successfully.") {
             setTimeout(async () => {
                 await logoutUser();
-                route("/login");
+                route("/");
             }, 2000);
         }
     }
@@ -139,7 +139,7 @@ export default function Account() {
 
     async function handleGoToLogin() {
         await logoutUser();
-        route("/login");
+        route("/");
     }
 
     function handleMetadataChange<K extends keyof UserMetadata>(

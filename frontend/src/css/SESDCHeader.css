@@ -125,6 +125,48 @@ nav.nav-scrolled {
   font-weight: 400;
 }
 
+.nav-signin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 18px;
+  border-radius: 9px;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1;
+  font-family: inherit;
+  color: var(--dark-grey);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.nav-signin-btn:hover {
+  background: transparent;
+  color: var(--green-main);
+  transition: .5s;
+}
+
+.nav-open-toolkit-btn {
+  background: var(--green-main);
+  color: var(--white-main);
+  padding: 12px 24px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.nav-open-toolkit-btn:hover {
+  background: var(--selection-green);
+  color: var(--white-main);
+  transition: none;
+}
+
 .nav-account-icon {
   width: 28px;
   height: 28px;

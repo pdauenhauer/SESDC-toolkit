@@ -7,9 +7,11 @@ import logo from '../media/Logo.svg';
 interface LoginFormProps {
   isVisible: boolean;
   showRegister: () => void;
+  afterLoginRedirect?: string | null;
+  onSuccess?: () => void;
 }
 
-export default function LoginForm({ isVisible, showRegister }: LoginFormProps) {
+export default function LoginForm({ isVisible, showRegister, afterLoginRedirect, onSuccess }: LoginFormProps) {
   const { route } = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,9 +23,16 @@ export default function LoginForm({ isVisible, showRegister }: LoginFormProps) {
     setMessage(result);
 
     if (result === 'Sign in successful!') {
-      const next = new URLSearchParams(window.location.search).get('next');
-      const redirectTarget = next && next.startsWith('/') ? next : '/';
-      route(redirectTarget);
+      if (afterLoginRedirect !== undefined) {
+        if (afterLoginRedirect) {
+          route(afterLoginRedirect);
+        }
+      } else {
+        const next = new URLSearchParams(window.location.search).get('next');
+        const redirectTarget = next && next.startsWith('/') ? next : '/';
+        route(redirectTarget);
+      }
+      onSuccess?.();
     }
   }
 

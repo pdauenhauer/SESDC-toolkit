@@ -4,7 +4,6 @@ import Home from './pages/Home'
 import Contact from './pages/Contact'
 import Account from './pages/Account'
 import Projects from './pages/Projects'
-import Login from './pages/Login'
 import Logout from './pages/Logout'
 import UserGuide from './pages/UserGuide'
 import SESDCHeader from './components/SESDCHeader'
@@ -39,7 +38,6 @@ function AppRoutes() {
           <Route path="/about" component={About}/>
           <Route path="/contact" component={Contact}/>
           <Route path="/account" component={Account}/>
-          <Route path="/login" component={Login}/>
           <Route path="/logout" component={Logout}/>
           <Route path="/guide" component={UserGuide}/>
         </Router>
