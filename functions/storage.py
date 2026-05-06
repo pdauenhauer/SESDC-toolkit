@@ -3,6 +3,7 @@
 import gzip
 import os
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 def get_storage_bucket_name():
@@ -55,10 +56,14 @@ def upload_csv_bundle(
     bucket_name = get_storage_bucket_name()
     client = storage.Client()
     bucket = client.bucket(bucket_name)
-    paths = {}
-    for key, csv_str in csv_dict.items():
-        if csv_str is None or len(str(csv_str)) == 0:
-            continue
+
+    items = [
+        (key, csv_str)
+        for key, csv_str in csv_dict.items()
+        if csv_str is not None and len(str(csv_str)) > 0
+    ]
+
+    def _upload_one(key: str, csv_str: str) -> tuple[str, str]:
         blob_path = f"simulations/{user_id}/{project_id}/{run_id}_{key}.csv.gz"
         blob = bucket.blob(blob_path)
         blob.content_encoding = "gzip"
@@ -66,7 +71,15 @@ def upload_csv_bundle(
             _compress(csv_str),
             content_type="text/csv; charset=utf-8",
         )
-        paths[key] = f"gs://{bucket_name}/{blob_path}"
+        return key, f"gs://{bucket_name}/{blob_path}"
+
+    paths = {}
+    with ThreadPoolExecutor(max_workers=min(len(items), 8)) as executor:
+        futures = {executor.submit(_upload_one, key, csv_str): key for key, csv_str in items}
+        for future in as_completed(futures):
+            key, gs_url = future.result()
+            paths[key] = gs_url
+
     print("[upload_csv_bundle] Uploaded", len(paths), "files")
     return paths
 
