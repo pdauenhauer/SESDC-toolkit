@@ -3,6 +3,7 @@
 import json
 import time
 import traceback
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from firebase_functions import https_fn
 from firebase_functions.params import SecretParam
@@ -185,12 +186,22 @@ def get_stored_simulation(req: https_fn.Request) -> https_fn.Response:
             )
 
         paths = last_run["paths"]
-        csv_bundle = {}
-        for key, gs_url in paths.items():
+
+        def _fetch_one(key: str, gs_url: str) -> tuple[str, str | None]:
             try:
-                csv_bundle[key] = download_csv(gs_url)
+                return key, download_csv(gs_url)
             except Exception as e:
                 print("[get_stored_simulation] Failed to download", key, str(e))
+                return key, None
+
+        csv_bundle = {}
+        with ThreadPoolExecutor(max_workers=min(len(paths), 8)) as executor:
+            futures = {executor.submit(_fetch_one, key, gs_url): key for key, gs_url in paths.items()}
+            for future in as_completed(futures):
+                key, csv_str = future.result()
+                if csv_str is not None:
+                    csv_bundle[key] = csv_str
+
         print("[get_stored_simulation] Returned", len(csv_bundle), "CSVs")
         return https_fn.Response(
             json.dumps({"csvBundle": csv_bundle}),
