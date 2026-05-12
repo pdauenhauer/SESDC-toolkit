@@ -43,8 +43,10 @@
 /* Shared image/text blocks */
 .about-img {
     flex: 1;
-    max-width: 400px;
-    height: 300px;
+    width: 100%;
+    max-width: clamp(220px, 42vw, 400px);
+    aspect-ratio: 4 / 3;
+    height: auto;
     object-fit: cover;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
@@ -98,23 +100,25 @@
 
 .about-contributors-years {
     margin: 0.9rem auto 0;
-    max-width: 420px;
+    max-width: 680px;
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     text-align: left;
-    gap: 2.5rem;
+    gap: 1.75rem;
 }
 
 .about-contributors-year-column {
     min-width: 0;
 }
 
+.about-contributors-year-column-2024,
 .about-contributors-year-column-2025,
 .about-contributors-year-column-2026 {
     text-align: center;
 }
 
+.about-contributors-year-column-2024 .about-contributors-list,
 .about-contributors-year-column-2025 .about-contributors-list,
 .about-contributors-year-column-2026 .about-contributors-list {
     display: flex;
@@ -165,8 +169,10 @@
     z-index: 1000;
     background: rgba(0, 0, 0, 0.88);
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 0.9rem;
     padding: 1rem;
 }
 
@@ -179,14 +185,12 @@
 }
 
 .about-lightbox-description {
-    position: absolute;
-    bottom: 1.25rem;
-    left: 50%;
-    transform: translateX(-50%);
+    position: static;
     margin: 0;
     color: #fff;
     text-align: center;
-    max-width: min(1400px, 96vw);
+    max-width: min(1200px, 92vw);
+    padding: 0 0.5rem;
 }
 
 .about-lightbox-prev,
@@ -248,5 +252,17 @@
 
     .about-contributors-years {
         gap: 1.2rem;
+    }
+
+    .about-lightbox {
+        padding: 3.5rem 1rem 1rem;
+    }
+
+    .about-lightbox-image {
+        max-height: calc(100vh - 11rem);
+    }
+
+    .about-lightbox-description {
+        max-width: min(92vw, 760px);
     }
 }

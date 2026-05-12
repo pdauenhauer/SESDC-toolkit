@@ -21,7 +21,7 @@ const slideshowImages: SlideshowImage[] = [
         src: team_picture,
         alt: 'SU capstone team photo',
         descriptionLabel: '2025 SU Capstone Team:',
-        description: 'Peter Dauenhauer (Sponsor), Joshua Baron, Daniel Nausner (Faculty advisor)'
+        description: 'Jules Hunter, Jessica Huang, Peter Dauenhauer (Sponsor), Joshua Baron, Daniel Nausner (Faculty advisor), J Guadalupe Andrade'
     }
 ]
 
@@ -165,12 +165,24 @@ function About() {
                     </section>
 
                     <section class="about-contributors">
-                        <h3 class="about-contributors-heading">Devlopers</h3>
+                        <h3 class="about-contributors-heading">Developers</h3>
                         <div class="about-contributors-years">
+                            <div class="about-contributors-year-column about-contributors-year-column-2024">
+                                <h4 class="about-contributors-year">2024</h4>
+                                <ul class="about-contributors-list">
+                                    {renderContributorLink('Aziz Aziz', 'https://www.linkedin.com/in/aziz-aziz/')}
+                                    {renderContributorLink('Mosaed Al Haidar', 'https://www.linkedin.com/in/mosaed-al-haidar-320a353a0/')}
+                                    {renderContributorLink('Sarina Sanjay', 'https://www.linkedin.com/in/sarinasanjay/')}
+                                    {renderContributorLink('Daniel Kasakula', 'https://www.linkedin.com/in/daniel-kasakula/')}
+                                </ul>
+                            </div>
                             <div class="about-contributors-year-column about-contributors-year-column-2025">
                                 <h4 class="about-contributors-year">2025</h4>
                                 <ul class="about-contributors-list">
+                                    {renderContributorLink('J Guadalupe Andrade','')}
                                     {renderContributorLink('Joshua Baron', 'https://www.linkedin.com/in/joshbaron2025/')}
+                                    {renderContributorLink('Jessica Huang', 'https://www.linkedin.com/in/jessicahuang2003/')}
+                                    {renderContributorLink('Jules Hunter', 'https://www.linkedin.com/in/hunterjules/')}
                                 </ul>
                             </div>
                             <div class="about-contributors-year-column about-contributors-year-column-2026">
