@@ -4,7 +4,7 @@ from utils import safe_float, safe_int
 
 
 def run_simulation(
-    nrel_df,
+    nlr_df,
     load_list,
     using_solar, solar_inputs,
     using_wind, wind_inputs,
@@ -15,7 +15,7 @@ def run_simulation(
     """Run the full energy-system simulation and return a dict of CSV strings.
 
     Keys in the returned dict (any may be None when not applicable):
-        input_data            - raw NREL + load data
+        input_data            - raw NLR + load data
         hourly_simulation     - per-timestep simulation results
         daily_averages        - daily-averaged values
         twenty_year_daily     - 20-year daily load-serviced projection
@@ -49,7 +49,7 @@ def run_simulation(
         df.to_csv(buf, index=False)
         return buf.getvalue()
 
-    n_rows = len(nrel_df)
+    n_rows = len(nlr_df)
     time_points = np.arange(n_rows)
 
     if load_list and len(load_list) > 0:
@@ -62,7 +62,7 @@ def run_simulation(
     solar_power = np.zeros(n_rows)
     if using_solar and solar_inputs:
         raw = calculate_hourly_solar_energy(
-            nrel_df,
+            nlr_df,
             solar_inputs["solar_array_size"],
             solar_inputs["losses"],
             coef, STCIrr, STCTemp,
@@ -73,7 +73,7 @@ def run_simulation(
     wind_power = np.zeros(n_rows)
     if using_wind and wind_inputs:
         raw = calculate_hourly_wind_energy(
-            nrel_df,
+            nlr_df,
             wind_inputs["nameplate_capacity"],
             wind_inputs["rated_power"],
             wind_inputs["cut_in_speed"],
@@ -117,12 +117,12 @@ def run_simulation(
 
     csvs: dict[str, str | None] = {}
 
-    input_df = nrel_df.copy()
+    input_df = nlr_df.copy()
     input_df["load_values"] = load_values
     csvs["input_data"] = _df_to_csv(input_df)
 
     hourly_df = pd.DataFrame({
-        "Datetime": nrel_df["Datetime"].values,
+        "Datetime": nlr_df["Datetime"].values,
         "load_kW": load_values,
         "solar_kW": solar_power,
         "wind_kW": wind_power,

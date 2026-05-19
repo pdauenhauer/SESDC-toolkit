@@ -4,6 +4,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import ProjectsSidebar from "../components/ProjectsSidebar";
 import Workbench from "../components/Workbench";
 import SimulationResults from "../components/SimulationResults";
+import SimulationGraphsPanel from "../components/graphs/SimulationGraphsPanel";
 import type { Load } from "../database/models/load";
 import type { Project } from "../database/models/metadata";
 import { createNewLoad } from "../utils/loadUtils";
@@ -32,8 +33,8 @@ import windIcon from "../media/wind.svg";
 import generatorIcon from "../media/zap.svg";
 import solarPanelIcon from "../media/solar-panel.svg";
 import batteryIcon from "../media/battery-medium.svg";
-import helpIcon from "../media/circle-question-mark.svg";
 import accountIcon from "../media/user.svg";
+import helpIcon from "../media/circle-question-mark.svg";
 import "../css/ProjectsPage/projects.css";
 import "../css/ProjectsPage/projectCraftArea.css";
 import Tooltip from "../components/Tooltip";
@@ -87,6 +88,7 @@ const TABS: { id: CraftTabId; label: string }[] = [
 ];
 
 export default function Projects() {
+  const { route } = useLocation();
   const [activeProjectId, setActiveProjectId] = useState<string>("");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,6 +106,11 @@ export default function Projects() {
   const handleAddComponent = () => {
     setWorkbenchLoads((prev) => [...prev, createNewLoad(`Load ${prev.length + 1}`)]);
   };
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setRevealReady(true), 10);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const handleRunSimulation = async () => {
     const user = auth.currentUser;
@@ -180,9 +187,9 @@ export default function Projects() {
     }
   }, [loading, projects, activeProjectId]);
 
-  // 3) When on Data tab and active project changes, fetch stored data for that project only
+  // 3) When on a results tab and active project changes, fetch stored data for that project
   useEffect(() => {
-    if (activeCraftTab !== "data") return;
+    if (activeCraftTab !== "data" && activeCraftTab !== "graphs") return;
     const user = auth.currentUser;
     if (!user?.uid || !activeProjectId) {
       setSimulationResult(null);
@@ -264,11 +271,11 @@ export default function Projects() {
 
   return (
     <div class="projects-page">
-      
-      
       <div class="projects-layout">
         {sidebarOpen && (
-          <aside class="projects-sidebar">
+          <aside
+            class={`projects-sidebar projects-reveal projects-reveal--sidebar ${revealReady ? "is-visible" : ""}`}
+          >
             <ProjectsSidebar
               projects={projects}
               loading={loading}
@@ -282,7 +289,9 @@ export default function Projects() {
         )}
 
         <section class="projects-main">
-          <div class="projects-project-header">
+          <div
+            class={`projects-project-header projects-reveal projects-reveal--header ${revealReady ? "is-visible" : ""}`}
+          >
             <div class="projects-project-header-side projects-project-header-side--left">
               <>
                 <Tooltip text="Show Projects" position="right">
@@ -299,7 +308,7 @@ export default function Projects() {
                   <button
                     type="button"
                     class="projects-toolbar-icon-btn projects-top-icon-btn"
-                    onClick={() => (window.location.href = "/")}
+                    onClick={() => route("/")}
                     aria-label="Home"
                   >
                     <img src={homeIcon} alt="" class="projects-toolbar-icon" />
@@ -316,24 +325,24 @@ export default function Projects() {
               </div>
             </div>
             <div class="projects-project-header-side projects-project-header-side--right">
-              <Tooltip text="User Guide" position="bottom">
-                <button
-                  type="button"
-                  class="projects-toolbar-icon-btn projects-top-icon-btn projects-top-icon-btn--front"
-                  onClick={() => (window.location.href = "/guide")}
-                  aria-label="User Guide"
-                >
-                  <img src={helpIcon} alt="" class="projects-toolbar-icon" />
-                </button>
-              </Tooltip>
               <Tooltip text="Account" position="bottom">
                 <button
                   type="button" //NEED TO FIX ACCOUNT PAGE ROUTE
                   class="projects-toolbar-icon-btn projects-top-icon-btn"
-                  onClick={() => (window.location.href = "/account")}
+                  onClick={() => route("/account")}
                   aria-label="Account"
                 >
                   <img src={accountIcon} alt="" class="projects-toolbar-icon" />
+                </button>
+              </Tooltip>
+              <Tooltip text="Help" position="bottom">
+                <button
+                  type="button"
+                  class="projects-toolbar-icon-btn projects-top-icon-btn projects-top-icon-btn--front"
+                  onClick={() => route("/contact")}
+                  aria-label="Help"
+                >
+                  <img src={helpIcon} alt="" class="projects-toolbar-icon" />
                 </button>
               </Tooltip>
               <button
@@ -347,7 +356,9 @@ export default function Projects() {
             </div>
           </div>
 
-          <div class="projects-toolbar">
+          <div
+            class={`projects-toolbar projects-reveal projects-reveal--toolbar ${revealReady ? "is-visible" : ""}`}
+          >
             <div class="projects-toolbar-row">
               <div class="project-craft-tabs project-craft-tabs--toolbar">
                 {TABS.map((tab) => (
@@ -489,7 +500,9 @@ export default function Projects() {
             </div>
           </div>
 
-          <main class="projects-workspace">
+          <main
+            class={`projects-workspace projects-reveal projects-reveal--workspace ${revealReady ? "is-visible" : ""}`}
+          >
             <div class="project-craft-content">
               {activeCraftTab === "data" && (
                 <div class="project-craft-panel">
@@ -520,9 +533,21 @@ export default function Projects() {
               )}
               {activeCraftTab === "graphs" && (
                 <div class="project-craft-panel">
-                  <p class="project-craft-placeholder">
-                    Graphs — simulation charts and visualizations.
-                  </p>
+                  {simulationLoading ? (
+                    <p class="project-craft-placeholder project-craft-placeholder--loading">
+                      Running simulation…
+                    </p>
+                  ) : dataTabLoading ? (
+                    <p class="project-craft-placeholder project-craft-placeholder--loading">
+                      Loading stored graph data…
+                    </p>
+                  ) : simulationResult && Object.keys(simulationResult).length > 0 ? (
+                    <SimulationGraphsPanel result={simulationResult} />
+                  ) : (
+                    <p class="project-craft-placeholder">
+                      Graphs — run a simulation from the toolbar to see charted results here.
+                    </p>
+                  )}
                 </div>
               )}
             </div>

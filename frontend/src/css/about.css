@@ -1,5 +1,10 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+.about-page {
+    background: var(--white-main);
+    min-height: calc(100vh - 60px);
+}
   
 .about-section {
     display: flex;
@@ -8,6 +13,10 @@
     margin: 4rem auto;
     max-width: 1000px;
     padding: 0 1rem;
+}
+
+.about-container .about-section:last-child {
+    margin-bottom: 0;
 }
 
 .about-section:nth-child(even) {
@@ -32,6 +41,7 @@
 
 .about-container {
     padding-top: 40px;
+    padding-bottom: 2rem;
 }
 
 .about-heading {
@@ -47,5 +57,3 @@
 .about-container {
 flex: 1;
 }
-
-

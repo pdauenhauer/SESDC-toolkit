@@ -1,7 +1,7 @@
 /* navbar/Header */
 
 nav {
-  background: var(--gradient-bg);
+  background: var(--white-main);
   height: 80px;
   width: 100%;
   position: fixed;
@@ -13,37 +13,189 @@ nav {
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
+  box-shadow: none;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.12);
+  transition: box-shadow 0.2s ease;
+}
+
+nav.nav-scrolled {
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.1);
 }
 
 .nav-left {
   display: flex;
   align-items: center;
+  gap: 18px;
+  margin-left: 60px;
+}
+
+.nav-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  text-decoration: none;
+  color: var(--dark-grey);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-brand:hover {
+  color: var(--dark-grey);
+}
+
+.nav-brand:visited,
+.nav-brand:focus,
+.nav-brand:active {
+  color: var(--dark-grey);
+  text-decoration: none;
 }
 
 .nav-logo {
   height: 50px;
   width: auto;
-  margin-right: 10px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  margin-right: 0;
+  filter: none;
+  transform: translateY(-7px);
 }
 
-label.logo-nav {
-  color: var(--white-main);
+.logo-nav {
+  color: var(--dark-grey);
   font-size: 35px;
   line-height: 80px;
-  padding: 0 100px;
-  font-weight: bold;
+  padding: 0;
+  font-family: "Apple SD Gothic Neo", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 800;
+}
+
+.logo-nav,
+.nav-links a,
+.check-btn {
+  color: var(--dark-grey);
 }
 
 .nav-links {
   list-style: none;
   display: flex;
-  gap: 20px;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links-left {
+  margin-left: 6px;
+  gap: 4px;
+}
+
+.nav-links-right {
+  margin-right: 60px;
+  gap: 6px;
+}
+
+.nav-links li {
+  display: flex;
+  align-items: center;
 }
 
 .nav-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1;
   text-decoration: none;
+  color: var(--dark-grey);
+  padding: 10px 18px;
+  border-radius: 9px;
+}
+
+.nav-links a[aria-label="About"],
+.nav-links a[aria-label="Contact"],
+.nav-links a[aria-label="Help"] {
+  font-size: 19px;
+  padding: 10px 14px;
+}
+
+.nav-links a[aria-label="Account"] {
+  padding: 8px;
+}
+
+.nav-home-link {
+  gap: 6px;
+  font-weight: 400;
+}
+
+.nav-account-icon {
+  width: 28px;
+  height: 28px;
+  display: block;
+  flex-shrink: 0;
+}
+
+.nav-account-icon--hover {
+  display: none;
+}
+
+.nav-links a[aria-label="Account"]:hover .nav-account-icon--default {
+  display: none;
+}
+
+.nav-links a[aria-label="Account"]:hover .nav-account-icon--hover {
+  display: block;
+}
+
+.nav-contact-link-tight {
+  margin-left: -6px;
+  margin-right: -6px;
+}
+
+.nav-icon-only-link {
+  padding: 9px;
+}
+
+.nav-home-icon {
+  width: 22px;
+  height: 22px;
+  display: block;
+  flex-shrink: 0;
+}
+
+.nav-links a:hover {
+  background: transparent;
+  color: var(--green-main);
+  transition: .5s;
+}
+
+.nav-links a.active {
+  background: transparent;
+  color: var(--dark-grey);
+}
+
+.nav-links a[aria-label="Projects"],
+.nav-links a[aria-label="Open toolkit"] {
+  background: var(--green-main);
   color: var(--white-main);
+}
+
+.nav-links a[aria-label="Open toolkit"] {
+  padding: 12px 24px;
+  font-size: 18px;
+  font-weight: 700;
+  transition: none;
+}
+
+.nav-links a[aria-label="Projects"]:hover,
+.nav-links a[aria-label="Projects"].active,
+.nav-links a[aria-label="Open toolkit"]:hover,
+.nav-links a[aria-label="Open toolkit"].active {
+  background: var(--green-main);
+  color: var(--white-main);
+}
+
+.nav-links a[aria-label="Open toolkit"]:hover {
+  background: var(--selection-green);
+  color: var(--white-main);
+  transition: none;
 }
 
 nav ul {
@@ -58,7 +210,7 @@ nav ul li {
 }
 
 nav ul li a {
-  color: var(--white-main);
+  color: var(--dark-grey);
   font-size: 17px;
   text-decoration: none;
   padding: 10px 18px;
@@ -67,21 +219,21 @@ nav ul li a {
 
 /*hover not working*/
 nav ul li a:hover {
-  background: var(--selection-green);
-  color: var(--white-main);
+  background: transparent;
+  color: var(--green-main);
   transition: .5s;
 }
 
 a.active {
-  background: var(--selection-green);
-  color: var(--white-main); 
+  background: transparent;
+  color: var(--dark-grey); 
   padding: 10px 18px;      
   border-radius: 9px;
 }
 
 .check-btn {
   font-size: 30px;
-  color: var(--white-main);
+  color: var(--dark-grey);
   float: right;
   line-height: 80px;
   margin-right: 40px;
@@ -95,9 +247,9 @@ a.active {
 
 /* Media queries for responsive navigation */
 @media (max-width: 952px) {
-  label.logo-nav {
+  .logo-nav {
     font-size: 30px;
-    padding-left: 50px;
+    padding-left: 0;
   }
 
   nav ul li a {
@@ -114,7 +266,7 @@ a.active {
     position: fixed;
     width: 100%;
     height: 100vh;
-    background: var(--gradient-bg);
+    background: var(--white-main);
     top: 80px;
     left: -100%;
     text-align: center;
@@ -133,7 +285,7 @@ a.active {
 
   a.active {
     background: none;
-    color: var(--white-main);
+    color: var(--dark-grey);
   }
 
   #check:checked ~ ul {

@@ -1,12 +1,19 @@
-import SESDCHeader from '../components/SESDCHeader';
-import SESDCFooter from '../components/SESDCFooter';
-
 import { useEffect, useState } from 'preact/hooks';
+import { useLocation } from 'preact-iso';
 import { onAuthStateChanged } from "firebase/auth";
 import "../css/account.css";
 import { auth } from "../utils/firebase/firebase-init";
+import keyRoundIcon from "../media/key-round.svg";
+import trashDefaultIcon from "../media/trash-2-3.svg";
+import trashHoverIcon from "../media/trash-2-4.svg";
+import bellIcon from "../media/bell.svg";
+import mailIcon from "../media/mail.svg";
+import user2Icon from "../media/user-2.svg";
+import briefcaseIcon from "../media/briefcase-business.svg";
+import chevronDownIcon from "../media/chevron-down.svg";
+import chevronUpIcon from "../media/chevron-up.svg";
+import signOutIcon from "../media/log-out.svg";
 
-import placeholder_user from '../media/placeholder_user.png';
 import { deleteAccount } from "../utils/firebase/auth";
 import {
     updateUserPassword,
@@ -22,6 +29,7 @@ import {
 
 
 export default function Account() {
+    const { route } = useLocation();
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [metadata, setMetadata] = useState<UserMetadata | null>(null);
     const [stats, setStats] = useState<UserStats | null>(null);
@@ -35,19 +43,22 @@ export default function Account() {
     useEffect(() => {
         const loadAccount = async (uid: string) => {
             try {
-                const [profileData, statsData] = await Promise.all([
-                    getUserProfile(uid),
-                    getUserStats(uid),
-                ]);
-
+                const profileData = await getUserProfile(uid);
                 if (profileData) {
                     setProfile(profileData);
                     setMetadata(profileData.metadata);
                 }
-                setStats(statsData);
             } catch (err) {
                 console.error(err);
                 setMessage("Failed to load account information.");
+            }
+
+            try {
+                const statsData = await getUserStats(uid);
+                setStats(statsData);
+            } catch (err) {
+                console.warn("Failed to load account project stats:", err);
+                setStats({ projectCount: 0 });
             } finally {
                 setLoading(false);
             }
@@ -71,6 +82,12 @@ export default function Account() {
 
         return () => unsubscribe();
     }, []);
+
+    useEffect(() => {
+        if (!message) return;
+        const timer = setTimeout(() => setMessage(''), 3000);
+        return () => clearTimeout(timer);
+    }, [message]);
 
     function toggleUpdatePassword() {
         setShowUpdatePassword(prev => !prev);
@@ -111,7 +128,7 @@ export default function Account() {
         if (result === "Account deleted successfully.") {
             setTimeout(async () => {
                 await logoutUser();
-                window.location.href = "/login";
+                route("/login");
             }, 2000);
         }
     }
@@ -122,7 +139,7 @@ export default function Account() {
 
     async function handleGoToLogin() {
         await logoutUser();
-        window.location.href = "/login";
+        route("/login");
     }
 
     function handleMetadataChange<K extends keyof UserMetadata>(
@@ -140,7 +157,7 @@ export default function Account() {
     try {
         setSavingMetadata(true);
         await updateUserMetadata(uid, metadata);
-        setMessage("Account preferences updated.");
+        setMessage("Account preferences updated");
     } catch (err) {
         console.error(err);
         setMessage("Failed to update preferences.");
@@ -151,41 +168,13 @@ export default function Account() {
 
 
 return (
-    <>
-      <SESDCHeader />
-  
+    <div class="account-page-shell">
       <main class="account-page">
-        {/* HERO */}
-        <section class="account-hero">
-          <div class="account-hero-content">
+        <section class="account-panel">
+          <header class="account-panel-header">
             <h1>Account Management</h1>
-            <p>Manage your account and preferences.</p>
-          </div>
-        </section>
-  
-        {/* CONTENT */}
-        <section class="account-layout">
-          {/* PROFILE CARD */}
-          <aside class="account-profile-card">
-            <div class="account-profile-row">
-              <div class="account-avatar">
-                <img src={placeholder_user} class="account-avatar" alt="User Avatar" />
-              </div>
-              <div>
-                <div class="account-name">{profile?.displayName ?? "User"}</div>
-                <div class="account-email">{profile?.email}</div>
-              </div>
-            </div>
-          </aside>
-  
-          {/* MAIN PANEL */}
-          <div class="account-panel">
-            <h2>Account Management</h2>
-  
-            {message && (
-              <div class="account-messageDiv">{message}</div>
-            )}
-  
+            <p>Manage your account and preferences</p>
+          </header>
             {loading ? (
               <p>Loading account information...</p>
             ) : (
@@ -193,8 +182,47 @@ return (
                 {profile && (
                   <section class="account-section">
                     <h3>Profile Details</h3>
-                    <p><strong>Name:</strong> {profile.displayName ?? "N/A"}</p>
-                    <p><strong>Email:</strong> {profile.email ?? "N/A"}</p>
+                    <p class="account-field-row">
+                      <strong class="account-label-with-icon">
+                        <img src={user2Icon} alt="" class="account-inline-icon" />
+                        Username:
+                      </strong>{" "}
+                      <span class="account-name-value">{profile.displayName ?? "N/A"}</span>
+                    </p>
+                    <p class="account-field-row">
+                      <strong class="account-label-with-icon">
+                        <img src={mailIcon} alt="" class="account-inline-icon" />
+                        Email:
+                      </strong>{" "}
+                      <span class="account-email-value">{profile.email ?? "N/A"}</span>
+                    </p>
+                    <button
+                      type="button"
+                      class="account-profile-action account-label-with-icon"
+                      onClick={toggleUpdatePassword}
+                      aria-expanded={showUpdatePassword}
+                    >
+                      <img src={keyRoundIcon} alt="" class="account-inline-icon" />
+                      Password
+                      <img
+                        src={showUpdatePassword ? chevronUpIcon : chevronDownIcon}
+                        alt=""
+                        class="account-profile-chevron"
+                      />
+                    </button>
+                    {showUpdatePassword && (
+                      <div class="account-inline-form account-inline-form--profile">
+                        <input id="newPassword" type="password" placeholder="New password" />
+                        <div class="account-inline-actions">
+                          <button class="account-signout-btn account-inline-action-btn" onClick={handleConfirmPasswordUpdate}>
+                            Confirm
+                          </button>
+                          <button class="account-signout-btn account-inline-action-btn" onClick={handleCancelPasswordUpdate}>
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </section>
                 )}
   
@@ -203,7 +231,10 @@ return (
                     <h3>Account Preferences</h3>
   
                     <label class="account-toggle-row">
-                      <span>Email updates</span>
+                      <span class="account-toggle-label">
+                        <img src={bellIcon} alt="" class="account-inline-icon" />
+                        Email updates
+                      </span>
                       <input
                         type="checkbox"
                         checked={metadata.emailUpdates}
@@ -217,7 +248,7 @@ return (
                     </label>
   
                     <button
-                      class="account-primary-btn"
+                      class="account-signout-btn account-preferences-save-btn"
                       onClick={handleSaveMetadata}
                       disabled={savingMetadata}
                     >
@@ -229,7 +260,13 @@ return (
                 {stats && (
                   <section class="account-section">
                     <h3>Insights & Analytics</h3>
-                    <p><strong>Projects owned:</strong> {stats.projectCount}</p>
+                    <p class="account-field-row">
+                      <strong class="account-label-with-icon">
+                        <img src={briefcaseIcon} alt="" class="account-inline-icon" />
+                        Projects owned:
+                      </strong>
+                      <span class="account-projects-owned-value">{Math.max(0, stats.projectCount - 1)}</span>
+                    </p>
                   </section>
                 )}
               </>
@@ -237,34 +274,15 @@ return (
   
             {/* ACTIONS */}
             <div class="account-actions">
-                {!showUpdatePassword && (
-                    <button
-                        class="account-secondary-btn"
-                        onClick={toggleUpdatePassword}
-                    >
-                        Update Password
-                    </button>
-                )}
-              {showUpdatePassword && (
-                <div class="account-inline-form">
-                  <input id="newPassword" type="password" placeholder="New password" />
-                  <div class="account-inline-actions">
-                    <button class="account-secondary-btn" onClick={handleConfirmPasswordUpdate}>
-                      Confirm
-                    </button>
-                    <button class="account-secondary-btn" onClick={handleCancelPasswordUpdate}>
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
-  
-              <button class="account-danger-btn" onClick={toggleDelete}>
-                {showDeleteConfirm ? "Hide Delete Form" : "Delete Account"}
+              <button class="account-danger-btn account-btn-with-icon account-delete-toggle-btn" onClick={toggleDelete}>
+                <img src={trashDefaultIcon} alt="" class="account-btn-icon account-delete-icon-default" />
+                <img src={trashHoverIcon} alt="" class="account-btn-icon account-delete-icon-hover" />
+                <span>{showDeleteConfirm ? "Hide Delete Form" : "Delete Account"}</span>
               </button>
   
-              <button class="account-primary-btn" onClick={handleGoToLogin}>
-                Sign Out
+              <button class="account-signout-btn account-btn-with-icon" onClick={handleGoToLogin}>
+                <img src={signOutIcon} alt="" class="account-btn-icon" />
+                <span>Sign Out</span>
               </button>
             </div>
   
@@ -273,20 +291,21 @@ return (
                 <p>This action cannot be undone.</p>
                 <input id="deletePassword" type="password" placeholder="Confirm password" />
                 <div class="account-inline-actions">
-                  <button class="account-danger-btn" onClick={handleConfirmDelete}>
+                  <button class="account-signout-btn account-inline-action-btn" onClick={handleConfirmDelete}>
                     Confirm Delete
                   </button>
-                  <button class="account-secondary-btn" onClick={handleCancelDelete}>
+                  <button class="account-signout-btn account-inline-action-btn" onClick={handleCancelDelete}>
                     Cancel
                   </button>
                 </div>
               </div>
             )}
-          </div>
+
+            {message && (
+              <div class="account-messageDiv">{message}</div>
+            )}
         </section>
       </main>
-  
-      <SESDCFooter />
-    </>
-  );  
+    </div>
+  );
 }

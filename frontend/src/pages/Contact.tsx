@@ -1,12 +1,8 @@
-import SESDCHeader from '../components/SESDCHeader';
-import SESDCFooter from '../components/SESDCFooter';
 import '../css/contact.css'; 
 
 function Contact() {
   return (
-    <>
-      <SESDCHeader />
-
+    <div class="contact-page">
       <div class="contact-container">
         <h1 class="contact-title">Contact Us</h1>
         <p class="contact-info">
@@ -29,10 +25,14 @@ function Contact() {
               value="b577f2c5-cd3f-4e78-8641-fc14d0f4f76e"
             />
 
-            <label htmlFor="name">Name:</label>
+            <label htmlFor="name">
+              Name <span class="contact-required" aria-hidden="true">*</span>
+            </label>
             <input class="input" id="name" type="text" name="name" required />
 
-            <label htmlFor="email">Email:</label>
+            <label htmlFor="email">
+              Email <span class="contact-required" aria-hidden="true">*</span>
+            </label>
             <input
               class="input"
               id="email"
@@ -41,7 +41,9 @@ function Contact() {
               required
             />
 
-            <label htmlFor="message">Message:</label>
+            <label htmlFor="message">
+              Message <span class="contact-required" aria-hidden="true">*</span>
+            </label>
             <textarea
               class="textarea"
               id="message"
@@ -56,9 +58,7 @@ function Contact() {
           </form>
         </div>
       </main>
-
-     <SESDCFooter />
-    </>
+    </div>
   );
 }
 
