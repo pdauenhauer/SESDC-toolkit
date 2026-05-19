@@ -35,6 +35,7 @@ const EST_PANEL_H = 260;
 const PLACE_GAP = 8;
 const VIEW_EDGE = 10;
 const PANEL_CLEAR_MARGIN = 6;
+const SPOTLIGHT_PADDING = 8;
 
 function getValue(data: Record<string, unknown> | undefined, path: string): unknown {
   if (!data) return undefined;
@@ -50,6 +51,8 @@ function isRequiredValid(data: Record<string, unknown> | undefined, path: string
   const v = getValue(data, path);
   if (path === 'solar.sizeKw' || path === 'battery.storageKwh') return typeof v === 'number' && v > 0;
   if (path === 'battery.type') return v === 'Lithium-Ion' || v === 'Lead-Acid';
+  if (path === 'loadProfiler.usagePattern') return !!v;
+  if (path === 'loadProfiler.buildingSize') return !!v;
   if (path === 'loadProfiler.selectionReady') {
     const state = (getValue(data, 'loadProfiler') as Record<string, unknown> | undefined) ?? {};
     return !!state.usagePattern && !!state.buildingSize;
@@ -87,6 +90,36 @@ function buildSpotlightPath(viewportW: number, viewportH: number, hole: Viewport
   return `M0 0 H${viewportW} V${viewportH} H0 Z M${x} ${y} h${w} v${h} h${-w} Z`;
 }
 
+function clampRectToViewport(rect: ViewportRect, viewportW: number, viewportH: number): ViewportRect {
+  const left = Math.max(0, Math.min(rect.left, viewportW));
+  const top = Math.max(0, Math.min(rect.top, viewportH));
+  const right = Math.max(left, Math.min(rect.left + rect.width, viewportW));
+  const bottom = Math.max(top, Math.min(rect.top + rect.height, viewportH));
+  return {
+    left,
+    top,
+    width: Math.max(0, right - left),
+    height: Math.max(0, bottom - top)
+  };
+}
+
+function computeBlockerRects(viewportW: number, viewportH: number, hole: ViewportRect | null): ViewportRect[] {
+  if (!hole || hole.width < 1 || hole.height < 1) {
+    return [{ top: 0, left: 0, width: viewportW, height: viewportH }];
+  }
+
+  const h = clampRectToViewport(hole, viewportW, viewportH);
+  const right = h.left + h.width;
+  const bottom = h.top + h.height;
+
+  return [
+    { top: 0, left: 0, width: viewportW, height: h.top },
+    { top: bottom, left: 0, width: viewportW, height: Math.max(0, viewportH - bottom) },
+    { top: h.top, left: 0, width: h.left, height: h.height },
+    { top: h.top, left: right, width: Math.max(0, viewportW - right), height: h.height }
+  ];
+}
+
 type SidePlacement = 'right' | 'left' | 'below' | 'above';
 
 function placementOrder(preferred?: TutorialStep['position']): SidePlacement[] {
@@ -108,8 +141,10 @@ function computePanelStyle(
   hole: ViewportRect | null,
   viewportW: number,
   viewportH: number,
-  preferred?: TutorialStep['position']
+  preferred?: TutorialStep['position'],
+  actualPanelH?: number
 ): Record<string, string> {
+  const panelH = Math.max(EST_PANEL_H, actualPanelH??0);
   const maxH = `${viewportH - 96}px`;
   const base: Record<string, string> = {
     width: `${PANEL_W}px`,
@@ -258,7 +293,9 @@ export default function TutorialOverlay({
   const [panelStyle, setPanelStyle] = useState<Record<string, string>>({});
   const [spotlightPath, setSpotlightPath] = useState('');
   const [spotlightVb, setSpotlightVb] = useState({ w: 0, h: 0 });
+  const [blockerRects, setBlockerRects] = useState<ViewportRect[]>([]);
   const layerRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     if (!isVisible || !layerRef.current) {
@@ -266,11 +303,11 @@ export default function TutorialOverlay({
       setPanelStyle({ display: 'none' });
       setSpotlightPath('');
       setSpotlightVb({ w: 0, h: 0 });
+      setBlockerRects([]);
       return;
     }
 
     let cancelled = false;
-    const padding = 8;
 
     const layout = () => {
       if (cancelled) return;
@@ -291,10 +328,10 @@ export default function TutorialOverlay({
       if (targetEl) {
         const tr = targetEl.getBoundingClientRect();
         highlightRect = {
-          top: tr.top - padding,
-          left: tr.left - padding,
-          width: tr.width + padding * 2,
-          height: tr.height + padding * 2
+          top: tr.top - SPOTLIGHT_PADDING,
+          left: tr.left - SPOTLIGHT_PADDING,
+          width: tr.width + SPOTLIGHT_PADDING * 2,
+          height: tr.height + SPOTLIGHT_PADDING * 2
         };
       }
       setHighlight(highlightRect);
@@ -306,22 +343,20 @@ export default function TutorialOverlay({
       if (mode === 'tour') {
         setSpotlightPath(buildSpotlightPath(viewportW, viewportH, hole));
         setSpotlightVb({ w: viewportW, h: viewportH });
+        setBlockerRects(computeBlockerRects(viewportW, viewportH, hole));
       } else {
         setSpotlightPath('');
         setSpotlightVb({ w: 0, h: 0 });
+        setBlockerRects([]);
       }
 
-      const panelPos = computePanelStyle(hole, viewportW, viewportH, step?.position);
+      const actualPanelH = panelRef.current ? panelRef.current.offsetHeight : undefined;
+      const panelPos = computePanelStyle(hole, viewportW, viewportH, step?.position, actualPanelH);
       setPanelStyle(panelPos);
     };
 
     const stepTargetId = steps[safeIndex]?.targetId;
-    const mutationObserver = new MutationObserver(() => layout());
-    mutationObserver.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true
-    });
+
     const resizeObserver = new ResizeObserver(() => layout());
     if (wizardCardRef?.current) resizeObserver.observe(wizardCardRef.current);
     if (stepTargetId) {
@@ -329,15 +364,22 @@ export default function TutorialOverlay({
       if (target) resizeObserver.observe(target);
     }
     layout();
+    
+    const scrollContainer = wizardCardRef?.current ?? null;
+    const onScroll = () => layout();
+    if (scrollContainer) scrollContainer.addEventListener('scroll', onScroll, { passive: true });
 
+    layout();
+    
     const onResize = () => layout();
     window.addEventListener('resize', onResize);
+    window.addEventListener('scroll', onScroll, true);
 
     return () => {
       cancelled = true;
-      mutationObserver.disconnect();
       resizeObserver.disconnect();
       window.removeEventListener('resize', onResize);
+      window.removeEventListener('scroll', onScroll, true);
     };
   }, [isVisible, safeIndex, currentStep?.targetId, currentStep?.title, currentStep?.position, wizardCardRef, mode, steps, tutorialRunId]);
 
@@ -377,6 +419,20 @@ export default function TutorialOverlay({
         </svg>
       )}
 
+      {mode === 'tour' &&
+        blockerRects.map((r, idx) => (
+          <div
+            key={`blocker-${idx}`}
+            class="tutorial-click-blocker"
+            style={{
+              top: `${r.top}px`,
+              left: `${r.left}px`,
+              width: `${r.width}px`,
+              height: `${r.height}px`
+            }}
+          />
+        ))}
+
       {mode === 'tour' && highlight && (
         <div
           class="tutorial-highlight-ring"
@@ -390,7 +446,7 @@ export default function TutorialOverlay({
       )}
 
       {currentStep && (
-        <div class="tutorial-panel" style={panelStyle}>
+        <div class="tutorial-panel" style={panelStyle} ref={panelRef}>
           <div class="tutorial-panel-header">
             <div class="tutorial-step-indicator">
               {mode === 'tour' &&
@@ -415,7 +471,7 @@ export default function TutorialOverlay({
           <h4 class="tutorial-panel-title">{currentStep.title}</h4>
           <p class="tutorial-panel-text">{currentStep.text}</p>
           {currentStep.requiredField && !canAdvance && (
-            <p class="tutorial-required-hint">Please enter a valid value to continue.</p>
+            <p class="tutorial-required-hint">{currentStep.requiredHint ?? 'Please enter a valid value to continue.'}</p>
           )}
           <div class="tutorial-bubble-actions">
             {hasMultiple && (

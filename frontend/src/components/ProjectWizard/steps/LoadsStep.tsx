@@ -11,6 +11,7 @@ interface LoadsStepProps extends StepProps {
   setData: (data: any) => void;
   onFinish: () => void;
   onValidationSync?: () => void;
+  onSelectionReady?: () => void;
 }
 
 type BlockConfig = {
@@ -30,7 +31,14 @@ function hoursInRange(startHour: number, endHour: number): number[] {
   return HOUR_OPTIONS.filter((h) => h >= startHour || h < endHour);
 }
 
-export default function LoadsStep({ data, setData, onFinish, onBack, onValidationSync }: LoadsStepProps) {
+export default function LoadsStep({
+  data,
+  setData,
+  onFinish,
+  onBack,
+  onValidationSync,
+  onSelectionReady
+}: LoadsStepProps) {
   const lp = data.loadProfiler ?? { baseLoadKw: 0 };
   const pattern = lp.usagePattern ?? lp.pattern;
   const buildingSize = lp.buildingSize;
@@ -109,11 +117,15 @@ export default function LoadsStep({ data, setData, onFinish, onBack, onValidatio
       ...data,
       loadProfiler: { ...lp, usagePattern: p, pattern: p, buildingSize: undefined, baseLoadKw }
     });
+    if (onValidationSync) onValidationSync();
+
+    if (onSelectionReady) onSelectionReady();
   };
 
   const setBuildingSize = (size: BuildingSize) => {
     if (!pattern) return;
     applyPreset(pattern, size, baseLoadKw);
+    if (onSelectionReady) onSelectionReady();
   };
 
   const onBaseLoadChange = (raw: string) => {
@@ -128,7 +140,7 @@ export default function LoadsStep({ data, setData, onFinish, onBack, onValidatio
 
   useEffect(() => {
     if (onValidationSync) onValidationSync();
-  }, [pattern, buildingSize, onValidationSync]);
+  }, [pattern, buildingSize]);
 
   const chartMax = useMemo(() => Math.max(baseLoadKw + 1, peakHint, ...data.loads, 1), [baseLoadKw, data.loads, peakHint]);
 
@@ -144,39 +156,48 @@ export default function LoadsStep({ data, setData, onFinish, onBack, onValidatio
       <div class="wizard-content" style={{ marginTop: '14px' }}>
         <section>
           <label style={{ marginBottom: '10px' }}>Step 1: Usage pattern</label>
-          <div id="input-loads-presets" class="preset-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px' }}>
+          <div
+            id="input-loads-presets"
+            class="preset-cards relative tutorial-spotlight-anchor"
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px', position: 'relative', zIndex: 1, pointerEvents: 'auto'}}
+          >
             <div
               role="button"
               tabIndex={0}
               onClick={() => setPattern('residential')}
               class={pattern === 'residential' ? 'card card-active' : 'card'}
+              style={{ pointerEvents: 'auto' }}
             >
               <strong>Residential</strong>
-              <small>Evening peak — typical homes and dwellings</small>
+              <small>Evening peak (Typical Homes and Dwellings)</small>
             </div>
             <div
               role="button"
               tabIndex={0}
               onClick={() => setPattern('commercial')}
               class={pattern === 'commercial' ? 'card card-active' : 'card'}
+              style={{ pointerEvents: 'auto' }}
             >
               <strong>Commercial</strong>
-              <small>Daytime peak — offices, retail, and light industry</small>
+              <small>Daytime peak (Offices, Retail, and Small Industry Buildings)</small>
             </div>
           </div>
         </section>
 
         {pattern && (
-          <section>
+          <section id="input-loads-building-size">
             <label style={{ marginBottom: '10px' }}>Building size</label>
-            <div class="preset-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '12px' }}>
+            <div
+              class="preset-cards relative tutorial-spotlight-anchor"
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '12px' }}
+            >
               {(['small', 'medium', 'large'] as const).map((size) => {
                 const copy = BUILDING_SIZE_COPY[pattern][size];
                 const selected = buildingSize === size;
                 const range =
-                  size === 'small' ? '~0.5-1 kW' :
+                  size === 'small' ? '<1 kW' :
                   size === 'medium' ? '~2-5 kW' :
-                  '~5-15+ kW';
+                  '>5-15+ kW';
                 return (
                   <div
                     key={size}

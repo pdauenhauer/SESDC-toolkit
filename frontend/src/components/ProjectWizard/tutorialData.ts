@@ -10,6 +10,8 @@ export interface TutorialStep {
   position?: 'top' | 'bottom' | 'left' | 'right' | 'center';
   /** Dot path into project data; user must enter a valid value before advancing (e.g. 'solar.sizeKw', 'battery.type'). */
   requiredField?: string;
+  /** Optional field-specific helper text shown when required validation is not satisfied. */
+  requiredHint?: string;
   /** UI precondition that should be applied before attaching this step target. */
   ensureUi?: 'solarAdvanced' | 'batteryAdvanced' | 'windAdvanced' | 'generatorAdvanced';
 }
@@ -80,16 +82,27 @@ export const TUTORIAL_TOUR_STEPS: TutorialStep[] = [
     id: 'tour-loads-1',
     wizardStep: 'LOADS',
     targetId: 'input-loads-presets',
-    title: 'Step 8: Load profile',
-    text: 'Pick Residential or Commercial and building size to generate a baseline profile.',
+    title: 'Step 8: Select usage pattern',
+    text: 'First, select whether this project is for a Residential or Commercial property.',
     position: 'right',
-    requiredField: 'loadProfiler.selectionReady'
+    requiredField: 'loadProfiler.usagePattern',
+    requiredHint: 'Please select a usage pattern to continue.'
   },
   {
     id: 'tour-loads-2',
     wizardStep: 'LOADS',
+    targetId: 'input-loads-building-size',
+    title: 'Step 9: Select building size',
+    text: 'Next, select the approximate size of the building to generate a baseline energy profile.',
+    position: 'right',
+    requiredField: 'loadProfiler.buildingSize',
+    requiredHint: 'Please select a building size to continue.'
+  },
+  {
+    id: 'tour-loads-3',
+    wizardStep: 'LOADS',
     targetId: 'input-loads-manual',
-    title: 'Step 9: Manual override and finish',
+    title: 'Step 10: Manual override and finish',
     text: 'Adjust hourly values in the chart, then create the project to run simulation.',
     position: 'right'
   }

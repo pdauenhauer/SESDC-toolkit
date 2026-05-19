@@ -211,6 +211,10 @@ function ProjectWizardBody({ onClose, onFinish, projectName, initialStep, initia
 
   const tourProgressStep =
     tutorial.tutorialMode === 'tour' && TUTORIAL_TOUR_STEPS.some((s) => s.wizardStep === step);
+  const activeTourStepId =
+    tutorial.showTutorial && tutorial.tutorialMode === 'tour'
+      ? TUTORIAL_TOUR_STEPS[tutorial.tutorialOverlayStepIndex]?.id ?? null
+      : null;
   const tourGlobalStepTotal = tourProgressStep ? getTourTutorialStepTotal() : undefined;
   const tourGlobalStepNumber = tourProgressStep
     ? tutorial.tutorialOverlayStepIndex + 1
@@ -349,18 +353,25 @@ function ProjectWizardBody({ onClose, onFinish, projectName, initialStep, initia
               {...commonProps}
               setData={setData}
               onValidationSync={() => {
-                if (tutorial.showTutorial && tutorial.tutorialMode === 'tour') {
+                if (tutorial.showTutorial && tutorial.tutorialMode === 'tour'){
                   tutorial.bumpTutorialRunId();
                 }
               }}
+              onSelectionReady={
+                tutorial.showTutorial &&
+                tutorial.tutorialMode === 'tour' &&
+                tutorial.tutorialOverlayStepIndex === 7
+                  ? handleTutorialAdvance
+                  : undefined
+              }
               onFinish={() => {
                 tutorial.stopTutorial();
                 onFinish(data);
                 onClose();
               }}
               onBack={() => handleStepChange('GENERATOR')}
-            />
-          )}
+          />
+        )}
         </div>
       </div>
       {tutorial.showTutorial &&
