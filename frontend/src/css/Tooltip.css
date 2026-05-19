@@ -21,7 +21,8 @@
   transition: opacity 0.1s ease, visibility 0.5s ease;
 }
 
-.tooltip:hover .tooltip-content {
+.tooltip:hover .tooltip-content,
+.tooltip:focus-within .tooltip-content {
   opacity: 98%;
   visibility: visible;
 }

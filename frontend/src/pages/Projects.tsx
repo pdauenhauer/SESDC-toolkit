@@ -402,31 +402,35 @@ export default function Projects() {
 
               {activeCraftTab === "workbench" && (
                 <>
-                  <button
-                    type="button"
-                    class="projects-btn projects-btn-add projects-btn-add--workbench"
-                    onClick={handleAddComponent}
-                    aria-label="Create Component"
-                  >
-                    <img src={showProjectsIcon} alt="" class="projects-btn-add-icon" />
-                    <span class="projects-btn-label">Create Component</span>
-                  </button>
-                  <div class={`projects-config-wrap ${configOpen ? "is-open" : ""}`}>
+                  <Tooltip text="Create Component" position="bottom">
                     <button
                       type="button"
-                      class="projects-btn projects-btn-config"
-                      onClick={() => setConfigOpen((open) => !open)}
-                      aria-label="System Configuration"
-                      aria-expanded={configOpen}
+                      class="projects-btn projects-btn-add projects-btn-add--workbench"
+                      onClick={handleAddComponent}
+                      aria-label="Create Component"
                     >
-                      <img src={configIcon} alt="" class="projects-btn-config-left-icon" />
-                      <span class="projects-btn-label">System Configuration</span>
-                      <img
-                        src={configOpen ? leftArrowIcon : rightArrowIcon}
-                        alt=""
-                      class="projects-btn-config-icon"
-                    />
-                  </button>
+                      <img src={showProjectsIcon} alt="" class="projects-btn-add-icon" />
+                      <span class="projects-btn-label">Create Component</span>
+                    </button>
+                  </Tooltip>
+                  <div class={`projects-config-wrap ${configOpen ? "is-open" : ""}`}>
+                    <Tooltip text="System Configuration" position="bottom">
+                      <button
+                        type="button"
+                        class="projects-btn projects-btn-config"
+                        onClick={() => setConfigOpen((open) => !open)}
+                        aria-label="System Configuration"
+                        aria-expanded={configOpen}
+                      >
+                        <img src={configIcon} alt="" class="projects-btn-config-left-icon" />
+                        <span class="projects-btn-label">System Configuration</span>
+                        <img
+                          src={configOpen ? leftArrowIcon : rightArrowIcon}
+                          alt=""
+                        class="projects-btn-config-icon"
+                      />
+                    </button>
+                  </Tooltip>
                     {configOpen && (
                       <div class="projects-config-icons" aria-label="System Configuration Options">
                         <Tooltip text="Generator" position="bottom">
