@@ -131,3 +131,45 @@
 .home-get-started:hover {
   background-color: var(--selection-green);
 }
+
+@media (max-width: 858px) {
+  .home-content-wrapper {
+    align-items: center;
+  }
+
+  .home-hero-section {
+    justify-content: center;
+    align-items: center;
+  }
+
+  .home-content-box {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 20px 40px;
+    transform: translateY(-70px);
+  }
+
+  .home-left-content {
+    width: 100%;
+    max-width: 640px;
+    align-items: center;
+    text-align: center;
+    position: static;
+    gap: 16px;
+  }
+
+  .home-hero-image {
+    position: static;
+    width: auto;
+    justify-content: center;
+  }
+
+  .home-hero-image img {
+    width: min(100%, 380px);
+  }
+
+  .home-design-tool-button {
+    width: min(320px, 90%);
+  }
+}

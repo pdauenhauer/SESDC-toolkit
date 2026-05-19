@@ -1,6 +1,8 @@
 import logo from '../media/Logo.svg'
 import accountDefaultIcon from '../media/circle-user-4.svg'
 import accountHoverIcon from '../media/circle-user-3.svg'
+import menuIcon from '../media/menu-2.svg'
+import AuthModal from './AuthModal'
 import { useState, useEffect } from 'preact/hooks'
 import { useLocation } from 'preact-iso'
 
@@ -10,7 +12,10 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 function SESDCHeader() {
     const [user, setUser] = useState<User | null>(() => auth.currentUser);
     const [hasScrolled, setHasScrolled] = useState<boolean>(false);
-    const { route } = useLocation();
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+    const [authRedirectTarget, setAuthRedirectTarget] = useState<string | null>(null);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+    const { route, path } = useLocation();
     const isActive = (path: string): string =>
         window.location.pathname === path ? 'active' : '';
 
@@ -22,6 +27,11 @@ function SESDCHeader() {
         event.preventDefault();
         if (window.location.pathname === to) return;
         route(to);
+    };
+
+    const handleMobileNavClick = (event: MouseEvent, to: string) => {
+        setMobileMenuOpen(false);
+        handleNavClick(event, to);
     };
 
     useEffect(() => {
@@ -41,13 +51,12 @@ function SESDCHeader() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    useEffect(() => {
+        setMobileMenuOpen(false);
+    }, [path]);
+
     return (
         <nav class={hasScrolled ? 'nav-scrolled' : ''}>
-            <input type="checkbox" id="check" />
-            <label htmlFor="check" class="check-btn">
-            <i class="bx bx-menu"></i>
-            </label>
-
             <div class="nav-left">
                 <a
                     class="nav-brand"
@@ -96,13 +105,16 @@ function SESDCHeader() {
             <div class="nav-links nav-links-right">
                 {!user && (
                     <li>
-                        <a
-                            className={`${isActive('/login')} nav-home-link`.trim()}
-                            href="/login"
-                            onClick={(event) => handleNavClick(event as MouseEvent, '/login')}
+                        <button
+                            type="button"
+                            class="nav-home-link nav-signin-btn"
+                            onClick={() => {
+                                setAuthRedirectTarget(null);
+                                setIsAuthModalOpen(true);
+                            }}
                         >
                             Sign in
-                        </a>
+                        </button>
                     </li>
                 )}
                 {user && (
@@ -119,21 +131,87 @@ function SESDCHeader() {
                     </li>
                 )}
                 <li>
-                    <a
-                        className={`${isActive(user ? '/projects' : '/login')} nav-home-link`.trim()}
-                        href={user ? '/projects' : '/login?next=/projects'}
-                        aria-label="Open toolkit"
-                        onClick={(event) =>
-                            handleNavClick(
-                                event as MouseEvent,
-                                user ? '/projects' : '/login?next=/projects'
-                            )
-                        }
+                    {user ? (
+                        <a
+                            className={`${isActive('/projects')} nav-home-link`.trim()}
+                            href="/projects"
+                            aria-label="Open toolkit"
+                            onClick={(event) => handleNavClick(event as MouseEvent, '/projects')}
+                        >
+                            <span>Open Toolkit</span>
+                        </a>
+                    ) : (
+                        <button
+                            type="button"
+                            class="nav-home-link nav-open-toolkit-btn"
+                            aria-label="Open toolkit"
+                            onClick={() => {
+                                setAuthRedirectTarget('/projects');
+                                setIsAuthModalOpen(true);
+                            }}
+                        >
+                            <span>Open Toolkit</span>
+                        </button>
+                    )}
+                </li>
+                <li>
+                    <button
+                        type="button"
+                        class="nav-hamburger-btn"
+                        aria-label="Toggle navigation menu"
+                        aria-expanded={mobileMenuOpen}
+                        aria-controls="nav-mobile-menu"
+                        onClick={() => setMobileMenuOpen((open) => !open)}
                     >
-                        <span>Open Toolkit</span>
-                    </a>
+                        <img src={menuIcon} alt="" class="nav-hamburger-icon" />
+                    </button>
                 </li>
             </div>
+            <button
+                type="button"
+                class={`nav-mobile-backdrop${mobileMenuOpen ? ' is-open' : ''}`}
+                aria-label="Close navigation menu"
+                onClick={() => setMobileMenuOpen(false)}
+            />
+            <aside
+                id="nav-mobile-menu"
+                class={`nav-mobile-menu${mobileMenuOpen ? ' is-open' : ''}`}
+                aria-hidden={!mobileMenuOpen}
+            >
+                <a
+                    className={`${isActive('/about')} nav-home-link`.trim()}
+                    href="/about"
+                    aria-label="About"
+                    onClick={(event) => handleMobileNavClick(event as MouseEvent, '/about')}
+                >
+                    <span>About</span>
+                </a>
+                <a
+                    className={`${isActive('/contact')} nav-home-link`.trim()}
+                    href="/contact"
+                    aria-label="Contact"
+                    onClick={(event) => handleMobileNavClick(event as MouseEvent, '/contact')}
+                >
+                    <span>Contact</span>
+                </a>
+                <a
+                    className={`${isActive('/guide')} nav-home-link`.trim()}
+                    href="/guide"
+                    aria-label="Help"
+                    onClick={(event) => handleMobileNavClick(event as MouseEvent, '/guide')}
+                >
+                    <span>Help</span>
+                </a>
+            </aside>
+            {isAuthModalOpen && !user ? (
+                <AuthModal
+                    onClose={() => {
+                        setIsAuthModalOpen(false);
+                        setAuthRedirectTarget(null);
+                    }}
+                    afterLoginRedirect={authRedirectTarget}
+                />
+            ) : null}
         </nav>
     )
 }

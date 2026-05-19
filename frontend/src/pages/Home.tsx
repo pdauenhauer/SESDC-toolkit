@@ -3,12 +3,14 @@ import { useLocation } from 'preact-iso';
 import { useEffect, useState } from 'preact/hooks';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../utils/firebase/firebase-init';
+import AuthModal from '../components/AuthModal';
 import '../css/homepage.css';
 
 
 function Home () {
   const { route } = useLocation();
   const [isSignedIn, setIsSignedIn] = useState<boolean>(() => !!auth.currentUser);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -35,7 +37,13 @@ function Home () {
               <h3>Design, simulate, and plan your microgrid with ease.</h3>
               <button
                 class="home-design-tool-button"
-                onClick={() => route(isSignedIn ? '/projects' : '/login?next=/projects')}
+                onClick={() => {
+                  if (isSignedIn) {
+                    route('/projects');
+                    return;
+                  }
+                  setIsAuthModalOpen(true);
+                }}
               >
                 Get Started
               </button>
@@ -44,6 +52,12 @@ function Home () {
         </section>
 
       </main>
+      {isAuthModalOpen ? (
+        <AuthModal
+          onClose={() => setIsAuthModalOpen(false)}
+          afterLoginRedirect="/projects"
+        />
+      ) : null}
     </div>
   );
 };
