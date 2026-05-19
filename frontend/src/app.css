@@ -1,6 +1,11 @@
 /*Global styles*/
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
 
+
+/* Icons are from Lucide.dev. The greys are greens are the same as the variable colors below,
+and the stroke witdth is 2px or 3px depending on the icon*/
+
+/*Color variables for the whole site*/
 :root {
   --black: #0A090C;
   --dark-text: #0f172a;
@@ -32,7 +37,7 @@
 }
 
 html {
-  scrollbar-gutter: stable;
+  scrollbar-gutter: auto;
 }
 
 /* General styles maybe justify content center*/

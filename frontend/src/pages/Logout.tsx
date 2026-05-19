@@ -17,7 +17,7 @@ export default function Logout() {
 
                 // redirect after short delay
                 setTimeout(() => {
-                    route("/login");
+                    route("/");
                 }, 1500);
             })
             .catch((err) => {
@@ -31,7 +31,7 @@ export default function Logout() {
             <main>
                 <div class="wrapper logout-wrapper">
                     <h1>You have been logged out</h1>
-                    <p>Redirecting to sign in...</p>
+                    <p>Redirecting to home...</p>
                 </div>
             </main>
         </>

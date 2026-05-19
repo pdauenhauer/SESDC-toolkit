@@ -104,14 +104,32 @@ export default function Projects() {
   const [wizardInitialStep, setWizardInitialStep] = useState<WizardStep>("ONBOARDING_PROMPT");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [revealReady, setRevealReady] = useState(false);
+  const [showComponentAddedMessage, setShowComponentAddedMessage] = useState(false);
+  const componentAddedMessageTimerRef = useRef<number | null>(null);
 
   const handleAddComponent = () => {
     setWorkbenchLoads((prev) => [...prev, createNewLoad(`Load ${prev.length + 1}`)]);
+    setShowComponentAddedMessage(true);
+    if (componentAddedMessageTimerRef.current !== null) {
+      window.clearTimeout(componentAddedMessageTimerRef.current);
+    }
+    componentAddedMessageTimerRef.current = window.setTimeout(() => {
+      setShowComponentAddedMessage(false);
+      componentAddedMessageTimerRef.current = null;
+    }, 450);
   };
 
   useEffect(() => {
     const timer = window.setTimeout(() => setRevealReady(true), 10);
     return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (componentAddedMessageTimerRef.current !== null) {
+        window.clearTimeout(componentAddedMessageTimerRef.current);
+      }
+    };
   }, []);
 
   const handleRunSimulation = async () => {
@@ -612,6 +630,13 @@ export default function Projects() {
           }} 
         />
       )}
+      <div
+        class={`projects-message-box${showComponentAddedMessage ? " is-visible" : ""}`}
+        role="status"
+        aria-live="polite"
+      >
+        Component added
+      </div>
     </div>
   );
 }
