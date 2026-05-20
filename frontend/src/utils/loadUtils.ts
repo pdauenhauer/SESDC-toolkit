@@ -1,5 +1,5 @@
-import type { Load } from "../database/models/load";
-import { defaultProfile } from "../database/models/load";
+import type { Load, SeasonalProfiles } from "../database/models/load";
+import { defaultSeasonalProfiles, SEASONS } from "../database/models/load";
 import { getDefaultLabelId } from "../data/loadLabels";
 
 export function createNewLoad(name?: string): Load {
@@ -7,14 +7,23 @@ export function createNewLoad(name?: string): Load {
     id: crypto.randomUUID(),
     name: name ?? "New Load",
     labelId: getDefaultLabelId(),
-    profile: defaultProfile(),
+    seasonalProfiles: defaultSeasonalProfiles(),
+  };
+}
+
+function cloneSeasonalProfiles(sp: SeasonalProfiles): SeasonalProfiles {
+  return {
+    spring: [...sp.spring],
+    summer: [...sp.summer],
+    fall: [...sp.fall],
+    winter: [...sp.winter],
   };
 }
 
 function cloneLoad(load: Load): Load {
   return {
     ...load,
-    profile: [...load.profile],
+    seasonalProfiles: cloneSeasonalProfiles(load.seasonalProfiles),
     children: load.children?.map(cloneLoad),
   };
 }
@@ -23,7 +32,7 @@ function updateInList(list: Load[], id: string, patch: Partial<Load> | null): Lo
   const out: Load[] = [];
   for (const load of list) {
     if (load.id === id) {
-      if (patch === null) continue; // remove
+      if (patch === null) continue;
       out.push({ ...cloneLoad(load), ...patch });
     } else {
       out.push({
@@ -58,15 +67,29 @@ export function addChildToLoad(roots: Load[], parentId: string, newLoad: Load): 
   return addChildToList(roots, parentId, newLoad);
 }
 
-export function combined24hProfile(loads: Load[]): number[] {
-  const out = Array.from({ length: 24 }, () => 0);
+/** Sum all load profiles per-season across the load tree. */
+export function combinedSeasonalProfiles(loads: Load[]): SeasonalProfiles {
+  const out = defaultSeasonalProfiles();
   function add(list: Load[]) {
     for (const load of list) {
-      const p = load.profile ?? [];
-      for (let h = 0; h < 24 && h < p.length; h++) out[h] += p[h];
+      for (const season of SEASONS) {
+        const p = load.seasonalProfiles?.[season] ?? [];
+        for (let h = 0; h < 24 && h < p.length; h++) out[season][h] += p[h];
+      }
       if (load.children?.length) add(load.children);
     }
   }
   add(loads);
+  return out;
+}
+
+/** Backward-compat wrapper: returns the average across all 4 seasons. */
+export function combined24hProfile(loads: Load[]): number[] {
+  const seasonal = combinedSeasonalProfiles(loads);
+  const out = Array.from({ length: 24 }, () => 0);
+  for (const season of SEASONS) {
+    for (let h = 0; h < 24; h++) out[h] += seasonal[season][h];
+  }
+  for (let h = 0; h < 24; h++) out[h] /= 4;
   return out;
 }

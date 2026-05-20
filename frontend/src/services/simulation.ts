@@ -1,5 +1,6 @@
 import type { Load } from "../database/models/load";
-import { combined24hProfile } from "../utils/loadUtils";
+import type { SeasonalProfiles } from "../database/models/load";
+import { combinedSeasonalProfiles } from "../utils/loadUtils";
 
 const REGION = "us-central1";
 const POST_FUNCTION = "run_simulation_post";
@@ -42,7 +43,8 @@ export type SimulationPayload = {
   projectId: string;
   latitude: number;
   longitude: number;
-  loadInputs: number[];
+  seasonalLoadInputs: SeasonalProfiles;
+  loadInputs?: number[];
   usingSolarPanel: boolean;
   usingWindTurbine: boolean;
   usingGenerator: boolean;
@@ -139,13 +141,17 @@ export function buildSimulationPayload(
   workbenchLoads: Load[],
   overrides?: Partial<SimulationPayload>
 ): SimulationPayload {
-  const loadInputs = combined24hProfile(workbenchLoads);
-  const hasLoad = loadInputs.some((v) => v !== 0);
-  if (!hasLoad) {
+  const seasonal = combinedSeasonalProfiles(workbenchLoads);
+  const allZero = (["spring", "summer", "fall", "winter"] as const).every(
+    (s) => seasonal[s].every((v) => v === 0)
+  );
+  if (allZero) {
     const defaultDaily = [
       0, 0, 0, 0, 0, 2, 4, 6, 8, 10, 12, 12, 10, 10, 12, 14, 12, 10, 8, 6, 4, 2, 0, 0,
     ];
-    for (let i = 0; i < 24; i++) loadInputs[i] = defaultDaily[i];
+    for (const s of ["spring", "summer", "fall", "winter"] as const) {
+      for (let i = 0; i < 24; i++) seasonal[s][i] = defaultDaily[i];
+    }
   }
 
   const base: SimulationPayload = {
@@ -153,7 +159,7 @@ export function buildSimulationPayload(
     projectId,
     latitude: DUMMY_DEFAULTS.latitude,
     longitude: DUMMY_DEFAULTS.longitude,
-    loadInputs,
+    seasonalLoadInputs: seasonal,
     usingSolarPanel: DUMMY_DEFAULTS.usingSolarPanel,
     usingWindTurbine: DUMMY_DEFAULTS.usingWindTurbine,
     usingGenerator: DUMMY_DEFAULTS.usingGenerator,

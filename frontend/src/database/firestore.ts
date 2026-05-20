@@ -13,6 +13,7 @@ import {
   type DocumentData,
 } from "firebase/firestore";
 import type { Load } from "./models/load";
+import { migrateLoad } from "./models/load";
 
 
 import type { User, Project } from "./models/metadata";
@@ -73,12 +74,13 @@ export async function deleteProject(uid: string, projectId: string) {
   await deleteDoc(projectRef(uid, projectId));
 }
 
-// Fetch the persisted load tree for a project
+// Fetch the persisted load tree for a project (auto-migrates legacy single-profile loads)
 export async function getProjectLoads(uid: string, projectId: string): Promise<Load[]> {
   const snap = await getDoc(projectRef(uid, projectId));
   if (!snap.exists()) return [];
   const data = snap.data() as any;
-  return (data.loads ?? []) as Load[];
+  const rawLoads: any[] = data.loads ?? [];
+  return rawLoads.map(migrateLoad);
 }
 // Persist the project's load tree to Firestore and update its last-modified timestamp.
 export async function saveProjectLoads(uid: string, projectId: string, loads: Load[]) {
@@ -95,7 +97,7 @@ function sanitizeLoads(loads: Load[]): any[] {
     id: l.id,
     name: l.name,
     labelId: l.labelId,
-    profile: Array.isArray(l.profile) ? l.profile : [],
+    seasonalProfiles: l.seasonalProfiles ?? {},
     ...(l.children && l.children.length ? { children: l.children.map(sanitize) } : {}),
   });
 

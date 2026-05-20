@@ -174,6 +174,37 @@
   min-width: 0;
 }
 
+.load-card-season-tabs {
+  display: flex;
+  gap: 2px;
+  margin-top: 6px;
+}
+
+.load-card-season-tab {
+  flex: 1;
+  padding: 2px 0;
+  font-size: 9px;
+  font-weight: 600;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  background: #f8fafc;
+  color: #94a3b8;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.load-card-season-tab:hover {
+  background: #f0fdf9;
+  color: #334155;
+}
+
+.load-card-season-tab--active {
+  background: var(--green-main);
+  color: #fff;
+  border-color: var(--green-main);
+}
+
 .load-card-actions {
   position: absolute;
   top: 6px;
@@ -290,6 +321,36 @@
   color: #0f172a;
 }
 
+.load-profile-editor-season-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.load-profile-editor-season-tab {
+  flex: 1;
+  padding: 6px 0;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.load-profile-editor-season-tab:hover {
+  background: #f0fdf9;
+  color: #0f172a;
+}
+
+.load-profile-editor-season-tab--active {
+  background: var(--green-main);
+  color: #fff;
+  border-color: var(--green-main);
+}
+
 .load-profile-editor-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -327,6 +388,23 @@
 .load-profile-editor-footer {
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
+}
+
+.load-profile-editor-copy-all {
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.load-profile-editor-copy-all:hover {
+  background: #e2e8f0;
+  color: #0f172a;
 }
 
 .load-profile-editor-save {

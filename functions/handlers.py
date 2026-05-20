@@ -43,7 +43,23 @@ def run_simulation_post(req: https_fn.Request) -> https_fn.Response:
 
         latitude = data.get("latitude")
         longitude = data.get("longitude")
-        load_list = data.get("loadInputs", [])
+
+        seasonal_load_inputs = data.get("seasonalLoadInputs")
+        if seasonal_load_inputs and isinstance(seasonal_load_inputs, dict):
+            seasonal_loads = {
+                "spring": seasonal_load_inputs.get("spring", [0] * 24),
+                "summer": seasonal_load_inputs.get("summer", [0] * 24),
+                "fall": seasonal_load_inputs.get("fall", [0] * 24),
+                "winter": seasonal_load_inputs.get("winter", [0] * 24),
+            }
+        else:
+            flat = data.get("loadInputs", [])
+            seasonal_loads = {
+                "spring": list(flat),
+                "summer": list(flat),
+                "fall": list(flat),
+                "winter": list(flat),
+            }
 
         using_solar = bool(data.get("usingSolarPanel"))
         using_wind = bool(data.get("usingWindTurbine"))
@@ -122,7 +138,8 @@ def run_simulation_post(req: https_fn.Request) -> https_fn.Response:
         print("[run_simulation_post] Running simulation...")
         csv_dict = run_simulation(
             nlr_df,
-            load_list,
+            seasonal_loads,
+            latitude,
             using_solar, solar_inputs,
             using_wind, wind_inputs,
             using_generator, generator_inputs,

@@ -1,10 +1,15 @@
 import { useState, useEffect, useRef } from "preact/hooks";
-import type { Load } from "../database/models/load";
+import type { Load, SeasonalProfiles, Season } from "../database/models/load";
+import { SEASONS, SEASON_LABELS, defaultSeasonalProfiles } from "../database/models/load";
 import { LOAD_LABELS, getLoadLabelById } from "../data/loadLabels";
 import Tooltip from "./Tooltip";
 import trashIcon from "../media/trash.svg";
 import trashRedIcon from "../media/trash-red.svg";
 import "../css/ProjectsPage/load.css";
+
+function cloneSP(sp: SeasonalProfiles): SeasonalProfiles {
+  return { spring: [...sp.spring], summer: [...sp.summer], fall: [...sp.fall], winter: [...sp.winter] };
+}
 
 interface LoadProps {
   load: Load;
@@ -15,7 +20,6 @@ interface LoadProps {
   childLoads?: Load[];
   onRemoveChild?: (id: string) => void;
   onUpdateChild?: (id: string, patch: Partial<Load>) => void;
-  /** When true, card is draggable (e.g. for reorder on workbench). */
   draggable?: boolean;
   isDragging?: boolean;
   isDragOver?: boolean;
@@ -46,50 +50,59 @@ export default function Load({
 }: LoadProps) {
   const [editingName, setEditingName] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [draftProfile, setDraftProfile] = useState<number[]>(load.profile);
+  const [activeSeason, setActiveSeason] = useState<Season>("summer");
+  const [draftProfiles, setDraftProfiles] = useState<SeasonalProfiles>(
+    () => cloneSP(load.seasonalProfiles ?? defaultSeasonalProfiles())
+  );
   const menuRef = useRef<HTMLDivElement>(null);
 
   const label = getLoadLabelById(load.labelId);
   const canNest = label?.canNest ?? false;
 
-  // Parent’s 24h chart: own profile + sum of children’s profiles (children add onto parent)
+  const displayProfile = load.seasonalProfiles?.[activeSeason] ?? [];
+
   const effectiveProfile =
     canNest && childLoads.length > 0
-      ? load.profile.map(
+      ? displayProfile.map(
           (p, i) =>
-            p + childLoads.reduce((sum, child) => sum + (child.profile[i] ?? 0), 0)
+            p + childLoads.reduce((sum, child) => sum + (child.seasonalProfiles?.[activeSeason]?.[i] ?? 0), 0)
         )
-      : load.profile;
+      : displayProfile;
   const maxProfile = Math.max(...effectiveProfile, 1);
 
-  // Keep draft in sync when opening menu
   useEffect(() => {
-    if (menuOpen) setDraftProfile([...load.profile]);
-  }, [menuOpen, load.profile]);
+    if (menuOpen) setDraftProfiles(cloneSP(load.seasonalProfiles ?? defaultSeasonalProfiles()));
+  }, [menuOpen, load.seasonalProfiles]);
 
-  // Close menu when clicking outside
   useEffect(() => {
     if (!menuOpen) return;
     const handleClick = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setMenuOpen(false);
-        onUpdate({ profile: draftProfile });
+        onUpdate({ seasonalProfiles: draftProfiles });
       }
     };
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
-  }, [menuOpen, draftProfile]);
+  }, [menuOpen, draftProfiles]);
 
   const handleProfileHourChange = (hourIndex: number, value: number) => {
-    setDraftProfile((prev) => {
-      const next = [...prev];
-      next[hourIndex] = Math.max(0, value);
+    setDraftProfiles((prev) => {
+      const next = cloneSP(prev);
+      next[activeSeason][hourIndex] = Math.max(0, value);
       return next;
     });
   };
 
+  const handleCopyToAllSeasons = () => {
+    setDraftProfiles((prev) => {
+      const source = [...prev[activeSeason]];
+      return { spring: [...source], summer: [...source], fall: [...source], winter: [...source] };
+    });
+  };
+
   const handleSaveProfile = () => {
-    onUpdate({ profile: draftProfile });
+    onUpdate({ seasonalProfiles: draftProfiles });
     setMenuOpen(false);
   };
 
@@ -112,13 +125,11 @@ export default function Load({
       onDrop={onDrop}
     >
       <div class="load-card-main">
-      {/* Picture-style icon */}
       <div class="load-card-icon" aria-hidden="true">
         {label?.icon ?? "🔌"}
       </div>
 
       <div class="load-card-body">
-        {/* Name */}
         {editingName ? (
           <input
             type="text"
@@ -140,7 +151,6 @@ export default function Load({
           </Tooltip>
         )}
 
-        {/* Label dropdown */}
         <select
           class="load-card-label"
           value={load.labelId}
@@ -153,8 +163,7 @@ export default function Load({
           ))}
         </select>
 
-        {/* 24h load profile (parent: own + children; leaf: own only) */}
-        <div class="load-card-profile" title={canNest && childLoads.length > 0 ? "24h profile (includes child loads)" : "24-hour load profile"}>
+        <div class="load-card-profile" title={`24h profile (${SEASON_LABELS[activeSeason]})`}>
           <div class="load-card-profile-bars">
             {effectiveProfile.map((v, i) => (
               <div
@@ -164,12 +173,25 @@ export default function Load({
               />
             ))}
           </div>
-          <span class="load-card-profile-label">24h</span>
+          <span class="load-card-profile-label">{SEASON_LABELS[activeSeason].slice(0, 3)}</span>
+        </div>
+
+        <div class="load-card-season-tabs">
+          {SEASONS.map((s) => (
+            <button
+              key={s}
+              type="button"
+              class={`load-card-season-tab ${s === activeSeason ? "load-card-season-tab--active" : ""}`}
+              onClick={() => setActiveSeason(s)}
+              title={SEASON_LABELS[s]}
+            >
+              {SEASON_LABELS[s].slice(0, 3)}
+            </button>
+          ))}
         </div>
       </div>
 
       <div class="load-card-actions">
-        {/* Parent loads: no edit icon; profile = own + children. Child/leaf loads: show edit. */}
         {!canNest && (
           <Tooltip text="Edit Load" position="bottom">
             <button
@@ -181,7 +203,7 @@ export default function Load({
                 e.stopPropagation();
                 setMenuOpen((open) => !open);
               }}
-              aria-label="Edit 24h profile"
+              aria-label="Edit seasonal profiles"
               aria-expanded={menuOpen}
             >
               <i class="bx bx-pencil" aria-hidden="true" />
@@ -211,7 +233,6 @@ export default function Load({
         </Tooltip>
       </div>
 
-      {/* 24h profile editor popover */}
       {menuOpen && (
         <div ref={menuRef} class="load-profile-editor">
           <div class="load-profile-editor-header">
@@ -225,8 +246,22 @@ export default function Load({
               x
             </button>
           </div>
+
+          <div class="load-profile-editor-season-tabs">
+            {SEASONS.map((s) => (
+              <button
+                key={s}
+                type="button"
+                class={`load-profile-editor-season-tab ${s === activeSeason ? "load-profile-editor-season-tab--active" : ""}`}
+                onClick={() => setActiveSeason(s)}
+              >
+                {SEASON_LABELS[s]}
+              </button>
+            ))}
+          </div>
+
           <div class="load-profile-editor-grid">
-            {draftProfile.map((value, i) => (
+            {(draftProfiles[activeSeason] ?? []).map((value, i) => (
               <label key={i} class="load-profile-editor-cell">
                 <span class="load-profile-editor-hour">{i}h</span>
                 <input
@@ -242,6 +277,9 @@ export default function Load({
             ))}
           </div>
           <div class="load-profile-editor-footer">
+            <button type="button" class="load-profile-editor-copy-all" onClick={handleCopyToAllSeasons}>
+              Copy to all seasons
+            </button>
             <button type="button" class="load-profile-editor-save" onClick={handleSaveProfile}>
               Done
             </button>
@@ -250,7 +288,6 @@ export default function Load({
       )}
       </div>
 
-      {/* Nested loads (one level) — append to the right of parent */}
       {canNest && (
         <div class="load-card-children">
           {childLoads.map((child) => (

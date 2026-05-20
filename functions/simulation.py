@@ -3,9 +3,29 @@
 from utils import safe_float, safe_int
 
 
+def _month_to_season(month: int, southern: bool) -> str:
+    """Map a calendar month (1-12) to a season key, flipping for southern hemisphere."""
+    if southern:
+        mapping = {
+            12: "summer", 1: "summer", 2: "summer",
+            3: "fall", 4: "fall", 5: "fall",
+            6: "winter", 7: "winter", 8: "winter",
+            9: "spring", 10: "spring", 11: "spring",
+        }
+    else:
+        mapping = {
+            3: "spring", 4: "spring", 5: "spring",
+            6: "summer", 7: "summer", 8: "summer",
+            9: "fall", 10: "fall", 11: "fall",
+            12: "winter", 1: "winter", 2: "winter",
+        }
+    return mapping.get(month, "summer")
+
+
 def run_simulation(
     nlr_df,
-    load_list,
+    seasonal_loads,
+    latitude,
     using_solar, solar_inputs,
     using_wind, wind_inputs,
     using_generator, generator_inputs,
@@ -13,6 +33,11 @@ def run_simulation(
     financial_inputs,
 ):
     """Run the full energy-system simulation and return a dict of CSV strings.
+
+    Args:
+        seasonal_loads: dict with keys "spring", "summer", "fall", "winter",
+                        each a list of 24 hourly load values (kW).
+        latitude: site latitude; negative = southern hemisphere (seasons flip).
 
     Keys in the returned dict (any may be None when not applicable):
         input_data            - raw NLR + load data
@@ -52,12 +77,25 @@ def run_simulation(
     n_rows = len(nlr_df)
     time_points = np.arange(n_rows)
 
-    if load_list and len(load_list) > 0:
-        repeats_needed = (n_rows // len(load_list)) + 1
-        repeated = (load_list * repeats_needed)[:n_rows]
-    else:
-        repeated = [0] * n_rows
-    load_values = np.array(repeated, dtype=float)
+    southern = safe_float(latitude) < 0
+    profiles = {
+        s: seasonal_loads.get(s, [0] * 24) for s in ("spring", "summer", "fall", "winter")
+    }
+    for s in profiles:
+        if not profiles[s] or len(profiles[s]) == 0:
+            profiles[s] = [0] * 24
+
+    datetimes = pd.to_datetime(nlr_df["Datetime"])
+    months = datetimes.dt.month.values
+    hours = datetimes.dt.hour.values
+
+    load_values = np.zeros(n_rows, dtype=float)
+    for i in range(n_rows):
+        season = _month_to_season(int(months[i]), southern)
+        h = int(hours[i]) % len(profiles[season])
+        load_values[i] = profiles[season][h]
+
+    print("[run_simulation] Seasonal loads applied, southern=", southern)
 
     solar_power = np.zeros(n_rows)
     if using_solar and solar_inputs:
