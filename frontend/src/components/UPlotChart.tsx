@@ -36,6 +36,15 @@ const PRESET_SECONDS: Record<Extract<ZoomPreset, "year">, number> = {
 const monthFormatter = new Intl.DateTimeFormat(undefined, {
   month: "short",
 });
+const timeOnlyFormatter = new Intl.DateTimeFormat(undefined, {
+  hour: "numeric",
+  minute: "2-digit",
+});
+const weekdayDayFormatter = new Intl.DateTimeFormat(undefined, {
+  weekday: "short",
+  month: "short",
+  day: "numeric",
+});
 const monthDayFormatter = new Intl.DateTimeFormat(undefined, {
   month: "short",
   day: "2-digit",
@@ -71,6 +80,43 @@ function getStartOfWeek(date: Date): Date {
   start.setDate(start.getDate() - offset);
   start.setHours(0, 0, 0, 0);
   return start;
+}
+
+function getEndOfWeek(date: Date): Date {
+  const end = getStartOfWeek(date);
+  end.setDate(end.getDate() + 6);
+  end.setHours(23, 59, 59, 999);
+  return end;
+}
+
+function getStartOfDay(date: Date): Date {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  return start;
+}
+
+function getEndOfDay(date: Date): Date {
+  const end = new Date(date);
+  end.setHours(23, 59, 59, 999);
+  return end;
+}
+
+function toEpochSeconds(date: Date): number {
+  return Math.floor(date.getTime() / 1000);
+}
+
+function buildTicksFromIncrement(scaleMin: number, scaleMax: number, increment: number): number[] {
+  if (!Number.isFinite(increment) || increment <= 0) return [];
+
+  const ticks: number[] = [];
+  let current = Math.ceil(scaleMin / increment) * increment;
+
+  while (current <= scaleMax) {
+    ticks.push(current);
+    current += increment;
+  }
+
+  return ticks;
 }
 
 function getWeekNumber(date: Date): { weekYear: number; week: number } {
@@ -117,12 +163,32 @@ function buildTimeWindows(timestamps: number[], mode: WindowMode): TimeWindow[] 
     }
 
     if (!current || current.key !== key) {
-      current = { key, label, inputValue, min: ts, max: ts };
+      if (mode === "day") {
+        current = {
+          key,
+          label,
+          inputValue,
+          min: toEpochSeconds(getStartOfDay(date)),
+          max: toEpochSeconds(getEndOfDay(date)),
+        };
+      } else if (mode === "week") {
+        current = {
+          key,
+          label,
+          inputValue,
+          min: toEpochSeconds(getStartOfWeek(date)),
+          max: toEpochSeconds(getEndOfWeek(date)),
+        };
+      } else {
+        current = { key, label, inputValue, min: ts, max: ts };
+      }
       windows.push(current);
       return;
     }
 
-    current.max = ts;
+    if (mode === "month") {
+      current.max = ts;
+    }
   });
 
   return windows;
@@ -167,6 +233,7 @@ function getLastWindowInputValue(windows: TimeWindow[]): string | undefined {
 export default function UPlotChart({ data, series, width, height }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const plotRef = useRef<uPlot | null>(null);
+  const zoomPresetRef = useRef<ZoomPreset>("month");
   const [zoomPreset, setZoomPreset] = useState<ZoomPreset>("month");
   const [windowSelection, setWindowSelection] = useState<WindowSelection>({
     day: "",
@@ -185,6 +252,10 @@ export default function UPlotChart({ data, series, width, height }: Props) {
   const dayWindowsByKey = useMemo(() => getWindowLookup(dayWindows), [dayWindows]);
   const weekWindowsByKey = useMemo(() => getWindowLookup(weekWindows), [weekWindows]);
   const monthWindowsByKey = useMemo(() => getWindowLookup(monthWindows), [monthWindows]);
+
+  useEffect(() => {
+    zoomPresetRef.current = zoomPreset;
+  }, [zoomPreset]);
 
   useEffect(() => {
     setWindowSelection((prev) => ({
@@ -225,18 +296,56 @@ export default function UPlotChart({ data, series, width, height }: Props) {
   const chartOptions = useMemo<uPlot.Options>(() => {
     const timeAxis: uPlot.Axis = {
       label: "time",
-      space: 120,
-      values: (u, splits) => {
-        const min = u.scales.x.min ?? 0;
-        const max = u.scales.x.max ?? 0;
-        const rangeSec = max - min;
+      space: 72,
+      splits: (_u, _axisIdx, scaleMin, scaleMax, foundIncr) => {
+        const preset = zoomPresetRef.current;
 
-        if (rangeSec > 180 * 86400) {
-          return splits.map((ts) => monthFormatter.format(new Date(ts * 1000)));
+        if (preset === "week") {
+          const ticks: number[] = [];
+          const start = getStartOfDay(new Date(scaleMin * 1000));
+
+          for (let i = 0; i < 7; i += 1) {
+            const tickDate = new Date(start);
+            tickDate.setDate(start.getDate() + i);
+            ticks.push(toEpochSeconds(tickDate));
+          }
+
+          return ticks;
         }
-        if (rangeSec > 14 * 86400) {
+
+        if (preset === "year") {
+          const ticks: number[] = [];
+          const start = new Date(scaleMin * 1000);
+          const end = new Date(scaleMax * 1000);
+          const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+          cursor.setHours(0, 0, 0, 0);
+
+          while (cursor.getTime() <= end.getTime()) {
+            ticks.push(toEpochSeconds(cursor));
+            cursor.setMonth(cursor.getMonth() + 1);
+          }
+
+          return ticks;
+        }
+
+        return buildTicksFromIncrement(scaleMin, scaleMax, foundIncr);
+      },
+      values: (_u, splits) => {
+        const preset = zoomPresetRef.current;
+
+        if (preset === "day") {
+          return splits.map((ts) => timeOnlyFormatter.format(new Date(ts * 1000)));
+        }
+        if (preset === "week") {
+          return splits.map((ts) => weekdayDayFormatter.format(new Date(ts * 1000)));
+        }
+        if (preset === "month") {
           return splits.map((ts) => monthDayFormatter.format(new Date(ts * 1000)));
         }
+        if (preset === "year" || preset === "all") {
+          return splits.map((ts) => monthFormatter.format(new Date(ts * 1000)));
+        }
+
         return splits.map((ts) => monthDayTimeFormatter.format(new Date(ts * 1000)));
       },
     };
@@ -273,11 +382,13 @@ export default function UPlotChart({ data, series, width, height }: Props) {
     if (!el) return;
 
     plotRef.current?.destroy();
+    el.innerHTML = "";
     plotRef.current = new uPlot(chartOptions, data as uPlot.AlignedData, el);
 
     return () => {
       plotRef.current?.destroy();
       plotRef.current = null;
+      el.innerHTML = "";
     };
   }, [chartOptions]);
 
