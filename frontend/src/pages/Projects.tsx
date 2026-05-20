@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "preact/hooks";
+import { useLocation } from "preact-iso";
 import { Timestamp, deleteField } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import ProjectsSidebar from "../components/ProjectsSidebar";
