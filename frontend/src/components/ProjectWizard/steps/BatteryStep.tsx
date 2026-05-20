@@ -1,28 +1,30 @@
-import { useState } from 'preact/hooks';
 import { StepProps } from '../types';
 import { BATTERY_PRESETS } from '../constants';
 
 import CostInputs from './CostInputs';
 
-export default function BatteryStep({ data, updateSection, updateNested, nextStep, onSkip, onBack }: StepProps) {
-  const [showAdvanced, setShowAdvanced] = useState(false);
+export default function BatteryStep({ data, updateSection, updateNested, nextStep, onSkip, onBack, showAdvanced = false, setShowAdvanced }: StepProps) {
 
   return (
     <div class="step-container">
-      <div class="step-header">
-         <h2>Battery Storage</h2>
-         <span class="live-cost">Est. Cost: ${data.battery.costs.capital.toLocaleString()}</span>
-      </div>
       <div class="wizard-content">
          <label>Battery Technology</label>
          <div id="input-battery-type" class="preset-cards">
-           <div class="card" onClick={() => {
+           <div
+             class={data.battery.type === 'Lithium-Ion' ? 'card card-active' : 'card'}
+             role="button"
+             tabIndex={0}
+             onClick={() => {
               updateSection('battery', 'type', 'Lithium-Ion');
               updateNested('battery', 'costs', 'capital', (data.battery.storageKwh || 1) * BATTERY_PRESETS.lithium.costPerKwh);
            }}>
               <strong>Lithium-Ion</strong><small>High perf, 10yr life</small>
            </div>
-           <div class="card" onClick={() => {
+           <div
+             class={data.battery.type === 'Lead-Acid' ? 'card card-active' : 'card'}
+             role="button"
+             tabIndex={0}
+             onClick={() => {
               updateSection('battery', 'type', 'Lead-Acid');
               updateNested('battery', 'costs', 'capital', (data.battery.storageKwh || 1) * BATTERY_PRESETS.lead.costPerKwh);
            }}>
@@ -30,7 +32,7 @@ export default function BatteryStep({ data, updateSection, updateNested, nextSte
            </div>
          </div>
          
-         <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginTop:'15px'}}>
+         <div id="tutorial-spotlight-battery-step2" class="tutorial-spotlight-anchor" style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginTop:'15px'}}>
             <div>
               <label>Capacity (kWh)</label>
               <input id="input-battery-capacity" type="number" class="big-input" placeholder="0.0" 
@@ -51,7 +53,7 @@ export default function BatteryStep({ data, updateSection, updateNested, nextSte
             </div>
          </div>
          
-         <button class="toggle-advanced" onClick={() => setShowAdvanced(!showAdvanced)}>{showAdvanced ? 'Hide Details' : 'Fine Tune Details'}</button>
+         <button class="toggle-advanced" onClick={() => setShowAdvanced?.(!showAdvanced)}>{showAdvanced ? 'Hide Details' : 'Fine Tune Details'}</button>
          {showAdvanced && <CostInputs section="battery" data={data} updateSection={updateSection} updateNested={updateNested} />}
       </div>
       <div class="wizard-actions">

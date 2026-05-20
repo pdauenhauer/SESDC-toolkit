@@ -1,12 +1,10 @@
 // src/components/ProjectWizard/steps/SolarStep.tsx
 
-import { useState } from 'preact/hooks';
 import { StepProps } from '../types';
-import { SOLAR_PRESETS } from '../constants';
+import { SOLAR_PRESETS, isSolarPresetStandard, isSolarPresetPremium } from '../constants';
 import CostInputs from './CostInputs';
 
-export default function SolarStep({ data, updateSection, updateNested, nextStep, onSkip }: StepProps) {
-  const [showAdvanced, setShowAdvanced] = useState(false);
+export default function SolarStep({ data, updateSection, updateNested, nextStep, onSkip, showAdvanced = false, setShowAdvanced }: StepProps) {
 
   // Local helper specific to Solar Logic
   const applySolarPreset = (type: 'standard' | 'premium') => {
@@ -20,25 +18,34 @@ export default function SolarStep({ data, updateSection, updateNested, nextStep,
     updateNested('solar', 'costs', 'capital', estimatedCost);
   };
 
+  const stdActive = isSolarPresetStandard(data.solar.losses);
+  const premActive = !stdActive && isSolarPresetPremium(data.solar.losses);
+
   return (
     <div class="step-container">
-      <div class="step-header">
-        <h2>Solar Configuration</h2>
-        <span class="live-cost">Est. Cost: ${data.solar.costs.capital.toLocaleString()}</span>
-      </div>
-      
       <div class="wizard-content">
+        <div id="tutorial-spotlight-solar-step1" class="tutorial-spotlight-anchor">
         <label>Quick Presets</label>
         <div class="preset-cards">
-           <div class="card" onClick={() => applySolarPreset('standard')}>
+           <div
+             class={stdActive ? 'card card-active' : 'card'}
+             role="button"
+             tabIndex={0}
+             onClick={() => applySolarPreset('standard')}
+           >
               <strong>Standard</strong><small>Avg Efficiency</small>
            </div>
-           <div class="card" onClick={() => applySolarPreset('premium')}>
+           <div
+             class={premActive ? 'card card-active' : 'card'}
+             role="button"
+             tabIndex={0}
+             onClick={() => applySolarPreset('premium')}
+           >
               <strong>Premium</strong><small>High Efficiency</small>
            </div>
         </div>
 
-        <label style={{marginTop: '15px'}}>System Size (kW) <span style={{color:'red'}}>*</span></label>
+        <label class="wizard-field-label-gap">System Size (kW) <span class="wizard-required">*</span></label>
         <input id="input-solar-size" type="number" class="big-input" placeholder="0.0" 
           value={data.solar.sizeKw || ''}
           onInput={(e) => { 
@@ -49,8 +56,9 @@ export default function SolarStep({ data, updateSection, updateNested, nextStep,
             updateNested('solar', 'costs', 'capital', val * 1000);
           }} 
         />
+        </div>
 
-        <button class="toggle-advanced" onClick={() => setShowAdvanced(!showAdvanced)}>
+        <button class="toggle-advanced" onClick={() => setShowAdvanced?.(!showAdvanced)}>
           {showAdvanced ? 'Hide Advanced Settings' : 'Fine Tune (Losses & Detailed Costs)'}
         </button>
 

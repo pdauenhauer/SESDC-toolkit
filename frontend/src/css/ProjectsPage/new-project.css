@@ -2,14 +2,16 @@
 
 .np-card {
   background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
   padding: 24px;
 
   width: 100%;
   max-width: 448px;
 
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  box-shadow:
+    0 20px 40px rgba(15, 23, 42, 0.1),
+    0 8px 20px rgba(15, 23, 42, 0.06);
 }
 
 .np-header {
@@ -87,6 +89,7 @@
 .np-input:focus,
 .np-textarea:focus {
   border-color: #037F6F;
+  box-shadow: 0 0 0 3px rgba(3, 127, 111, 0.2);
 }
 
 .np-textarea {
