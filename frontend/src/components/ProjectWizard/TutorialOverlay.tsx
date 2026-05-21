@@ -348,8 +348,7 @@ export default function TutorialOverlay({
         setBlockerRects([]);
       }
 
-      const actualPanelH = panelRef.current ? panelRef.current.offsetHeight : undefined;
-      const panelPos = computePanelStyle(hole, viewportW, viewportH, step?.position, actualPanelH);
+      const panelPos = computePanelStyle(hole, viewportW, viewportH, step?.position);
       setPanelStyle(panelPos);
     };
 
