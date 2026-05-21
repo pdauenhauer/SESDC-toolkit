@@ -144,7 +144,7 @@ function computePanelStyle(
   preferred?: TutorialStep['position'],
   actualPanelH?: number
 ): Record<string, string> {
-  const panelH = Math.max(EST_PANEL_H, actualPanelH??0);
+  const _panelH = Math.max(EST_PANEL_H, actualPanelH??0);
   const maxH = `${viewportH - 96}px`;
   const base: Record<string, string> = {
     width: `${PANEL_W}px`,
