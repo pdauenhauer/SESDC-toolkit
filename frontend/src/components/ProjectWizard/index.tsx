@@ -211,10 +211,6 @@ function ProjectWizardBody({ onClose, onFinish, projectName, initialStep, initia
 
   const tourProgressStep =
     tutorial.tutorialMode === 'tour' && TUTORIAL_TOUR_STEPS.some((s) => s.wizardStep === step);
-  const _activeTourStepId =
-    tutorial.showTutorial && tutorial.tutorialMode === 'tour'
-      ? TUTORIAL_TOUR_STEPS[tutorial.tutorialOverlayStepIndex]?.id ?? null
-      : null;
   const tourGlobalStepTotal = tourProgressStep ? getTourTutorialStepTotal() : undefined;
   const tourGlobalStepNumber = tourProgressStep
     ? tutorial.tutorialOverlayStepIndex + 1
