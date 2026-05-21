@@ -141,8 +141,7 @@ function computePanelStyle(
   hole: ViewportRect | null,
   viewportW: number,
   viewportH: number,
-  preferred?: TutorialStep['position'],
-  actualPanelH?: number
+  preferred?: TutorialStep['position']
 ): Record<string, string> {
   const maxH = `${viewportH - 96}px`;
   const base: Record<string, string> = {
