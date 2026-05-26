@@ -1,7 +1,7 @@
 import { auth } from "../utils/firebase/firebase-init";
 import type { Project } from "../database/models/metadata";
 import { updateProject, deleteProject } from "../database/firestore";
-import { useState, useMemo, useEffect } from "preact/hooks";
+import { useState, useMemo } from "preact/hooks";
 import NewProjectModal from "./NewProjectModal";
 import exitIcon from "../media/circle-x.svg";
 import plusIcon from "../media/plus.svg";
@@ -32,8 +32,9 @@ function ProjectsList({
 
 }: 
 ProjectsSidebarProps) {
-    const [openOptionsProject, setOpenOptionsProject] = useState<string | null>(null);
     const [infoProject, setInfoProject] = useState<Project | null>(null);
+    const [editingProjectName, setEditingProjectName] = useState(false);
+    const [projectNameDraft, setProjectNameDraft] = useState("");
     const [showNewProjectModal, setShowNewProjectModal] = useState(false);
     const [query, setQuery] = useState("");
 
@@ -79,14 +80,6 @@ ProjectsSidebarProps) {
         setJustCreatedProject(null);
     };
 
-
-    useEffect(() => {
-        if (!openOptionsProject) return;
-        const handleClickOutside = () => setOpenOptionsProject(null);
-        document.addEventListener("click", handleClickOutside);
-        return () => document.removeEventListener("click", handleClickOutside);
-    }, [openOptionsProject]);
-
     const userPermission = () => {
         const user = auth.currentUser;
         if(!user) {
@@ -94,25 +87,6 @@ ProjectsSidebarProps) {
             return null;
         }
         return user;
-    };
-
-    const renameHandler = async (project: Project) => {
-        const user = userPermission();
-        if(!user) return;
-
-        const newName = window.prompt("Rename project:",project.name);
-        if(!newName) return;
-
-        const name = newName.trim();
-        if(!name) return;
-
-        try {
-            await updateProject(user.uid,project.id, {name});
-            setOpenOptionsProject(null);
-            onProjectCreated?.();//list refresh
-        } catch (err) {
-            console.error("Rename failed: ", err);
-        }
     };
 
     const deleteHandler = async (project: Project) => {
@@ -129,7 +103,10 @@ ProjectsSidebarProps) {
                 onProjectSelect?.("");
             }
 
-            setOpenOptionsProject(null);
+            if (infoProject?.id === project.id) {
+                setInfoProject(null);
+                setEditingProjectName(false);
+            }
             onProjectCreated?.();
         } catch (err){
             console.error("Delete failed: ", err);
@@ -138,8 +115,58 @@ ProjectsSidebarProps) {
 
     const infoHandler = (project: Project) => {
         setInfoProject(project);
-        setOpenOptionsProject(null);
+        setEditingProjectName(false);
+        setProjectNameDraft(project.name);
     }
+
+    const formatProjectDate = (value: unknown) => {
+        if (
+            value &&
+            typeof value === "object" &&
+            "toDate" in value &&
+            typeof (value as { toDate: () => Date }).toDate === "function"
+        ) {
+            return (value as { toDate: () => Date }).toDate().toLocaleString();
+        }
+        return "Not available";
+    };
+
+    const saveProjectName = async () => {
+        if (!infoProject) {
+            setEditingProjectName(false);
+            return;
+        }
+
+        const name = projectNameDraft.trim();
+        if (!name) {
+            setProjectNameDraft(infoProject.name);
+            setEditingProjectName(false);
+            return;
+        }
+
+        if (name === infoProject.name) {
+            setEditingProjectName(false);
+            return;
+        }
+
+        const user = userPermission();
+        if (!user) {
+            setProjectNameDraft(infoProject.name);
+            setEditingProjectName(false);
+            return;
+        }
+
+        try {
+            await updateProject(user.uid, infoProject.id, { name });
+            setInfoProject({ ...infoProject, name });
+            onProjectCreated?.();
+        } catch (err) {
+            console.error("Rename failed: ", err);
+            setProjectNameDraft(infoProject.name);
+        } finally {
+            setEditingProjectName(false);
+        }
+    };
 
     return (
         <>
@@ -215,36 +242,17 @@ ProjectsSidebarProps) {
                                         class="projects-item-options"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            setOpenOptionsProject((prev) => (prev === project.id ? null : project.id));
+                                            if (infoProject?.id === project.id) {
+                                                setInfoProject(null);
+                                                setEditingProjectName(false);
+                                            } else {
+                                                infoHandler(project);
+                                            }
                                         }}
-                                        aria-label="Options"
+                                        aria-label="Project Info"
                                     >
                                         <img src={optionIcon} alt="" class="projects-item-icon" />
                                     </button>
-
-                                    {openOptionsProject === project.id && (
-                                        <div
-                                            class="projects-item-menu"
-                                            onClick={(e) => e.stopPropagation()}
-                                        >
-                                            <button type="button" class="projects-item-menu-item"
-                                                onClick={() => renameHandler(project)}
-                                            >
-                                                Rename
-                                            </button>
-                                            <button type="button" class="projects-item-menu-item"
-                                                onClick={() => infoHandler(project)}
-                                            >
-                                                Project Info
-                                            </button>
-                                            <div class="projects-item-menu-divider" />
-                                            <button type="button" class="projects-item-menu-item is-danger"
-                                                onClick={() => deleteHandler(project)}
-                                            >
-                                                Delete
-                                            </button>
-                                        </div>
-                                    )}
                                 </div>
                             ))
                         )}
@@ -300,23 +308,75 @@ ProjectsSidebarProps) {
                 onClick={(e) => e.stopPropagation()}
                 >
                 <div class="projects-modal-header">
-                    <div class="projects-modal-title">{infoProject.name}</div>
+                    <div class="projects-modal-title-wrap">
+                        <img src={projectIcon} alt="" class="projects-modal-title-icon" />
+                        {editingProjectName ? (
+                            <input
+                                type="text"
+                                class="projects-modal-title-input"
+                                value={projectNameDraft}
+                                onInput={(e) => setProjectNameDraft((e.currentTarget as HTMLInputElement).value)}
+                                onBlur={() => { void saveProjectName(); }}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        void saveProjectName();
+                                    }
+                                    if (e.key === "Escape") {
+                                        setProjectNameDraft(infoProject.name);
+                                        setEditingProjectName(false);
+                                    }
+                                }}
+                                autoFocus
+                            />
+                        ) : (
+                            <Tooltip text="Edit Name" position="right">
+                                <button
+                                    type="button"
+                                    class="projects-modal-title-button"
+                                    onClick={() => setEditingProjectName(true)}
+                                >
+                                    {infoProject.name}
+                                </button>
+                            </Tooltip>
+                        )}
+                    </div>
                     <button
                     type="button"
                     class="projects-modal-close"
                     onClick={() => setInfoProject(null)}
                     aria-label="Close"
                     >
-                    ✕
+                        <img src={hideIcon} alt="" class="projects-modal-close-icon" />
                     </button>
                 </div>
 
                 <div class="projects-modal-body">
-                    <div style="font-weight: 600; margin-bottom: 8px;">Description</div>
-                    <div style="opacity: 0.9;">
-                    {infoProject.description?.toString().trim()
-                        ? infoProject.description?.toString()
-                        : "No description yet."}
+                    <div class="projects-modal-section-label">Description</div>
+                    <div class="projects-modal-description">
+                        {infoProject.description?.toString().trim()
+                            ? infoProject.description?.toString()
+                            : "No description yet."}
+                    </div>
+                    <div class="projects-modal-divider" />
+                    <div class="projects-modal-meta">
+                        <div class="projects-modal-meta-row">
+                            <span class="projects-modal-meta-key">Created</span>
+                            <span class="projects-modal-meta-value">{formatProjectDate(infoProject.createdAt)}</span>
+                        </div>
+                        <div class="projects-modal-meta-row">
+                            <span class="projects-modal-meta-key">Last Updated</span>
+                            <span class="projects-modal-meta-value">{formatProjectDate(infoProject.updatedAt)}</span>
+                        </div>
+                    </div>
+                    <div class="projects-modal-actions">
+                        <button
+                            type="button"
+                            class="projects-modal-delete-btn"
+                            onClick={() => deleteHandler(infoProject)}
+                        >
+                            Delete
+                        </button>
                     </div>
                 </div>
                 </div>

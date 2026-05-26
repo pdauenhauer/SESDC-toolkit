@@ -38,8 +38,6 @@ This guide walks through accessing the tool, creating projects, configuring micr
   - [Reporting bugs or feedback](#reporting-bugs-or-feedback)
   - [Contact Support](#contact-support)
 
----
-
 ## Introduction
 
 Welcome to the Microgrid Design Tool User Guide. This guide will walk you through everything you need to know to get started—from accessing the tool and creating your first project, to configuring system settings, running simulations, and analyzing results. Whether you're a first-time user or looking to deepen your understanding, this guide is designed to support you at every step.
@@ -75,17 +73,15 @@ The tool is accessible online at [https://sesdc-toolkit.com/](https://sesdc-tool
 
 The tool is fully optimized for desktop browsers. A streamlined mobile version is available, though we recommend using a desktop or laptop for detailed system configuration and analysis features.
 
----
-
 ## Getting Started
 
 Before diving into microgrid configurations and simulations, it's important to get set up with the tool. This section will guide you through the basics—creating an account, navigating the dashboard, and starting your first project. Whether you're a new or returning user, these steps ensure you can make the most of the platform from the very beginning.
 
-### Creating an Account & Logging in
+### Creating an Account & Login
 
-#### Steps to Sign Up
+#### Sign Up
 
-To begin using the Microgrid Design Tool, go to the login page and select “Create Account.” You'll be asked to enter your name, email address, and a secure password. Once you submit the form, a verification email will be sent to your inbox.
+To begin using the Microgrid Design Tool, go to the account page and select “Sign in” You'll be asked to enter your name, email address, and a secure password. Once you submit the form, a verification email will be sent to your inbox.
 
 #### Email Verification
 
@@ -97,20 +93,11 @@ After verifying your email, return to the login page and enter your credentials 
 
 #### Deleting Your Account
 
-If you wish to permanently delete your account, go to the Account Settings section from your dashboard. At the bottom of the settings page, click “Delete Account” and confirm your choice. This action is irreversible and will remove all saved projects and user data associated with your account.
+If you wish to permanently delete your account, go to the Account page (Person Icon). At the bottom of the account page, click “Delete Account” and confirm your choice. This action is irreversible and will remove all saved projects and user data associated with your account.
 
-### Navigating Dashboard
+#### Open Toolkit
 
-#### Overview
-
-Once logged in, the dashboard serves as your main hub. Here you can start new projects, manage saved ones, and access tutorials or example walkthroughs.
-
-#### Key Icons + Their Functions
-
-- **New Project** — Start designing a new microgrid
-- **Edit** — Modify an existing project
-- **Duplicate** — Make a copy of a project for comparison or reuse
-- **Delete** — Remove a project permanently
+Once logged in, the Toolkit page serves as your main hub. Here you can start new projects, manage saved ones, and access tutorials, example walkthroughs and create your microgrid.
 
 ### Starting a New Project
 
@@ -120,19 +107,24 @@ Click the “New Project” button to begin. You’ll be prompted to enter a nam
 
 #### Naming and Saving Projects
 
-Choose a clear, descriptive name to stay organized. The tool autosaves regularly, but you can also save manually using the save button in the toolbar.
+Choose a clear, descriptive name to stay organized. The toolkit automatically saves everything so no need to worry about saving manually.
 
-#### Duplicating or Deleting Projects
+- **Search Projects** - Search for projects you've created previously.
+- **New Project** — Adds a new project to your project list so you can start designing a new microgrid.
+- **Edit** — Rename, view description, and delete your project.
 
-To duplicate a project, click the copy icon in the dashboard. This is useful for testing different design scenarios. To delete a project, click the trash icon and confirm when prompted—this action is permanent.
+## Workbench
 
----
-
-## Configuring a Microgrid
+The Workbench tab is where you will create and design your microgrid.
 
 ### Defining energy loads
 
+Create component adds a new fully customizable component to your microgrid. The default is a light bulb but it can
+be easily changed differnet electronic devices. Load per hour can be changed by clicking the pencil icon and entering the value in killowatts for each hour of operation. Components can be deleted by pressing the trash icon.
+
 ### Selecting energy sources
+
+You can edit the energy settings for your microgrid by pressing the System Configuration button and then clicking the appropiate system you want to modify.
 
 ### Set location and environmental data
 
@@ -140,7 +132,7 @@ To duplicate a project, click the copy icon in the dashboard. This is useful for
 
 ---
 
-## Simulation
+## Graph/Simulation
 
 ### How to start
 
@@ -151,6 +143,8 @@ To duplicate a project, click the copy icon in the dashboard. This is useful for
 The wind and solar data was retrieved using the National Solar Radiation Database. The API works for areas in Africa only. All of the values have been retrieved (Zenith Solar Angle, DNI, GHI, Wind Speed, Air Temperature, DHI) or calculated (GTI) using this database only, specifically the Meteosat Prime Meridian: PSM v4.
 
 ---
+
+## Data
 
 ## Analysis
 
