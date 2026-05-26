@@ -52,9 +52,32 @@ export default function Workbench({ loads, setLoads }: WorkbenchProps) {
       const fromIndex = prev.findIndex((c) => c.id === draggedId);
       const toIndex = prev.findIndex((c) => c.id === dropId);
       if (fromIndex === -1 || toIndex === -1) return prev;
+
+      const draggedLoad = prev[fromIndex];
+      const dropLoad = prev[toIndex];
+      const dropCanNest = getLoadLabelById(dropLoad.labelId)?.canNest ?? false;
+      const draggedCanNest = getLoadLabelById(draggedLoad.labelId)?.canNest ?? false;
+      const draggedHasChildren = (draggedLoad.children?.length ?? 0) > 0;
+
+     
+      if (dropCanNest && !draggedCanNest && !draggedHasChildren) {
+        const next = [...prev];
+        const [removed] = next.splice(fromIndex, 1);
+        const dropIndexAfterRemoval = next.findIndex((c) => c.id === dropId);
+        if (dropIndexAfterRemoval === -1) return prev;
+        const parent = next[dropIndexAfterRemoval];
+        next[dropIndexAfterRemoval] = {
+          ...parent,
+          children: [...(parent.children ?? []), removed],
+        };
+        return next;
+      }
+
+  
       const next = [...prev];
       const [removed] = next.splice(fromIndex, 1);
-      next.splice(toIndex, 0, removed);
+      const adjustedToIndex = fromIndex < toIndex ? toIndex - 1 : toIndex;
+      next.splice(adjustedToIndex, 0, removed);
       return next;
     });
     setDraggedId(null);

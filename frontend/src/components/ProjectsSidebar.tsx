@@ -270,6 +270,7 @@ ProjectsSidebarProps) {
                         onProjectCreated={(newProject: any) => {
                         onProjectCreated?.();
                         if(newProject){
+                            onProjectSelect?.(newProject.id);
                             setJustCreatedProject(newProject);
                             setShowNewProjectModal(false);
                             setShowWizard(true);
