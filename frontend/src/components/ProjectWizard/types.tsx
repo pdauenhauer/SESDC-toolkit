@@ -44,6 +44,14 @@ export interface GeneratorData {
   lifespan: number;
 }
 
+/** Persisted Smart Load Profiler choices (optional). */
+export interface LoadProfilerSettings {
+  usagePattern?: "residential" | "commercial";
+  pattern?: "residential" | "commercial";
+  buildingSize?: "small" | "medium" | "large";
+  baseLoadKw: number;
+}
+
 export interface ProjectData {
   name: string;
   solar: SolarData;
@@ -51,6 +59,7 @@ export interface ProjectData {
   wind: WindData;
   generator: GeneratorData;
   loads: number[];
+  loadProfiler?: LoadProfilerSettings;
 }
 
 export interface ProjectWizardProps {
@@ -64,6 +73,8 @@ export interface StepProps {
   updateSection: (section: keyof ProjectData, field: string, value: any) => void;
   updateNested: (section: keyof ProjectData, category: string, field: string, value: any) => void;
   nextStep: (next: WizardStep) => void;
+  showAdvanced?: boolean;
+  setShowAdvanced?: (open: boolean) => void;
   onSkip?: () => void;
   onBack?: () => void;
 }

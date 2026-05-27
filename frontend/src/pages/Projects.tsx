@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "preact/hooks";
 import { useLocation } from "preact-iso";
-import { Timestamp } from "firebase/firestore";
+import { Timestamp, deleteField } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import ProjectsSidebar from "../components/ProjectsSidebar";
 import Workbench from "../components/Workbench";
@@ -12,7 +12,8 @@ import { createNewLoad } from "../utils/loadUtils";
 import { auth } from "../utils/firebase/firebase-init";
 import ProjectWizard from '../components/ProjectWizard';
 import type { WizardStep } from "../components/ProjectWizard/types";
-import { listProjects, getProjectLoads, saveProjectLoads, createProject, updateProject } from "../database/firestore";
+import { listProjects, getProjectLoads, saveProjectLoads, updateProject, createProject } from "../database/firestore";
+import { projectPatchFromWizardData, projectToWizardInitialData } from "../database/projectPayload";
 import {
   buildSimulationPayload,
   fetchStoredSimulation,
@@ -575,59 +576,58 @@ export default function Projects() {
         </section>
       </div>
       {isWizardOpen && (
-        <ProjectWizard 
-          projectName = {activeProjectName}
-          initialStep = {wizardInitialStep}
-
-          initialData={(projects.find(p => p.id === activeProjectId) as any)?.wizardConfig || projects.find(p => p.id === activeProjectId)}
-
+        <ProjectWizard
+          projectName={activeProjectName}
+          initialStep={wizardInitialStep}
+          initialData={
+            activeProjectId
+              ? projectToWizardInitialData(
+                  projects.find((p) => p.id === activeProjectId) as Project
+                )
+              : undefined
+          }
           onClose={() => setWizardOpen(false)}
           onFinish={async (wizardData) => {
             if (!auth.currentUser) return;
 
             if (wizardInitialStep !== "ONBOARDING_PROMPT") {
               try {
+                const patch = projectPatchFromWizardData(wizardData);
                 await updateProject(auth.currentUser.uid, activeProjectId, {
-                  wizardConfig: wizardData
-              });
-
-              await refreshProjects();
-            } catch (e) {
-              console.error("error updating project configuration", e);
-              alert("Failed to save changes.");
-            } finally {
-              setWizardOpen(false);
-              setWizardInitialStep("ONBOARDING_PROMPT");
+                  ...patch,
+                  wizardConfig: deleteField()
+                } as Partial<Project>);
+                await refreshProjects();
+              } catch (e) {
+                console.error("error updating project configuration", e);
+                alert("Failed to save changes.");
+              } finally {
+                setWizardOpen(false);
+                setWizardInitialStep("ONBOARDING_PROMPT");
+              }
+              return;
             }
-            return;
-          }
+
             console.log("Wizard Completed with Data:", wizardData);
             setWizardOpen(false);
 
-            if (!auth.currentUser) return;
-
             try {
-              // 1. Create the new project in Firestore
-              const newProjectId = await createProject(auth.currentUser.uid, {
-                name: wizardData.name,
-                ownerId: auth.currentUser.uid,
+              const uid = auth.currentUser.uid;
+              const patch = projectPatchFromWizardData(wizardData);
+              const newProjectId = await createProject(uid, {
+                ownerId: uid,
                 description: "Created via Smart Wizard",
-                wizardConfig: wizardData, 
+                ...patch
               });
-
-              // 2. Refresh the sidebar list to show the new project
               await refreshProjects();
-
-              // 3. Automatically select the new project
               setActiveProjectId(newProjectId);
-
             } catch (e) {
               console.error("Error creating project:", e);
               alert("Failed to create project. See console for details.");
             } finally {
-              setWizardInitialStep("ONBOARDING_PROMPT")
+              setWizardInitialStep("ONBOARDING_PROMPT");
             }
-          }} 
+          }}
         />
       )}
       <div
