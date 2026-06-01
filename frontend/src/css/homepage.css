@@ -41,7 +41,7 @@
   overflow: visible;
   flex-wrap: nowrap;
   gap: 0;
-  transform: translateY(-200px);
+  transform: translateY(-140px);
 }
 
 .home-left-content {

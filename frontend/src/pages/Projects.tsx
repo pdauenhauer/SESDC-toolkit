@@ -360,7 +360,7 @@ export default function Projects() {
                 <button
                   type="button"
                   class="projects-toolbar-icon-btn projects-top-icon-btn projects-top-icon-btn--front"
-                  onClick={() => route("/contact")}
+                  onClick={() => route("/guide")}
                   aria-label="Help"
                 >
                   <img src={helpIcon} alt="" class="projects-toolbar-icon" />
