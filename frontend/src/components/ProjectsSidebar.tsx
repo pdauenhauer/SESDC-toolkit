@@ -3,7 +3,7 @@ import type { Project } from "../database/models/metadata";
 import { updateProject, deleteProject } from "../database/firestore";
 import { projectPatchFromWizardData } from "../database/projectPayload";
 import { deleteField } from "firebase/firestore";
-import { useState, useMemo, useEffect } from "preact/hooks";
+import { useState, useMemo } from "preact/hooks";
 import NewProjectModal from "./NewProjectModal";
 import exitIcon from "../media/circle-x.svg";
 import plusIcon from "../media/plus.svg";
