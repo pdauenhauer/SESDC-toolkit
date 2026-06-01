@@ -27,7 +27,7 @@ git clone https://github.com/pdauenhauer/SESDC-toolkit.git
 cd SESDC-Toolkit
 ```
 
-> The recommended working branch is `su_testing`. Work there and push to `main` only when you have substantial changes ready.
+> The recommended working branch is `test`. Work there and push to `main` only when you have substantial changes ready.
 
 ---
 
