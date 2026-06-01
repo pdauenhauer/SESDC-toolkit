@@ -1,0 +1,98 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+.contact-page {
+  background: var(--white-main);
+  min-height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    background-color: var(--green-main);
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin: 2rem auto;
+
+    width: 100%;
+    max-width: 600px;
+  }
+
+  .contact-form label {
+    font-size: 1rem;
+    color: var(--white-main);
+    text-align: left;
+    margin-bottom: 0;
+    font-weight: 700;
+  }
+
+  .contact-required {
+    color: #dc2626;
+    font-weight: 700;
+    font-size: 0.8em;
+    margin-left: 0;
+    position: relative;
+    top: -4px;
+  }
+
+  .contact-form input,
+  .contact-form textarea {
+    padding: 0.75rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    background-color: var(--white-main);
+    color: var(--black);
+    margin-bottom: 0.9rem;
+  }
+
+  .contact-form input:focus,
+  .contact-form textarea:focus {
+    outline: 2px solid var(--selection-green);
+  }
+
+  .contact-submit-btn {
+    background-color: var(--selection-green);
+    color: var(--white-main);
+    border: none;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 1rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: background-color 0.3s ease;
+  }
+
+  .contact-submit-btn:hover {
+    background-color: var(--selection-green);
+  }
+
+
+  .contact-title {
+    font-size: 2.5rem;
+    color: var(--green-main);
+    margin-bottom: 1rem;
+  }
+
+  .contact-container {
+    text-align: center;
+    color: var(--green-start);
+    margin: 1.5rem auto 0.5rem auto;
+    max-width: 550px;
+    width: 100%;
+    padding: 0 1rem;
+    padding-top: 32px;
+  }
+
+  .contact-page-container {
+    width: 100%;
+    max-width: 550px;
+    margin: 0 auto;
+  }

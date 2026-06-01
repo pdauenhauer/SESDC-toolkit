@@ -11,6 +11,7 @@
       "ignore": [
         "venv",
         ".git",
+        ".env",
         "firebase-debug.log",
         "firebase-debug.*.log",
         "*.local"
@@ -20,7 +21,8 @@
     }
   ],
   "hosting": {
-    "public": "public",
+    "site": "sesdc-toolkit2",
+    "public": "frontend/dist",
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -31,6 +33,8 @@
     "rules": "storage.rules"
   },
   "emulators": {
+    "auth": { "port": 9099 
+    },
     "functions": {
       "port": 5001
     },
@@ -38,7 +42,7 @@
       "port": 8080
     },
     "hosting": {
-      "port": 5001
+      "port": 5005
     },
     "ui": {
       "enabled": true

@@ -1,0 +1,207 @@
+/* src/css/TutorialOverlay.css */
+
+:root {
+  --tutorial-accent: var(--green-main, #037f6f);
+  --tutorial-accent-soft: rgba(3, 127, 111, 0.22);
+  --tutorial-panel-bg: #ffffff;
+  --tutorial-panel-border: #e2e8f0;
+  --tutorial-text: #0f172a;
+  --tutorial-text-muted: #64748b;
+  --tutorial-dim-fill: rgba(15, 23, 42, 0.52);
+}
+
+.tutorial-layer.tutorial-layer-viewport {
+  position: fixed;
+  inset: 0;
+  pointer-events: none !important;
+  z-index: 10000;
+  overflow: hidden;
+}
+
+/* Spotlight: SVG hole is transparent to clicks; dimmed area uses the path only */
+.tutorial-spotlight-svg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none !important;
+  z-index: 0;
+}
+
+.tutorial-spotlight-path {
+  pointer-events: none !important;
+  fill: var(--tutorial-dim-fill);
+  fill-rule: evenodd;
+  transition: d 0.2s ease;
+}
+
+.tutorial-click-blocker {
+  position: fixed;
+  background: transparent;
+  pointer-events: auto !important;
+  z-index: 1;
+}
+
+.tutorial-highlight-ring {
+  position: fixed;
+  border: 2px solid var(--tutorial-accent);
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 4px var(--tutorial-accent-soft),
+    0 8px 28px rgba(15, 23, 42, 0.12);
+  pointer-events: none;
+  transition: top 0.2s ease, left 0.2s ease, width 0.2s ease, height 0.2s ease;
+  z-index: 2;
+}
+
+.tutorial-panel {
+  position: fixed;
+  background: var(--tutorial-panel-bg);
+  color: var(--tutorial-text);
+  padding: 20px 22px 22px;
+  border-radius: 16px;
+  border: 1px solid var(--tutorial-panel-border);
+  box-shadow:
+    0 18px 50px rgba(15, 23, 42, 0.14),
+    0 4px 16px rgba(15, 23, 42, 0.06);
+  pointer-events: auto !important;
+  animation: tutorialPopIn 0.25s ease-out;
+  z-index: 3;
+  overflow-y: auto;
+}
+
+.tutorial-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.tutorial-panel-title {
+  margin: 0 0 8px 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--tutorial-text);
+  line-height: 1.3;
+}
+
+.tutorial-panel-text {
+  margin: 0 0 14px 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--tutorial-text-muted);
+}
+
+.tutorial-panel-close {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin: -6px -6px 0 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--tutorial-text-muted);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.tutorial-panel-close:hover {
+  background: #f1f5f9;
+  color: var(--tutorial-text);
+}
+
+.tutorial-panel-close:focus-visible {
+  outline: 2px solid var(--tutorial-accent);
+  outline-offset: 2px;
+}
+
+.tutorial-required-hint {
+  margin: 0 0 10px 0 !important;
+  font-size: 0.85rem !important;
+  color: #b45309 !important;
+}
+
+.tutorial-step-indicator {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--tutorial-text-muted);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.tutorial-bubble-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.tutorial-btn {
+  padding: 9px 16px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    opacity 0.15s,
+    box-shadow 0.15s;
+}
+
+.tutorial-btn-next {
+  background: var(--tutorial-accent);
+  color: #f8fafc;
+  margin-left: auto;
+}
+
+.tutorial-btn-next:hover:not(:disabled) {
+  filter: brightness(1.05);
+  box-shadow: 0 4px 14px rgba(3, 127, 111, 0.35);
+}
+
+.tutorial-btn-next:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tutorial-btn-prev {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+.tutorial-btn-prev:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.tutorial-btn-prev:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tutorial-btn:focus-visible {
+  outline: 2px solid var(--tutorial-accent);
+  outline-offset: 2px;
+}
+
+@keyframes tutorialPopIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

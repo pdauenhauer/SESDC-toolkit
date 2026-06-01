@@ -1,0 +1,122 @@
+.simulation-results {
+  padding: 16px;
+  background: var(--white-main, #fff);
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.simulation-results--empty {
+  text-align: center;
+  color: #64748b;
+}
+
+.simulation-results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.simulation-results-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.simulation-results-clear {
+  padding: 6px 12px;
+  font-size: 14px;
+  color: #64748b;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.simulation-results-clear:hover {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.simulation-results-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.simulation-results-item {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.simulation-results-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #f8fafc;
+}
+
+.simulation-results-item-toggle {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #334155;
+}
+
+.simulation-results-item-toggle:hover {
+  color: var(--green-main, #0d9488);
+}
+
+.simulation-results-item-label {
+  font-weight: 600;
+}
+
+.simulation-results-item-meta {
+  font-size: 12px;
+  color: #64748b;
+  margin-left: 8px;
+}
+
+.simulation-results-download {
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #0d9488;
+  background: #ccfbf1;
+  border: 1px solid #99f6e4;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.simulation-results-download:hover {
+  background: #99f6e4;
+  color: #0f766e;
+}
+
+.simulation-results-preview {
+  margin: 0;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.4;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  overflow: auto;
+  max-height: 320px;
+  white-space: pre;
+  color: #475569;
+}

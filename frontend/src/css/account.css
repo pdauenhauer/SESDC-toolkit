@@ -1,0 +1,262 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+/* Page */
+.account-page-shell {
+  background: var(--white-main);
+  padding-top: 52px;
+  min-height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+}
+
+.account-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  width: min(60vw, 1200px);
+  max-width: none;
+  margin: 0 auto;
+  padding: 16px 16px 24px;
+  background: transparent;
+  color: var(--dark-text);
+}
+
+/* Panel */
+.account-panel {
+  width: 100%;
+  background: var(--white-main);
+  padding: 24px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.07);
+}
+
+.account-panel-header {
+  margin-bottom: 34px;
+}
+
+.account-panel-header h1 {
+  margin: 0;
+  font-size: 32px;
+}
+
+.account-panel-header p {
+  margin: 8px 0 0;
+  color: var(--dark-grey);
+}
+
+.account-section {
+  margin-bottom: 0;
+}
+
+.account-section h3 {
+  margin-bottom: 5px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.16);
+  font-weight: 400;
+}
+
+.account-panel .account-section + .account-section {
+  margin-top: 22px;
+  padding-top: 0;
+}
+
+.account-email-value,
+.account-name-value,
+.account-projects-owned-value {
+  color: var(--dark-grey);
+}
+
+.account-email-value,
+.account-name-value {
+  margin-left: 4px;
+}
+
+.account-field-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 4px;
+}
+
+.account-label-with-icon,
+.account-toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.account-toggle-label {
+  font-weight: 700;
+}
+
+.account-inline-icon,
+.account-profile-chevron {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.account-profile-action {
+  margin-top: 0;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--dark-text);
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.4;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.account-inline-form.account-inline-form--profile {
+  margin-top: 10px;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+/* Buttons */
+.account-danger-btn {
+  background: #c0392b;
+  color: var(--white-main);
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: none;
+}
+
+.account-btn-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.account-btn-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.account-delete-icon-hover {
+  display: none;
+}
+
+.account-signout-btn,
+.account-delete-toggle-btn {
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.16);
+  transition: box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.account-signout-btn {
+  margin-left: auto;
+  background: var(--white-main);
+  color: var(--dark-text);
+  border: 1px solid rgba(15, 23, 42, 0.24);
+}
+
+.account-delete-toggle-btn {
+  background: var(--white-main);
+  color: #c0392b;
+  border: 2px solid #c0392b;
+}
+
+.account-signout-btn:hover {
+  background: var(--light-cool);
+  color: var(--dark-text);
+}
+
+.account-delete-toggle-btn:hover {
+  background: var(--white-main);
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.account-signout-btn:hover,
+.account-delete-toggle-btn:hover {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.2);
+}
+
+.account-delete-toggle-btn:hover .account-delete-icon-default {
+  display: none;
+}
+
+.account-delete-toggle-btn:hover .account-delete-icon-hover {
+  display: inline-block;
+}
+
+.account-preferences-save-btn,
+.account-inline-action-btn {
+  margin-left: 0;
+}
+
+/* Inline forms */
+.account-inline-form,
+.account-delete-box {
+  margin-top: 12px;
+  padding: 16px;
+  background: var(--light-grey);
+  border-radius: 10px;
+}
+
+.account-inline-form input,
+.account-delete-box input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.account-inline-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* Actions */
+.account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* Toggle */
+.account-toggle-row {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.account-messageDiv {
+  margin: 14px auto 0;
+  width: fit-content;
+  max-width: 100%;
+  text-align: center;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 10px;
+  box-shadow: none;
+  background: transparent;
+  color: var(--dark-text);
+}
+
+@media (max-width: 780px) {
+  .account-page-shell {
+    min-height: 100%;
+  }
+
+  .account-page {
+    width: 100%;
+    padding: 12px 16px 32px;
+  }
+
+  .account-panel {
+    margin-bottom: 16px;
+  }
+}

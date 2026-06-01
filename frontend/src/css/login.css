@@ -1,0 +1,174 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+/* Auth card */
+.login-wrapper {
+  margin-top: 20px;
+  width: 420px;
+  background: var(--white-main);
+  color: var(--dark-grey);
+  border: 1px solid var(--light-grey);
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  padding: 30px 40px;
+}
+
+.login-wrapper h1,
+.login-wrapper h2 {
+  font-size: 30px;
+  text-align: center;
+  color: var(--dark-grey);
+}
+
+.login-form-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  margin-bottom: 12px;
+}
+
+.login-form-brand-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  transform: translateY(-7px);
+}
+
+.login-form-brand-text {
+  font-size: 1.25rem;
+  font-family: "Apple SD Gothic Neo", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--dark-grey);
+}
+
+/* Form controls */
+.login-input-box {
+  position: relative;
+  width: 100%;
+  height: 50px;
+  margin: 30px 0;
+}
+
+.login-input-box input {
+  width: 100%;
+  height: 100%;
+  background: var(--white-main);
+  border: none;
+  outline: none;
+  border: 2px solid var(--light-grey);
+  border-radius: 40px;
+  font-size: 18px;
+  color: var(--dark-grey);
+  padding: 20px 45px 20px 20px;
+}
+
+.login-input-box input::placeholder {
+  color: var(--dark-grey);
+}
+
+.login-btn {
+  width: 100%;
+  height: 45px;
+  background: var(--green-main);
+  border: 1px solid var(--green-main);
+  outline: none;
+  border-radius: 40px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, .1);
+  cursor: pointer;
+  color: var(--white-main);
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.toggle-text {
+  text-align: center;
+  margin-top: 1rem;
+  color: var(--dark-grey);
+  font-weight: 200;
+}
+
+.toggle-text a,
+.toggle-text a:visited {
+  color: var(--green-main);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.toggle-text a:hover {
+  color: var(--green-main);
+  text-decoration: underline;
+}
+
+/* Form visibility states */
+.login-form-container {
+  transition: opacity 0.3s ease-in-out;
+}
+
+.login-form-container.login-hidden {
+  display: none;
+  opacity: 0;
+}
+
+.login-form-container.login-visible {
+  display: block;
+  opacity: 1;
+}
+
+/* Status message */
+.message {
+  background-color: var(--gradient-bg);
+  color: var(--white-main);
+  padding: 10px 20px;
+  margin: 10px;
+  border-radius: 5px;
+  font-size: 1rem;
+  animation: fadeOut 5s forwards;
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Modal shell */
+.auth-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.62);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.auth-modal-wrapper {
+  position: relative;
+  margin-top: 0;
+  width: 100%;
+  max-width: 420px;
+}
+
+.auth-modal-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.auth-modal-close-icon {
+  width: 22px;
+  height: 22px;
+}

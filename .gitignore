@@ -12,6 +12,7 @@ yarn-debug.log*
 yarn-error.log*
 firebase-debug.log*
 firebase-debug.*.log*
+*.csv
 
 # Service Account
 functions/serviceAccount.json
@@ -76,3 +77,4 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+

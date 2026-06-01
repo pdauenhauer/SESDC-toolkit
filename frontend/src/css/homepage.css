@@ -1,0 +1,175 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+.home-page {
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)),
+    url('../media/david-ouma-U13RrgO6f7g-unsplash.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  min-height: calc(100vh - 60px);
+}
+
+.home-content-wrapper {
+  min-height: calc(100vh - 60px);
+  display: flex;
+  align-items: flex-end;
+}
+
+/* Hero Section */
+.home-hero-section {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-end;
+  padding: 0;
+}
+
+.home-content-box {
+  width: 100%;
+  max-width: none;
+  background-color: transparent;
+  border: none;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 40px 0 40px 80px;
+  box-shadow: none;
+  overflow: visible;
+  flex-wrap: nowrap;
+  gap: 0;
+  transform: translateY(-140px);
+}
+
+.home-left-content {
+  flex: 1;
+  max-width: 620px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  justify-content: center;
+  gap: 20px;
+  position: relative;
+}
+
+.home-left-content h1,
+.home-left-content h3 {
+  color: var(--white-main);
+}
+
+.home-design-tool-button {
+  background-color: var(--green-main);
+  color: var(--white-main);
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  width: 60%;
+}
+
+.home-design-tool-button:hover {
+  background-color: var(--selection-green);
+}
+
+.home-hero-image {
+  position: absolute;
+  top: -220px;
+  left: 0;
+  transform: none;
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  pointer-events: none;
+}
+
+.home-hero-image img {
+  width: 380px;
+  height: auto;
+  border-radius: 14px;
+}
+
+/* Overview Section */
+.home-overview-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 80%;
+  margin: 40px auto 0;
+  background-color: var(--white-main);
+  padding: 24px;
+  margin-bottom: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.home-overview-section p {
+  font-size: 18px;
+  color: var(--subheading);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.home-get-started {
+  background-color: var(--green-main);
+  color: var(--white-main);
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  border: none;
+  margin-top: 15px;
+  text-align: center;
+}
+
+.home-get-started:hover {
+  background-color: var(--selection-green);
+}
+
+@media (max-width: 858px) {
+  .home-content-wrapper {
+    align-items: center;
+  }
+
+  .home-hero-section {
+    justify-content: center;
+    align-items: center;
+  }
+
+  .home-content-box {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 20px 40px;
+    transform: translateY(-70px);
+  }
+
+  .home-left-content {
+    width: 100%;
+    max-width: 640px;
+    align-items: center;
+    text-align: center;
+    position: static;
+    gap: 16px;
+  }
+
+  .home-hero-image {
+    position: static;
+    width: auto;
+    justify-content: center;
+  }
+
+  .home-hero-image img {
+    width: min(100%, 380px);
+  }
+
+  .home-design-tool-button {
+    width: min(320px, 90%);
+  }
+}

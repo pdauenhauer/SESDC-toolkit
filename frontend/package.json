@@ -9,11 +9,22 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "preact": "^10.25.4",
-    "preact-iso": "^2.11.0"
+    "@tailwindcss/vite": "^4.1.17",
+    "firebase": "^12.8.0",
+    "marked": "^18.0.2",
+    "preact": "^10.27.2",
+    "preact-iso": "^2.11.0",
+    "uplot": "^1.6.32"
   },
   "devDependencies": {
-    "@preact/preset-vite": "^2.10.1",
+    "@preact/preset-vite": "^2.10.2",
+    "@tailwindcss/cli": "^4.1.18",
+    "@tailwindcss/vite": "^4.1.18",
+    "@types/node": "^24.10.0",
+    "autoprefixer": "^10.4.22",
+    "baseline-browser-mapping": "^2.9.18",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
     "typescript": "~5.7.2",
     "vite": "^6.1.0"
   }

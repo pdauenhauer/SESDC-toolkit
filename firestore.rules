@@ -1,13 +1,27 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read and write access to all documents
+
+    function signedIn() { return request.auth != null; }
+    function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
+
+    // users/{uid} doc (your index fields live here)
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+
+      // users/{uid}/projects/{projectId}
+      match /projects/{projectId} {
+        // Owner can do everything under their own path
+        allow read, create, update, delete: if isOwner(uid);
+
+        // Optional: enforce projectOwner field consistency on create
+        // allow create: if isOwner(uid) && request.resource.data.projectOwner == request.auth.uid;
+      }
+    }
+
+    // deny everything else
     match /{document=**} {
-      allow read, write: if true; 
+      allow read, write: if false;
     }
   }
 }
-
-
-

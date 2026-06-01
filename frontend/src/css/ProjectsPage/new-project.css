@@ -1,0 +1,140 @@
+/*css for popup card after + new project is clicked*/
+
+.np-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+
+  width: 100%;
+  max-width: 448px;
+
+  box-shadow:
+    0 20px 40px rgba(15, 23, 42, 0.1),
+    0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+.np-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.np-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #0A090C;
+}
+
+.np-close {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 8px;
+  position: relative;
+  top: -16px;
+  right: -16px;
+  background: transparent;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.np-close-icon {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.np-close:hover {
+  background: var(--light-cool);
+}
+
+.np-group {
+  margin-bottom: 16px;
+}
+
+.np-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #4a5568;
+  margin-bottom: 4px;
+}
+
+.np-required{
+  font-weight: 500;
+  color: #c82a2a;
+}
+
+.np-input,
+.np-textarea {
+  width: 100%;
+  padding: 8px 12px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+
+  color: #0A090C;
+  background: white;
+
+  outline: none;
+  box-sizing: border-box;
+}
+
+.np-input:focus,
+.np-textarea:focus {
+  border-color: #037F6F;
+  box-shadow: 0 0 0 3px rgba(3, 127, 111, 0.2);
+}
+
+.np-textarea {
+  resize: none;
+}
+
+.np-error {
+  color: #ef4444;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.np-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.np-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.np-btn-cancel {
+  background: #e5e7eb;
+  color: #4a5568;
+}
+
+.np-btn-cancel:hover {
+  background: #d1d5db;
+}
+
+.np-btn-primary {
+  background: #037F6F;
+  color: #F7F9F1;
+}
+
+.np-btn-primary:hover {
+  background: #05B39C;
+}
+
+.np-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

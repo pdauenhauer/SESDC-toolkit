@@ -1,6 +1,22 @@
 {
   "dependencies": {
     "@google-cloud/storage": "^7.15.0",
-    "papaparse": "^5.5.1"
+    "@tailwindcss/postcss": "^4.1.17",
+    "firebase": "^12.9.0",
+    "http-server": "^14.1.1",
+    "papaparse": "^5.5.1",
+    "tailwindcss": "^4.1.17"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.22",
+    "firebase-tools": "^15.8.0",
+    "postcss": "^8.5.6",
+    "vitest": "^3.2.4"
+  },
+  "scripts": {
+    "test:unit": "vitest run",
+    "test:functions": "cd functions && python -m pytest tests/ -v",
+    "test:e2e": "firebase emulators:exec --only auth,firestore --project demo-sesdc-toolkit \"npm run test:unit\"",
+    "test:emulators": "npm run test:e2e"
   }
 }
