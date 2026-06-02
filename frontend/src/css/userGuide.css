@@ -1,117 +1,325 @@
-.user-guide-page {
-  max-width: 860px;
-  margin: 0 auto;
-  padding: 40px 32px 96px;
-  color: var(--black, #1f2430);
-  box-sizing: border-box;
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+html {
+    scroll-behavior: smooth;
+}
+
+/* Main content */
+.guide-main-content {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 2rem 3rem;
+    padding-top: 100px;
+}
+
+.guide-main-content h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+    line-height: 1.2;
+    text-align: center;
+    color: var(--black-main, #111);
+}
+
+.guide-subtitle {
+    text-align: center;
+    color: var(--black-main, #111);
+    font-size: 1.05rem;
+    margin-bottom: 1.5rem;
+}
+
+.guide-divider {
+    border: none;
+    border-top: 1.5px solid lightgrey;
+    margin: 0 0 2rem 0;
+}
+
+.guide-main-content h2 {
+    font-size: 1.9rem;
+    font-weight: 600;
+    margin-top: 2.5rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+    color: var(--black-main);
+    border-bottom: 1.5px solid lightgrey;
+    padding-bottom: 0.25rem;
+}
+
+.guide-main-content p {
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+    color: var(--black-main, #111);
+}
+
+.guide-main-content ul {
+    display: block;
+    list-style-type: disc;
+    margin-left: 1.2rem;
+    margin-bottom: 1rem;
+    padding-left: 0;
+}
+
+.guide-main-content ul li {
+    display: list-item;
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+    color: var(--black-main, #111); 
+}
+
+.guide-main-content h3 {
+    font-size: 1.45rem;
+    font-weight: 600;
+    color: var(--black-main);
+    margin-top: 1.75rem;
+    margin-bottom: 0.6rem;
+    line-height: 1.3;
+}
+
+.guide-main-content h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    margin-top: 1.1rem;
+    margin-bottom: 0.4rem;
+    line-height: 1.4;
+}
+
+.guide-main-content ul li strong {
+    font-weight: 600;
+}
+
+.guide-main-content a {
+    color: var(--green-main, #037f6f);
+    text-decoration: none;
+}
+
+.guide-main-content a:hover {
+    text-decoration: underline;
+}
+
+/* ── Table of Contents ── */
+.guide-toc {
+    margin-bottom: 2.5rem;
+}
+
+.guide-toc-heading {
+    font-size: 1.6rem !important;
+    font-weight: 700 !important;
+    color: var(--black-main) !important;
+    border-bottom: none !important;
+    margin-bottom: 0.75rem !important;
+    margin-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.guide-toc-list {
+    list-style: none !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+.guide-toc-list > li {
+    list-style: none !important;
+    display: list-item !important;
+    padding-left: 0;
+    margin-bottom: 0.35rem !important;
+    color: inherit !important;
+}
+
+.guide-toc-list > li::before {
+    content: "•";
+    color: var(--black-main, #111);
+    font-weight: 700;
+    margin-right: 8px;
+}
+
+.guide-toc-list > li > a {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--green-main, #037f6f) !important;
+    text-decoration: underline;
+}
+
+.guide-toc-list > li > a:hover {
+    text-decoration: underline;
+}
+
+.guide-toc-list ul {
+    list-style: none !important;
+    margin: 0.25rem 0 0.4rem 1.5rem !important;
+    padding-left: 0 !important;
+}
+
+.guide-toc-list ul li {
+    list-style: none !important;
+    display: list-item !important;
+    margin-bottom: 0.2rem !important;
+    color: inherit !important;
+}
+
+.guide-toc-list ul li::before {
+    content: "◦";
+    color: var(--black-main, #111);
+    margin-right: 8px;
+}
+
+.guide-toc-list ul li a {
+    font-size: 1.05rem;
+    color: var(--green-main, #037f6f) !important;
+    text-decoration: underline;
+}
+
+.guide-toc-list ul li a:hover {
+    text-decoration: underline;
+}
+
+/* ── Callout box ── */
+.guide-callout {
+    background: #f0fdf9;
+    border-left: 4px solid var(--green-main, #037f6f);
+    border-radius: 0 10px 10px 0;
+    padding: 14px 18px;
+    margin: 1rem 0 1.5rem 0;
+}
+
+.guide-callout p {
+    margin-bottom: 0.5rem;
+    color: #1e3a35;
+}
+
+.guide-callout p:last-child {
+    margin-bottom: 0;
+}
+
+.guide-callout ul {
+    margin-bottom: 0;
+}
+
+.guide-callout ul li {
+    color: #1e3a35;
+}
+
+.guide-callout strong {
+    color: var(--green-main, #037f6f);
+}
+
+/* ── Numbered steps ── */
+.guide-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin: 1rem 0 1.5rem 0;
+}
+
+.guide-step-item {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 16px;
+}
+
+.guide-step-num {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    background: var(--green-main, #037f6f);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.guide-step-body strong {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 4px;
+}
+
+.guide-step-body p {
+    margin-bottom: 0;
+    font-size: 0.95rem;
+}
+
+/* ── Component cards ── */
+.guide-component-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 1rem 0 1.5rem 0;
 }
 
 @media (max-width: 640px) {
-  .user-guide-page {
-    padding: 32px 20px 72px;
-  }
+    .guide-component-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
-.user-guide-content {
-  line-height: 1.65;
-  font-size: 1rem;
+.guide-component-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 16px;
 }
 
-.user-guide-content h1,
-.user-guide-content h2,
-.user-guide-content h3,
-.user-guide-content h4 {
-  scroll-margin-top: 104px;
-  position: relative;
+.guide-component-card h4 {
+    margin-top: 0;
+    color: var(--green-main, #037f6f);
+    font-weight: 600;
 }
 
-.user-guide-content h1 {
-  font-size: 2.2rem;
-  margin: 0 0 24px;
-  line-height: 1.2;
+.guide-component-card p {
+    margin-bottom: 0.5rem;
+    font-size: 0.93rem;
 }
 
-.user-guide-content h2 {
-  font-size: 1.6rem;
-  margin: 48px 0 16px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+.guide-component-card ul {
+    margin-bottom: 0;
 }
 
-.user-guide-content h3 {
-  font-size: 1.25rem;
-  margin: 32px 0 12px;
+.guide-component-card ul li {
+    font-size: 0.9rem;
 }
 
-.user-guide-content h4 {
-  font-size: 1.05rem;
-  margin: 24px 0 8px;
+/* ── FAQ items ── */
+.guide-faq {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 1rem;
 }
 
-.user-guide-content p {
-  margin: 0 0 16px;
+.guide-faq-item {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 18px;
 }
 
-.user-guide-content ul,
-.user-guide-content ol {
-  padding-left: 1.4rem;
-  margin: 0 0 16px;
+.guide-faq-item h4 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    color: #0f172a;
+    font-size: 1rem;
+    font-weight: 600;
 }
 
-.user-guide-content li {
-  margin: 4px 0;
+.guide-faq-item p {
+    margin-bottom: 0;
+    font-size: 0.93rem;
 }
 
-.user-guide-content hr {
-  border: none;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  margin: 32px 0;
-}
-
-.user-guide-content a {
-  color: var(--green-main, #037F6F);
-  text-decoration: underline;
-}
-
-.user-guide-content a:hover {
-  text-decoration: none;
-}
-
-.user-guide-content code {
-  background: rgba(0, 0, 0, 0.06);
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-size: 0.92em;
-}
-
-.user-guide-content pre {
-  background: rgba(0, 0, 0, 0.06);
-  padding: 14px 16px;
-  border-radius: 8px;
-  overflow-x: auto;
-}
-
-.user-guide-content pre code {
-  background: transparent;
-  padding: 0;
-}
-
-.user-guide-content .guide-anchor {
-  position: absolute;
-  left: -22px;
-  top: 0;
-  text-decoration: none;
-  color: rgba(0, 0, 0, 0.3);
-  opacity: 0;
-  transition: opacity 0.15s ease;
-  font-weight: 600;
-}
-
-.user-guide-content .guide-heading:hover .guide-anchor,
-.user-guide-content .guide-heading:focus-within .guide-anchor {
-  opacity: 1;
-}
-
-.user-guide-content .guide-anchor:hover {
-  color: var(--green-main, #037F6F);
+@media (max-width: 640px) {
+    .guide-main-content {
+        padding: 1.25rem 1rem 2rem;
+        padding-top: 80px;
+    }
 }

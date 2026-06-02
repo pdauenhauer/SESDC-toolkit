@@ -252,7 +252,7 @@ ProjectsSidebarProps) {
                                         }}
                                         aria-label="Project Info"
                                     >
-                                        <img src={optionIcon} alt="" class="projects-item-icon" />
+                                        <i class="bx bx-dots-horizontal-rounded" style={{ fontSize: '20px', color: '#334155' }} />
                                     </button>
                                 </div>
                             ))
