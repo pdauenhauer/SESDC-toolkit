@@ -4,6 +4,9 @@ import { LOAD_LABELS, getLoadLabelById } from "../data/loadLabels";
 import Tooltip from "./Tooltip";
 import trashIcon from "../media/trash.svg";
 import trashRedIcon from "../media/trash-red.svg";
+import LoadBlockEditor from "./LoadBlockEditor";
+import { defaultBlocks, computeProfile } from "../utils/loadBlocks";
+import type { LoadBlock } from "../utils/loadBlocks";
 import "../css/ProjectsPage/load.css";
 
 interface LoadProps {
@@ -46,13 +49,14 @@ export default function Load({
 }: LoadProps) {
   const [editingName, setEditingName] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [draftBlocks, setDraftBlocks] = useState<LoadBlock[]>(load.blocks ?? defaultBlocks());
   const [draftProfile, setDraftProfile] = useState<number[]>(load.profile);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const label = getLoadLabelById(load.labelId);
   const canNest = label?.canNest ?? false;
 
-  // Parent’s 24h chart: own profile + sum of children’s profiles (children add onto parent)
+  // Parent's 24h chart: own profile + sum of children's profiles (children add onto parent)
   const effectiveProfile =
     canNest && childLoads.length > 0
       ? load.profile.map(
@@ -64,8 +68,11 @@ export default function Load({
 
   // Keep draft in sync when opening menu
   useEffect(() => {
-    if (menuOpen) setDraftProfile([...load.profile]);
-  }, [menuOpen, load.profile]);
+    if (menuOpen) {
+      setDraftBlocks(load.blocks ?? defaultBlocks());
+      setDraftProfile([...load.profile]);
+    }
+  }, [menuOpen, load.profile, load.blocks]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -73,23 +80,20 @@ export default function Load({
     const handleClick = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setMenuOpen(false);
-        onUpdate({ profile: draftProfile });
+        onUpdate({ profile: draftProfile, blocks: draftBlocks });
       }
     };
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
-  }, [menuOpen, draftProfile]);
+  }, [menuOpen, draftProfile, draftBlocks]);
 
-  const handleProfileHourChange = (hourIndex: number, value: number) => {
-    setDraftProfile((prev) => {
-      const next = [...prev];
-      next[hourIndex] = Math.max(0, value);
-      return next;
-    });
+  const handleBlocksChange = (blocks: LoadBlock[], profile: number[]) => {
+    setDraftBlocks(blocks);
+    setDraftProfile(profile);
   };
 
   const handleSaveProfile = () => {
-    onUpdate({ profile: draftProfile });
+    onUpdate({ profile: draftProfile, blocks: draftBlocks });
     setMenuOpen(false);
   };
 
@@ -211,11 +215,11 @@ export default function Load({
         </Tooltip>
       </div>
 
-      {/* 24h profile editor popover */}
+      {/* Load profile editor popover */}
       {menuOpen && (
         <div ref={menuRef} class="load-profile-editor">
           <div class="load-profile-editor-header">
-            <span>Edit 24h load profile</span>
+            <span>Edit load profile</span>
             <button
               type="button"
               class="load-profile-editor-close"
@@ -225,21 +229,11 @@ export default function Load({
               x
             </button>
           </div>
-          <div class="load-profile-editor-grid">
-            {draftProfile.map((value, i) => (
-              <label key={i} class="load-profile-editor-cell">
-                <span class="load-profile-editor-hour">{i}h</span>
-                <input
-                  type="number"
-                  min={0}
-                  step={0.1}
-                  value={value}
-                  onInput={(e) =>
-                    handleProfileHourChange(i, parseFloat((e.target as HTMLInputElement).value) || 0)
-                  }
-                />
-              </label>
-            ))}
+          <div class="load-profile-editor-body">
+            <LoadBlockEditor
+              blocks={draftBlocks}
+              onChange={handleBlocksChange}
+            />
           </div>
           <div class="load-profile-editor-footer">
             <button type="button" class="load-profile-editor-save" onClick={handleSaveProfile}>

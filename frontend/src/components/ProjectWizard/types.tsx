@@ -50,6 +50,7 @@ export interface LoadProfilerSettings {
   pattern?: "residential" | "commercial";
   buildingSize?: "small" | "medium" | "large";
   baseLoadKw: number;
+  blocks?: import('../../utils/loadBlocks').LoadBlock[];
 }
 
 export interface ProjectData {
