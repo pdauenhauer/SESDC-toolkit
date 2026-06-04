@@ -39,7 +39,7 @@ def fetch_nlr_data(
         print("[fetch_nlr_data] Missing NLR_API_KEY (set in functions/.env or Cloud Function env)")
         return None
 
-    url = "https://developer.nrel.gov/api/nsrdb/v2/solar/nsrdb-msg-v1-0-0-download.csv"
+    url = "https://developer.nlr.gov/api/nsrdb/v2/solar/nsrdb-msg-v1-0-0-download.csv"
     wkt = f"POINT({longitude} {latitude})"
     params = {
         "api_key": key,
