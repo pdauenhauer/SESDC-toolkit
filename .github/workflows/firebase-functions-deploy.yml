@@ -6,6 +6,7 @@ on:
       - test
     paths:
       - "functions/**"
+  workflow_dispatch:
 
 jobs:
   deploy-functions:
