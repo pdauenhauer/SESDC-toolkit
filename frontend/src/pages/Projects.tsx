@@ -1,155 +1,278 @@
-import { useState, useEffect, useRef } from "preact/hooks";
+import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 import { useLocation } from "preact-iso";
-import { Timestamp, deleteField } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import ProjectsSidebar from "../components/ProjectsSidebar";
-import Workbench from "../components/Workbench";
-import SimulationResults from "../components/SimulationResults";
-import SimulationGraphsPanel from "../components/graphs/SimulationGraphsPanel";
+import { CircleHelp, Play, Plus, Zap } from "lucide-preact";
 import type { Load } from "../database/models/load";
 import type { Project } from "../database/models/metadata";
-import { createNewLoad } from "../utils/loadUtils";
 import { auth } from "../utils/firebase/firebase-init";
-import ProjectWizard from '../components/ProjectWizard';
-import type { WizardStep } from "../components/ProjectWizard/types";
-import { listProjects, getProjectLoads, saveProjectLoads, updateProject, createProject } from "../database/firestore";
-import { projectPatchFromWizardData, projectToWizardInitialData } from "../database/projectPayload";
 import {
-  buildSimulationPayload,
-  fetchStoredSimulation,
-  runSimulation,
-  type SimulationResult,
-} from "../services/simulation";
-import menuIcon from "../media/layout-grid.svg";
-import settingIcon from "../media/settings.svg";
-import homeIcon from "../media/house.svg";
-import projectsIcon from "../media/boxes.svg";
-import runIcon from "../media/play-green.svg";
-import showProjectsIcon from "../media/grid-2x2-plus.svg";
-import slidersHorizontalIcon from "../media/sliders-horizontal.svg";
-import rightArrowIcon from "../media/chevron-right.svg";
-import leftArrowIcon from "../media/chevron-left.svg";
-import configIcon from "../media/cog.svg";
-import windIcon from "../media/wind.svg";
-import generatorIcon from "../media/zap.svg";
-import solarPanelIcon from "../media/solar-panel.svg";
-import batteryIcon from "../media/battery-medium.svg";
-import accountIcon from "../media/user.svg";
-import helpIcon from "../media/circle-question-mark.svg";
-import "../css/ProjectsPage/projects.css";
-import "../css/ProjectsPage/projectCraftArea.css";
-import Tooltip from "../components/Tooltip";
-//maybe add the ability to have more than one project open at a time and have the tab change.with a plus
+  deleteProject,
+  getProjectLoads,
+  listProjects,
+  saveProjectLoads,
+  updateProject,
+} from "../database/firestore";
+import { buildSimulationPayload, fetchStoredSimulation, runSimulation, type SimulationResult } from "../services/simulation";
+import ResultsTab from "../components/results/ResultsTab";
+import GraphsTab from "../components/graphs/GraphsTab";
+import Workbench from "../components/workbench/Workbench";
+import { findWithParent, initialsOf, isNestable, removeLoad, saveLoadEdit, sourceConfig } from "../components/workbench/model";
+import ConfigDrawer, { type SupplyDraft } from "../components/drawers/ConfigDrawer";
+import LoadProfilerDrawer from "../components/drawers/LoadProfilerDrawer";
+import ProjectSwitcher from "../components/shell/ProjectSwitcher";
+import { Button, IconButton, Segmented, SOURCE_META, STROKE, useToast, type SourceId } from "../components/ui";
+import "../css/app-shell.css";
 
-// Set to true to use hardcoded dummy projects instead of fetching from DB
-const USE_DUMMY_DATA = false;
-
-// Hardcoded dummy projects for testing
-const dummyProjects: Project[] = [
-  {
-    id: "1",
-    name: "Solar Farm Project",
-    ownerId: "user1",
-    description: "Large-scale solar installation",
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
-  },
-  {
-    id: "2",
-    name: "Microgrid Design Alpha",
-    ownerId: "user1",
-    description: "Community microgrid system",
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
-  },
-  {
-    id: "3",
-    name: "Rural Energy System",
-    ownerId: "user1",
-    description: "Off-grid renewable energy solution",
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
-  },
-  {
-    id: "4",
-    name: "Hybrid Solar-Wind",
-    ownerId: "user1",
-    description: "Combined renewable energy project",
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
-  },
-];
-
-type CraftTabId = "data" | "workbench" | "graphs";
-
-const TABS: { id: CraftTabId; label: string }[] = [
-  { id: "data", label: "Data" },
-  { id: "workbench", label: "Workbench" },
-  { id: "graphs", label: "Graphs" },
-];
+type TabId = "workbench" | "data" | "graphs";
 
 export default function Projects() {
-  const { route } = useLocation();
-  const [activeProjectId, setActiveProjectId] = useState<string>("");
+  const { route, query } = useLocation();
+  /** Project to open first, e.g. /projects?project=abc after the wizard creates one. */
+  const requestedProjectId = query.project;
+  const flash = useToast();
+
+  const [user, setUser] = useState(auth.currentUser);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeCraftTab, setActiveCraftTab] = useState<CraftTabId>("workbench");
+  const [activeProjectId, setActiveProjectId] = useState("");
+  const [activeTab, setActiveTab] = useState<TabId>("workbench");
+
+  // Load tree + debounced autosave.
   const [workbenchLoads, setWorkbenchLoads] = useState<Load[]>([]);
-  const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
-  const [simulationLoading, setSimulationLoading] = useState(false);
-  const [configOpen, setConfigOpen] = useState(false);
-  const [graphFiltersOpen, setGraphFiltersOpen] = useState(false);
-  const [dataTabLoading, setDataTabLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const hydratedProjectIdRef = useRef<string | null>(null);
-  const [isWizardOpen, setWizardOpen] = useState(false);
-  const [wizardInitialStep, setWizardInitialStep] = useState<WizardStep>("ONBOARDING_PROMPT");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [revealReady, setRevealReady] = useState(false);
-  const [showComponentAddedMessage, setShowComponentAddedMessage] = useState(false);
-  const componentAddedMessageTimerRef = useRef<number | null>(null);
+  const dirtyRef = useRef(false);
+  const editVersionRef = useRef(0);
 
-  const handleAddComponent = () => {
-    setWorkbenchLoads((prev) => [...prev, createNewLoad(`Load ${prev.length + 1}`)]);
-    setShowComponentAddedMessage(true);
-    if (componentAddedMessageTimerRef.current !== null) {
-      window.clearTimeout(componentAddedMessageTimerRef.current);
-    }
-    componentAddedMessageTimerRef.current = window.setTimeout(() => {
-      setShowComponentAddedMessage(false);
-      componentAddedMessageTimerRef.current = null;
-    }, 450);
-  };
+  // Simulation.
+  const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
+  /** Set when a run completes this session; stored results have no known run time. */
+  const [simulatedAt, setSimulatedAt] = useState<Date | null>(null);
+  const [simulationLoading, setSimulationLoading] = useState(false);
+  const [resultsLoading, setResultsLoading] = useState(false);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => setRevealReady(true), 10);
-    return () => window.clearTimeout(timer);
+  // Drawers.
+  const [configSource, setConfigSource] = useState<SourceId | null>(null);
+  const [editingLoadId, setEditingLoadId] = useState<string | null>(null);
+
+  const activeProject = projects.find((p) => p.id === activeProjectId) ?? null;
+
+  /* ---------- Data loading ---------- */
+
+  const refreshProjects = useCallback(async () => {
+    const u = auth.currentUser;
+    if (!u) return [];
+    const list = await listProjects(u.uid);
+    setProjects(list);
+    return list;
   }, []);
 
   useEffect(() => {
-    return () => {
-      if (componentAddedMessageTimerRef.current !== null) {
-        window.clearTimeout(componentAddedMessageTimerRef.current);
+    const unsubscribe = onAuthStateChanged(auth, async (u) => {
+      setUser(u);
+      if (!u) {
+        hydratedProjectIdRef.current = null;
+        setWorkbenchLoads([]);
+        setActiveProjectId("");
+        setProjects([]);
+        setLoading(false);
+        return;
       }
-    };
-  }, []);
+      try {
+        await refreshProjects();
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+        setProjects([]);
+      } finally {
+        setLoading(false);
+      }
+    });
+    return () => unsubscribe();
+  }, [refreshProjects]);
 
-  const handleRunSimulation = async () => {
-    const user = auth.currentUser;
-    if (!user || !activeProjectId) {
-      alert("Please sign in and select a project.");
+  // Select the most recently edited project once the list arrives.
+  useEffect(() => {
+    if (loading) return;
+    if (!activeProjectId && projects.length > 0) {
+      const requested = requestedProjectId && projects.find((p) => p.id === requestedProjectId);
+      setActiveProjectId(requested ? requested.id : projects[0].id);
+    }
+  }, [loading, projects, activeProjectId]);
+
+  // Load the tree when the active project changes.
+  useEffect(() => {
+    const u = auth.currentUser;
+    dirtyRef.current = false;
+    setSaving(false);
+    setSimulatedAt(null);
+    if (!u || !activeProjectId) {
+      setWorkbenchLoads([]);
       return;
     }
-    setSimulationLoading(true);
-    setSimulationResult(null);
+    hydratedProjectIdRef.current = null;
+    let cancelled = false;
+    (async () => {
+      try {
+        const loads = await getProjectLoads(u.uid, activeProjectId);
+        if (!cancelled) setWorkbenchLoads(loads);
+      } catch (e) {
+        console.error("Failed to load project loads:", e);
+        if (!cancelled) setWorkbenchLoads([]);
+      } finally {
+        if (!cancelled) hydratedProjectIdRef.current = activeProjectId;
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeProjectId]);
+
+  /** All user edits to the load tree go through here so they're saved. */
+  const editLoads = useCallback((updater: (prev: Load[]) => Load[]) => {
+    dirtyRef.current = true;
+    editVersionRef.current += 1;
+    setWorkbenchLoads(updater);
+  }, []);
+
+  // Debounced save (800 ms) with a live Saved / Saving… status.
+  useEffect(() => {
+    const u = auth.currentUser;
+    if (!dirtyRef.current || !u || !activeProjectId) return;
+    if (hydratedProjectIdRef.current !== activeProjectId) return;
+    setSaving(true);
+    const version = editVersionRef.current;
+    const pid = activeProjectId;
+    const loads = workbenchLoads;
+    const handle = window.setTimeout(async () => {
+      try {
+        await saveProjectLoads(u.uid, pid, loads);
+        setProjects((ps) => ps.map((p) => (p.id === pid ? { ...p, loads } : p)));
+      } catch (e) {
+        console.error("Failed to save project loads:", e);
+      }
+      if (editVersionRef.current === version) {
+        dirtyRef.current = false;
+        setSaving(false);
+      }
+    }, 800);
+    return () => window.clearTimeout(handle);
+  }, [activeProjectId, workbenchLoads]);
+
+  // Stored results for the Results / Graphs tabs.
+  useEffect(() => {
+    if (activeTab === "workbench") return;
+    const u = auth.currentUser;
+    if (!u || !activeProjectId) {
+      setSimulationResult(null);
+      return;
+    }
+    setResultsLoading(true);
+    fetchStoredSimulation(u.uid, activeProjectId)
+      .then((bundle) => setSimulationResult(Object.keys(bundle).length > 0 ? bundle : null))
+      .catch((err) => {
+        console.warn("[Simulation GET stored] failed:", err);
+        setSimulationResult(null);
+      })
+      .finally(() => setResultsLoading(false));
+  }, [activeTab, activeProjectId]);
+
+  /* ---------- Project actions ---------- */
+
+  const selectProject = async (id: string) => {
+    if (id === activeProjectId) return;
+    // Flush an unsaved edit before switching so it isn't dropped.
+    const u = auth.currentUser;
+    if (u && dirtyRef.current && activeProjectId) {
+      saveProjectLoads(u.uid, activeProjectId, workbenchLoads).catch((e) => console.error("Flush save failed:", e));
+    }
+    setActiveProjectId(id);
+  };
+
+  const renameProject = async (id: string, name: string) => {
+    const u = auth.currentUser;
+    if (!u) return;
+    setProjects((ps) => ps.map((p) => (p.id === id ? { ...p, name } : p)));
     try {
-      const payload = buildSimulationPayload(
-        user.uid,
-        activeProjectId,
-        workbenchLoads
-      );
+      await updateProject(u.uid, id, { name });
+      flash("Project renamed");
+    } catch (e) {
+      console.error("Rename failed:", e);
+      await refreshProjects();
+    }
+  };
+
+  const removeProject = async (project: Project) => {
+    const u = auth.currentUser;
+    if (!u) return;
+    if (!window.confirm(`Delete project "${project.name}"? This cannot be undone.`)) return;
+    try {
+      await deleteProject(u.uid, project.id);
+      const list = await refreshProjects();
+      if (project.id === activeProjectId) setActiveProjectId(list[0]?.id ?? "");
+      flash("Project deleted");
+    } catch (e) {
+      console.error("Delete failed:", e);
+    }
+  };
+
+  /* ---------- Supply ---------- */
+
+  const toggleSource = async (id: SourceId, enabled: boolean) => {
+    const u = auth.currentUser;
+    if (!u || !activeProject) return;
+    const next = { ...sourceConfig(activeProject, id), enabled };
+    const pid = activeProject.id;
+    setProjects((ps) => ps.map((p) => (p.id === pid ? { ...p, [id]: next } : p)));
+    setSaving(true);
+    try {
+      await updateProject(u.uid, pid, { [id]: next } as Partial<Project>);
+      flash(`${SOURCE_META[id].name} turned ${enabled ? "on" : "off"}`);
+    } catch (e) {
+      console.error("Toggle failed:", e);
+      await refreshProjects();
+    } finally {
+      if (!dirtyRef.current) setSaving(false);
+    }
+  };
+
+  const openSource = (id: SourceId) => {
+    if (activeProject) setConfigSource(id);
+  };
+
+  const saveConfig = async (supply: SupplyDraft) => {
+    const u = auth.currentUser;
+    if (!u || !activeProject) return;
+    const pid = activeProject.id;
+    setConfigSource(null);
+    // SupplyDraft is the same shape as the stored source configs (normalized numbers).
+    const patch = supply as unknown as Partial<Project>;
+    setProjects((ps) => ps.map((p) => (p.id === pid ? ({ ...p, ...patch } as Project) : p)));
+    setSaving(true);
+    try {
+      await updateProject(u.uid, pid, patch);
+      flash("Configuration saved");
+    } catch (e) {
+      console.error("Saving configuration failed:", e);
+      alert("Failed to save the configuration.");
+      await refreshProjects();
+    } finally {
+      if (!dirtyRef.current) setSaving(false);
+    }
+  };
+
+  /* ---------- Simulation ---------- */
+
+  const handleRunSimulation = async () => {
+    const u = auth.currentUser;
+    if (!u || !activeProjectId) return;
+    setSimulationLoading(true);
+    try {
+      const payload = buildSimulationPayload(u.uid, activeProjectId, workbenchLoads, activeProject);
       const result = await runSimulation(payload);
       setSimulationResult(result);
-      setActiveCraftTab("data");
+      setSimulatedAt(new Date());
+      setActiveTab("data");
+      flash("Simulation complete");
     } catch (err) {
       console.error("Simulation error:", err);
       alert(err instanceof Error ? err.message : "Simulation failed. Check console.");
@@ -158,485 +281,171 @@ export default function Projects() {
     }
   };
 
-  const openWizardAtStep = (step: WizardStep) => {
-    setWizardInitialStep(step);
-    setWizardOpen(true);
+  /* ---------- Rendering ---------- */
+
+  const editing = (() => {
+    if (!editingLoadId) return null;
+    const { load, parent } = findWithParent(workbenchLoads, editingLoadId);
+    // A top-level nestable load is a building: its own (shared) profile is edited.
+    return load ? { load, parent, isGroup: !parent && isNestable(load) } : null;
+  })();
+  const initials = initialsOf(user?.displayName || user?.email);
+  const hasProject = !!activeProject;
+
+  const renderTab = () => {
+    if (activeTab === "workbench") {
+      return (
+        <Workbench
+          loads={workbenchLoads}
+          onLoadsChange={editLoads}
+          project={activeProject}
+          onToggleSource={toggleSource}
+          onOpenSource={openSource}
+          onEditLoad={setEditingLoadId}
+        />
+      );
+    }
+    const label = activeTab === "data" ? "results" : "graphs";
+    if (simulationLoading) return <div class="mg-state mg-state--loading">Running simulation…</div>;
+    if (resultsLoading) return <div class="mg-state mg-state--loading">Loading stored {label}…</div>;
+    if (!simulationResult || Object.keys(simulationResult).length === 0) {
+      return (
+        <div class="mg-card mg-state">
+          <div class="mg-state__title">No simulation yet</div>
+          <div>Run a simulation to see {label} for this project.</div>
+          <Button variant="primary" size="sm" icon={<Play size={14} fill="currentColor" strokeWidth={STROKE} />} onClick={handleRunSimulation}>
+            Run simulation
+          </Button>
+        </div>
+      );
+    }
+    return activeTab === "data" ? (
+      <ResultsTab
+        result={simulationResult}
+        project={activeProject}
+        simulatedAt={simulatedAt}
+        onEditInputs={() => setActiveTab("workbench")}
+      />
+    ) : (
+      <GraphsTab result={simulationResult} />
+    );
   };
 
-  const handleCraftTabChange = (tab: CraftTabId) => {
-    setActiveCraftTab(tab);
-    if (tab !== "data") setDataTabLoading(false);
+  const renderEmpty = () => {
+    if (loading) return <div class="mg-state mg-state--loading">Loading projects…</div>;
+    if (!user) {
+      return (
+        <div class="mg-card mg-state">
+          <div class="mg-state__title">Sign in to see your projects</div>
+          <Button variant="primary" size="sm" onClick={() => route("/")}>
+            Go to sign in
+          </Button>
+        </div>
+      );
+    }
+    return (
+      <div class="mg-card mg-state">
+        <div class="mg-state__title">No projects yet</div>
+        <div>Create a project to start designing a microgrid.</div>
+        <Button variant="primary" size="sm" icon={<Plus size={16} strokeWidth={STROKE} />} onClick={() => route("/projects/new")}>
+          New project
+        </Button>
+      </div>
+    );
   };
-
-  // 1) fetch projects
-  useEffect(() => {
-    if (USE_DUMMY_DATA) {
-      setProjects(dummyProjects);
-      setLoading(false);
-      return;
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        hydratedProjectIdRef.current = null;
-        setWorkbenchLoads([]);
-        setActiveProjectId("");
-        setProjects([]);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const userProjects = await listProjects(user.uid);
-        setProjects(userProjects);
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-        setProjects([]);
-      } finally {
-        setLoading(false);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  // 2) Select first project after projects load (if none selected)
-  useEffect(() => {
-    if (loading) return;
-    if (!activeProjectId && projects.length > 0) {
-      setActiveProjectId(projects[0].id);
-    }
-  }, [loading, projects, activeProjectId]);
-
-  // 3) When on a results tab and active project changes, fetch stored data for that project
-  useEffect(() => {
-    if (activeCraftTab !== "data" && activeCraftTab !== "graphs") return;
-    const user = auth.currentUser;
-    if (!user?.uid || !activeProjectId) {
-      setSimulationResult(null);
-      return;
-    }
-    setDataTabLoading(true);
-    fetchStoredSimulation(user.uid, activeProjectId)
-      .then((csvBundle) => {
-        if (Object.keys(csvBundle).length > 0) setSimulationResult(csvBundle);
-        else setSimulationResult(null);
-      })
-      .catch((err) => {
-        console.warn("[Simulation GET stored] failed:", err);
-        setSimulationResult(null);
-      })
-      .finally(() => setDataTabLoading(false));
-  }, [activeCraftTab, activeProjectId]);
-
-  // 4) load loads when active project changes
-  useEffect(() => {
-    if (USE_DUMMY_DATA) return;
-
-    const user = auth.currentUser;
-    if (!user || !activeProjectId) {
-      setWorkbenchLoads([]);
-      return;
-    }
-
-    hydratedProjectIdRef.current = null;
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const loads = await getProjectLoads(user.uid, activeProjectId);
-        if (cancelled) return;
-        setWorkbenchLoads(loads);
-        hydratedProjectIdRef.current = activeProjectId;
-      } catch (e) {
-        console.error("Failed to load project loads:", e);
-        if (!cancelled) setWorkbenchLoads([]);
-        hydratedProjectIdRef.current = activeProjectId; // allow saving after user edits
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [activeProjectId]);
-
-  // 4) Debounced save when loads change
-  useEffect(() => {
-    if (USE_DUMMY_DATA) return;
-
-    const user = auth.currentUser;
-    if (!user || !activeProjectId) return;
-    if (hydratedProjectIdRef.current !== activeProjectId) return;
-
-    const handle = setTimeout(() => {
-      saveProjectLoads(user.uid, activeProjectId, workbenchLoads).catch((e) => {
-        console.error("Failed to save project loads:", e);
-      });
-    }, 800);
-
-    return () => clearTimeout(handle);
-  }, [activeProjectId, workbenchLoads]);
-
-  // Callback to refresh projects after creating a new one
-  const refreshProjects = async () => {
-    if (USE_DUMMY_DATA) return;
-    const user = auth.currentUser;
-    if (user) {
-      const userProjects = await listProjects(user.uid);
-      setProjects(userProjects);
-    }
-  };
-
-  const activeProjectName =
-    projects.find((project) => project.id === activeProjectId)?.name ?? "No Project Selected";
 
   return (
-    <div class="projects-page">
-      <div class="projects-layout">
-        {sidebarOpen && (
-          <aside
-            class={`projects-sidebar projects-reveal projects-reveal--sidebar ${revealReady ? "is-visible" : ""}`}
-          >
-            <ProjectsSidebar
-              projects={projects}
-              loading={loading}
-              activeProjectId={activeProjectId}
-              onProjectSelect={(id) => setActiveProjectId(id)}
-              onProjectCreated={refreshProjects}
-              onNewProjectClick={() => setWizardOpen(true)}
-              onHideSidebar={() => setSidebarOpen(false)}
-            />
-          </aside>
+    <div class="mg-root mg-shell">
+      <header class="mg-header">
+        <a href="/" class="mg-brand" aria-label="Microgrid Toolkit home" title="Home">
+          <Zap size={16} strokeWidth={STROKE} fill="currentColor" />
+        </a>
+        <ProjectSwitcher
+          projects={projects}
+          activeId={activeProjectId}
+          activeName={activeProject?.name || (loading ? "Loading…" : "No project")}
+          onSelect={selectProject}
+          onNew={() => route("/projects/new")}
+          onRename={renameProject}
+          onDelete={removeProject}
+        />
+        <Segmented<TabId>
+          variant="tabs"
+          ariaLabel="Project views"
+          value={activeTab}
+          onChange={setActiveTab}
+          options={[
+            { id: "workbench", label: "Workbench" },
+            { id: "data", label: "Results" },
+            { id: "graphs", label: "Graphs" },
+          ]}
+        />
+        <div class="mg-header__spacer" />
+        {hasProject && (
+          <div class={`mg-save${saving ? " is-saving" : ""}`} title={saving ? "Saving…" : "All changes saved"}>
+            <span class="mg-save__dot" />
+            <span>{saving ? "Saving…" : "Saved"}</span>
+          </div>
         )}
-
-        <section class="projects-main">
-          <div
-            class={`projects-project-header projects-reveal projects-reveal--header ${revealReady ? "is-visible" : ""}`}
-          >
-            <div class="projects-project-header-side projects-project-header-side--left">
-              <>
-                <Tooltip text="Show Projects" position="right">
-                    <button
-                      type="button"
-                      class="projects-sidebar-inline-toggle projects-top-icon-btn"
-                      onClick={() => setSidebarOpen(true)}
-                      aria-label="Show Projects"
-                    >
-                    <img src={menuIcon} alt="" class="projects-sidebar-toggle-icon" />
-                  </button>
-                </Tooltip>
-                <Tooltip text="Home" position="bottom">
-                  <button
-                    type="button"
-                    class="projects-toolbar-icon-btn projects-top-icon-btn"
-                    onClick={() => route("/")}
-                    aria-label="Home"
-                  >
-                    <img src={homeIcon} alt="" class="projects-toolbar-icon" />
-                  </button>
-                </Tooltip>
-              </>
-            </div>
-            <div class="projects-project-header-title-wrap">
-              <span class="projects-project-header-outer-box projects-project-header-outer-box--left" />
-              <span class="projects-project-header-outer-box projects-project-header-outer-box--right" />
-              <div class="projects-project-header-title">
-                <img src={projectsIcon} alt="" class="projects-project-header-title-icon" />
-                {activeProjectName}
-              </div>
-            </div>
-            <div class="projects-project-header-side projects-project-header-side--right">
-              <Tooltip text="Account" position="bottom">
-                <button
-                  type="button" //NEED TO FIX ACCOUNT PAGE ROUTE
-                  class="projects-toolbar-icon-btn projects-top-icon-btn"
-                  onClick={() => route("/account")}
-                  aria-label="Account"
-                >
-                  <img src={accountIcon} alt="" class="projects-toolbar-icon" />
-                </button>
-              </Tooltip>
-              <Tooltip text="Help" position="bottom">
-                <button
-                  type="button"
-                  class="projects-toolbar-icon-btn projects-top-icon-btn projects-top-icon-btn--front"
-                  onClick={() => route("/guide")}
-                  aria-label="Help"
-                >
-                  <img src={helpIcon} alt="" class="projects-toolbar-icon" />
-                </button>
-              </Tooltip>
-              <button
-                type="button"
-                class="projects-toolbar-icon-btn projects-top-icon-btn"
-                onClick={() => console.log("Open Settings")}
-                aria-label="Settings"
-              >
-                <img src={settingIcon} alt="" class="projects-toolbar-icon" />
-              </button>
-            </div>
+        <IconButton label="Help" size="round" onClick={() => route("/guide")}>
+          <CircleHelp size={18} strokeWidth={STROKE} />
+        </IconButton>
+        <button type="button" class="mg-avatar" aria-label="Account" title="Account" onClick={() => route("/account")}>
+          {initials}
+        </button>
+        <Button
+          variant="primary"
+          icon={<Play size={14} fill="currentColor" strokeWidth={STROKE} />}
+          onClick={handleRunSimulation}
+          disabled={simulationLoading || !hasProject}
+        >
+          {simulationLoading ? "Running…" : "Run simulation"}
+        </Button>
+        {simulationLoading && (
+          <div class="mg-runbar" aria-hidden="true">
+            <div class="mg-runbar__fill" />
           </div>
+        )}
+      </header>
 
-          <div
-            class={`projects-toolbar projects-reveal projects-reveal--toolbar ${revealReady ? "is-visible" : ""}`}
-          >
-            <div class="projects-toolbar-row">
-              <div class="project-craft-tabs project-craft-tabs--toolbar">
-                {TABS.map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    class={[
-                      "project-craft-tab",
-                      activeCraftTab === tab.id ? "is-active" : "",
-                    ].join(" ")}
-                    onClick={() => handleCraftTabChange(tab.id)}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
+      <main class="mg-main">
+        <div class="mg-content">{hasProject ? renderTab() : renderEmpty()}</div>
+      </main>
 
-              {(activeCraftTab === "workbench" || activeCraftTab === "graphs") && (
-                <span class="projects-toolbar-divider" aria-hidden="true" />
-              )}
+      {configSource && hasProject && (
+        <ConfigDrawer
+          key={`${activeProjectId}-${configSource}`}
+          project={activeProject}
+          initialSource={configSource}
+          onClose={() => setConfigSource(null)}
+          onSave={saveConfig}
+        />
+      )}
 
-              {activeCraftTab === "workbench" && (
-                <>
-                  <button
-                    type="button"
-                    class="projects-btn projects-btn-add projects-btn-add--workbench"
-                    onClick={handleAddComponent}
-                    aria-label="Create Component"
-                  >
-                    <img src={showProjectsIcon} alt="" class="projects-btn-add-icon" />
-                    <span class="projects-btn-label">Create Component</span>
-                  </button>
-                  <div class={`projects-config-wrap ${configOpen ? "is-open" : ""}`}>
-                    <button
-                      type="button"
-                      class="projects-btn projects-btn-config"
-                      onClick={() => setConfigOpen((open) => !open)}
-                      aria-label="System Configuration"
-                      aria-expanded={configOpen}
-                    >
-                      <img src={configIcon} alt="" class="projects-btn-config-left-icon" />
-                      <span class="projects-btn-label">System Configuration</span>
-                      <img
-                        src={configOpen ? leftArrowIcon : rightArrowIcon}
-                        alt=""
-                      class="projects-btn-config-icon"
-                    />
-                  </button>
-                    {configOpen && (
-                      <div class="projects-config-icons" aria-label="System Configuration Options">
-                        <Tooltip text="Generator" position="bottom">
-                          <button
-                            type="button"
-                            class="projects-config-option-btn"
-                            onClick={() => openWizardAtStep("GENERATOR")}
-                            aria-label="Open Generator Setup"
-                          >
-                            <img src={generatorIcon} alt="Generator" class="projects-config-option-icon" />
-                          </button>
-                        </Tooltip>
-                        <Tooltip text="Battery" position="bottom">
-                          <button
-                            type="button"
-                            class="projects-config-option-btn"
-                            onClick={() => openWizardAtStep("BATTERY")}
-                            aria-label="Open Battery Setup"
-                          >
-                            <img src={batteryIcon} alt="Battery" class="projects-config-option-icon" />
-                          </button>
-                        </Tooltip>
-                        <Tooltip text="Solar" position="bottom">
-                          <button
-                            type="button"
-                            class="projects-config-option-btn"
-                            onClick={() => openWizardAtStep("SOLAR")}
-                            aria-label="Open Solar Setup"
-                          >
-                            <img src={solarPanelIcon} alt="Solar" class="projects-config-option-icon" />
-                          </button>
-                        </Tooltip>
-                        <Tooltip text="Wind" position="bottom">
-                          <button
-                            type="button"
-                            class="projects-config-option-btn"
-                            onClick={() => openWizardAtStep("WIND")}
-                            aria-label="Open Wind Setup"
-                          >
-                            <img src={windIcon} alt="Wind" class="projects-config-option-icon" />
-                          </button>
-                        </Tooltip>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-
-              {activeCraftTab === "graphs" && (
-                <div class={`projects-filters-wrap ${graphFiltersOpen ? "is-open" : ""}`}>
-                  <button
-                    type="button"
-                    class="projects-btn projects-btn-config projects-btn-config--filters"
-                    onClick={() => setGraphFiltersOpen((open) => !open)}
-                    aria-label="Filters"
-                    aria-expanded={graphFiltersOpen}
-                  >
-                    <img src={slidersHorizontalIcon} alt="" class="projects-btn-config-left-icon" />
-                    <span class="projects-btn-label">Filters</span>
-                    <img
-                      src={graphFiltersOpen ? leftArrowIcon : rightArrowIcon}
-                      alt=""
-                      class="projects-btn-config-icon projects-btn-config-icon--filters"
-                    />
-                  </button>
-                  {graphFiltersOpen && (
-                    <div
-                      class="projects-config-icons projects-config-icons--filters"
-                      aria-label="Graph Filter Options"
-                    />
-                  )}
-                </div>
-              )}
-
-              <div class="projects-spacer" />
-
-              {activeCraftTab === "workbench" && (
-                <button
-                  type="button"
-                  class="projects-btn projects-btn-run"
-                  onClick={handleRunSimulation}
-                  aria-label="Run Simulation"
-                  disabled={simulationLoading}
-                >
-                  <img src={runIcon} alt="" class="projects-btn-run-icon" />
-                  <span class="projects-btn-label">
-                    {simulationLoading ? "Running…" : "Run Simulation"}
-                  </span>
-                </button>
-              )}
-            </div>
-          </div>
-
-          <main
-            class={`projects-workspace projects-reveal projects-reveal--workspace ${revealReady ? "is-visible" : ""}`}
-          >
-            <div class="project-craft-content">
-              {activeCraftTab === "data" && (
-                <div class="project-craft-panel">
-                  {simulationLoading ? (
-                    <p class="project-craft-placeholder project-craft-placeholder--loading">
-                      Running simulation…
-                    </p>
-                  ) : dataTabLoading ? (
-                    <p class="project-craft-placeholder project-craft-placeholder--loading">
-                      Loading stored data…
-                    </p>
-                  ) : simulationResult && Object.keys(simulationResult).length > 0 ? (
-                    <SimulationResults
-                      result={simulationResult}
-                      onClear={() => setSimulationResult(null)}
-                    />
-                  ) : (
-                    <p class="project-craft-placeholder">
-                      Data — run a simulation from the toolbar to see CSV results here.
-                    </p>
-                  )}
-                </div>
-              )}
-              {activeCraftTab === "workbench" && (
-                <div class="project-craft-panel project-craft-panel--workbench">
-                  <Workbench loads={workbenchLoads} setLoads={setWorkbenchLoads} />
-                </div>
-              )}
-              {activeCraftTab === "graphs" && (
-                <div class="project-craft-panel">
-                  {simulationLoading ? (
-                    <p class="project-craft-placeholder project-craft-placeholder--loading">
-                      Running simulation…
-                    </p>
-                  ) : dataTabLoading ? (
-                    <p class="project-craft-placeholder project-craft-placeholder--loading">
-                      Loading stored graph data…
-                    </p>
-                  ) : simulationResult && Object.keys(simulationResult).length > 0 ? (
-                    <SimulationGraphsPanel result={simulationResult} />
-                  ) : (
-                    <p class="project-craft-placeholder">
-                      Graphs — run a simulation from the toolbar to see charted results here.
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          </main>
-        </section>
-      </div>
-      {isWizardOpen && (
-        <ProjectWizard
-          projectName={activeProjectName}
-          initialStep={wizardInitialStep}
-          initialData={
-            activeProjectId
-              ? projectToWizardInitialData(
-                  projects.find((p) => p.id === activeProjectId) as Project
-                )
-              : undefined
-          }
-          onClose={() => setWizardOpen(false)}
-          onFinish={async (wizardData) => {
-            if (!auth.currentUser) return;
-
-            if (wizardInitialStep !== "ONBOARDING_PROMPT") {
-              try {
-                const patch = projectPatchFromWizardData(wizardData);
-                await updateProject(auth.currentUser.uid, activeProjectId, {
-                  ...patch,
-                  wizardConfig: deleteField()
-                } as Partial<Project>);
-                await refreshProjects();
-              } catch (e) {
-                console.error("error updating project configuration", e);
-                alert("Failed to save changes.");
-              } finally {
-                setWizardOpen(false);
-                setWizardInitialStep("ONBOARDING_PROMPT");
-              }
-              return;
-            }
-
-            console.log("Wizard Completed with Data:", wizardData);
-            setWizardOpen(false);
-
-            try {
-              const uid = auth.currentUser.uid;
-              const patch = projectPatchFromWizardData(wizardData);
-              const newProjectId = await createProject(uid, {
-                ownerId: uid,
-                description: "Created via Smart Wizard",
-                ...patch
-              });
-              await refreshProjects();
-              setActiveProjectId(newProjectId);
-            } catch (e) {
-              console.error("Error creating project:", e);
-              alert("Failed to create project. See console for details.");
-            } finally {
-              setWizardInitialStep("ONBOARDING_PROMPT");
-            }
+      {editing && (
+        <LoadProfilerDrawer
+          key={editing.load.id}
+          load={editing.load}
+          parentId={editing.parent ? editing.parent.id : "none"}
+          isGroup={editing.isGroup}
+          groups={workbenchLoads.filter(isNestable).map((g) => ({ id: g.id, name: g.name }))}
+          onClose={() => setEditingLoadId(null)}
+          onSave={(result) => {
+            const id = editing.load.id;
+            editLoads((prev) =>
+              saveLoadEdit(prev, id, { name: result.name, labelId: result.labelId, profile: result.profile }, result.parentId)
+            );
+            setEditingLoadId(null);
+            flash(editing.isGroup ? "Building saved" : "Load saved");
+          }}
+          onDelete={() => {
+            const { id, name } = editing.load;
+            editLoads((prev) => removeLoad(prev, id));
+            setEditingLoadId(null);
+            flash(`${name} deleted`);
           }}
         />
       )}
-      <div
-        class={`projects-message-box${showComponentAddedMessage ? " is-visible" : ""}`}
-        role="status"
-        aria-live="polite"
-      >
-        Component added
-      </div>
     </div>
   );
 }

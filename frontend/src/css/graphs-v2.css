@@ -1,0 +1,60 @@
+/* Graphs tab (redesign). */
+
+.mg-graphs { display: flex; flex-direction: column; gap: 20px; }
+
+/* ---------- Energy flows ---------- */
+.mg-flows { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 16px; }
+.mg-flows__head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.mg-flows__title { display: flex; flex-direction: column; margin-right: auto; }
+
+.mg-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.mg-chip {
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 11px 0 9px;
+  border: 1px solid #ECEAE5;
+  border-radius: 999px;
+  background: #FAFAF8;
+  color: var(--mg-faint);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.mg-chip:hover { border-color: #C9C6BF; }
+.mg-chip.is-on { border-color: #DAD7D0; background: #fff; color: var(--mg-ink); }
+.mg-chip__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--mg-switch-off); }
+
+.mg-flows__chart { position: relative; }
+.mg-flows__guide { position: absolute; width: 0; border-left: 1px solid #C9C6BF; pointer-events: none; }
+.mg-flows__tip {
+  position: absolute;
+  top: 10px;
+  z-index: 2;
+  min-width: 180px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid var(--mg-border);
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(22, 24, 27, 0.12);
+  font-size: 12px;
+  pointer-events: none;
+}
+.mg-flows__tip-date { margin-bottom: 6px; font-weight: 600; }
+.mg-flows__tip-row { display: flex; align-items: center; gap: 8px; padding: 2px 0; font-variant-numeric: tabular-nums; }
+.mg-flows__tip-dot { width: 8px; height: 8px; flex: none; border-radius: 50%; }
+.mg-flows__tip-label { flex: 1; color: var(--mg-ink-2); }
+.mg-flows__tip-value { font-weight: 500; }
+.mg-flows__empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--mg-faint); }
+.mg-flows__caption { font-size: 12px; color: var(--mg-faint); }
+
+/* ---------- Solar heatmap ---------- */
+.mg-heat { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 14px; }
+.mg-heat__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px; }
+.mg-heat__head .mg-h3 { margin-right: auto; }
+.mg-heat__grid { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 3px 10px; }
+.mg-heat__month { align-self: center; font-size: 11px; color: var(--mg-faint); }
+.mg-heat__row { display: grid; grid-template-columns: repeat(24, minmax(0, 1fr)); gap: 3px; }
+.mg-heat__cell { height: 16px; border-radius: 3px; }
+.mg-heat__hours { display: flex; justify-content: space-between; padding-top: 4px; font-size: 11px; color: var(--mg-faint); }

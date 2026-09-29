@@ -90,6 +90,7 @@ def run_simulation_post(req: https_fn.Request) -> https_fn.Response:
                 "opex": safe_float(data.get("generatorOpex")),
                 "lifespan": safe_int(data.get("generatorLifespan")),
                 "replacement_cost": safe_float(data.get("generatorReplacement")),
+                "fuel_price": safe_float(data.get("generatorFuelPrice")),
             }
 
         battery_inputs = None

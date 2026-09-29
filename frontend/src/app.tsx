@@ -4,10 +4,12 @@ import Home from './pages/Home'
 import Contact from './pages/Contact'
 import Account from './pages/Account'
 import Projects from './pages/Projects'
+import NewProjectWizard from './pages/NewProjectWizard'
 import Logout from './pages/Logout'
 import UserGuide from './pages/UserGuide'
 import SESDCHeader from './components/SESDCHeader'
 import SESDCFooter from './components/SESDCFooter'
+import { ToastProvider } from './components/ui'
 import '../src/css/SESDCFooter.css'
 import '../src/css/SESDCHeader.css'
 //import './app.css'
@@ -15,8 +17,8 @@ import '../src/css/SESDCHeader.css'
 function AppRoutes() {
   const { path } = useLocation()
   const normalizedPath = path !== '/' ? path.replace(/\/+$/, '') : '/'
-  const staticRoutes = new Set(['/', '/about', '/contact', '/account', '/guide'])
-  const noScrollStaticRoutes = new Set(['/contact', '/account'])
+  const staticRoutes = new Set(['/about', '/contact', '/guide'])
+  const noScrollStaticRoutes = new Set(['/contact'])
   const showStaticChrome = staticRoutes.has(normalizedPath)
   const disableStaticScroll = noScrollStaticRoutes.has(normalizedPath)
 
@@ -35,6 +37,7 @@ function AppRoutes() {
         <Router>
           <Route path="/" component={Home}/>
           <Route path="/projects" component={Projects} />
+          <Route path="/projects/new" component={NewProjectWizard} />
           <Route path="/about" component={About}/>
           <Route path="/contact" component={Contact}/>
           <Route path="/account" component={Account}/>
@@ -50,8 +53,10 @@ function AppRoutes() {
 export function App() {
   return (
     <LocationProvider>
-      <ErrorBoundary onError={e => alert(e)}> 
-        <AppRoutes />
+      <ErrorBoundary onError={e => alert(e)}>
+        <ToastProvider>
+          <AppRoutes />
+        </ToastProvider>
       </ErrorBoundary>
     </LocationProvider>
   )

@@ -8,8 +8,16 @@ import {
     reauthenticateWithCredential,
     deleteUser
 } from 'firebase/auth';
-import { setDoc, doc, deleteDoc } from 'firebase/firestore';
-import { ref, listAll, deleteObject } from 'firebase/storage';
+import { setDoc, doc, deleteDoc, collection, getDocs } from 'firebase/firestore';
+import { ref, listAll, deleteObject, type StorageReference } from 'firebase/storage';
+
+async function deleteFolder(folderRef: StorageReference): Promise<void> {
+    const { items, prefixes } = await listAll(folderRef);
+    await Promise.allSettled([
+        ...items.map((fileRef) => deleteObject(fileRef)),
+        ...prefixes.map((sub) => deleteFolder(sub)),
+    ]);
+}
 
 export async function registerUser(email: string, password: string, username: string) {
     try {
@@ -100,15 +108,13 @@ export async function deleteAccount(password: string): Promise<string> {
         const credential = EmailAuthProvider.credential(user.email!, password);
         await reauthenticateWithCredential(user, credential);
 
-        // 2. Delete Firestore user doc
+        // 2. Delete the user's projects (Firestore doesn't cascade subcollections), then the user doc
+        const projects = await getDocs(collection(db, "users", user.uid, "projects"));
+        await Promise.all(projects.docs.map((p) => deleteDoc(p.ref)));
         await deleteDoc(doc(db, "users", user.uid));
 
-        // 3. Delete Storage folder
-        const userFolderRef = ref(storage, `${user.uid}/`);
-
-        const folderList = await listAll(userFolderRef);
-        const deletions = folderList.items.map((fileRef) => deleteObject(fileRef));
-        await Promise.allSettled(deletions);
+        // 3. Delete Storage folder, including per-project subfolders ({uid}/{projectId}/...)
+        await deleteFolder(ref(storage, `${user.uid}/`));
 
         // 4. Delete Authentication user
         await deleteUser(user);

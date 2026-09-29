@@ -32,6 +32,29 @@ diesel_losses = {
     "converter": 0.98
 }
 
+# Approximate diesel fuel consumption per kWh of electrical output (liters/kWh).
+# Typical gensets burn ~0.28-0.33 L/kWh near rated load; 0.30 is a reasonable default.
+DIESEL_LITERS_PER_KWH = 0.30
+
+# Annual performance degradation of renewable assets.
+SOLAR_DEGRADATION_PER_YEAR = 0.005   # ~0.5%/yr panel output decline (industry standard)
+BATTERY_DEGRADATION_PER_YEAR = 0.015  # ~1.5%/yr effective usable-capacity fade
+
+
+def system_degradation_rate(renewable_share, using_battery):
+    """Approximate annual decline in delivered energy from renewable degradation.
+
+    Weighted by how much of the served load is renewable, since diesel/grid
+    backup does not degrade. This is a simplification: a full model would
+    re-dispatch each year with derated assets, but a single annual factor
+    captures the first-order trend for the 20-year projection and revenue.
+    """
+    share = max(0.0, min(1.0, float(renewable_share)))
+    rate = SOLAR_DEGRADATION_PER_YEAR * share
+    if using_battery:
+        rate += BATTERY_DEGRADATION_PER_YEAR * 0.5 * share
+    return rate
+
 class EnergyStorageSystem:
     def __init__(self, capacity, max_storage, battery_type): #capacity in kw
         self.capacity = capacity #(draw/charge per hour)
@@ -235,13 +258,20 @@ def calc_daily_energy(lengthOfTime, energy_subset_hourly):
     
     return daily_loads
 
-def predict20years(load):
+def predict20years(load, degradation_rate=0.0):
+    """Project a single year's daily series across 20 years.
+
+    With `degradation_rate > 0`, each subsequent year's delivered energy is
+    scaled by (1 - rate)^year to reflect renewable-asset degradation, instead
+    of repeating year 1 unchanged.
+    """
     load20 = [0] * (365 * 20)
 
     for year in range(0, 20):
         start_addr = year * 365
         end_addr = start_addr + 365
-        load20[start_addr: end_addr] = load
+        factor = (1.0 - degradation_rate) ** year
+        load20[start_addr: end_addr] = [v * factor for v in load]
 
     return load20
 
@@ -259,6 +289,32 @@ def calculate_20_year_expenses(inflation_rate, capex, opex, replacement_cost, li
             expenses[year] += inflated_replacement
     return expenses
 
+def calculate_recurring_cost(inflation_rate, annual_cost, capex=0.0, years=20):
+    """One-time CAPEX at year 0 plus an annually-inflating operating cost.
+
+    Used for project-level fixed costs (labor, land lease, licensing, other
+    CAPEX) and for generator fuel, none of which are tied to a single component's
+    replacement cycle.
+    """
+    stream = np.zeros(years)
+    if capex:
+        stream[0] += capex
+    for year in range(years):
+        stream[year] += annual_cost * ((1 + inflation_rate) ** year)
+    return stream
+
+
+def calculate_fuel_cost_stream(inflation_rate, annual_diesel_kwh, fuel_price,
+                               liters_per_kwh=DIESEL_LITERS_PER_KWH, years=20):
+    """Annual diesel fuel cost over the horizon, inflating each year.
+
+    `fuel_price` is in $/liter; diesel energy is converted to liters via
+    `liters_per_kwh`.
+    """
+    base_cost = annual_diesel_kwh * liters_per_kwh * fuel_price
+    return np.array([base_cost * ((1 + inflation_rate) ** year) for year in range(years)])
+
+
 # Revenue Calculation Helper Functions
 def compute_annual_energy(daily_values):
     return float(np.sum(daily_values) * 24.0)
@@ -270,15 +326,23 @@ def normalize_inflation(inflation_raw):
     value = float(inflation_raw)
     return value / 100.0 if value > 1 else value
 
-def compute_20_year_revenue(daily_load_serviced, price_per_kwh, inflation, years=20):
+def compute_20_year_revenue(daily_load_serviced, price_per_kwh, inflation,
+                            years=20, degradation_rate=0.0):
     """
-    Calculate the 20 year revenue for a given daily load serviced, price per kWh, and inflation rate.
+    Calculate the 20 year revenue for a given daily load serviced, price per kWh,
+    inflation rate, and annual energy degradation.
+
+    Physical energy delivered declines by (1 - degradation_rate)^year while the
+    nominal sale price rises with inflation.
     """
-    
+
     annual_energy = compute_annual_energy(daily_load_serviced)
     price = float(price_per_kwh)
     base_revenue = annual_energy * price
     inflation_rate = normalize_inflation(inflation)
-    revenue_yearly = [base_revenue * ((1 + inflation_rate) ** year) for year in range(years)]
+    revenue_yearly = [
+        base_revenue * ((1 - degradation_rate) ** year) * ((1 + inflation_rate) ** year)
+        for year in range(years)
+    ]
     return revenue_yearly
     

@@ -1,0 +1,145 @@
+/* Workbench tab: Demand card (list / cards / diagram), Supply, Typical day. */
+
+.mg-wb { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+.mg-wb__demand { flex: 1 1 620px; min-width: 0; }
+.mg-wb__aside { flex: 1 1 300px; max-width: 420px; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+
+/* ---------- Demand header + aggregate chart ---------- */
+.mg-demand__head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 18px 20px 6px; }
+.mg-demand__title { display: flex; flex-direction: column; gap: 2px; margin-right: auto; min-width: 0; }
+
+.mg-agg { padding: 14px 20px 18px; }
+.mg-agg__plot { position: relative; height: 120px; display: flex; align-items: flex-end; gap: 4px; }
+.mg-agg__top { position: absolute; left: 0; right: 0; top: 0; border-top: 1px dashed #E6E4DE; pointer-events: none; }
+.mg-agg__scale { position: absolute; top: -9px; right: 0; padding-left: 6px; background: #fff; font-size: 11px; color: var(--mg-faint); }
+.mg-agg__bar { flex: 1; min-height: 2px; border-radius: 4px 4px 1px 1px; background: var(--mg-bar-light); transition: background 120ms ease; }
+.mg-agg__bar:hover,
+.mg-agg__bar.is-peak { background: var(--mg-accent); }
+.mg-agg__hours { display: flex; justify-content: space-between; padding-top: 6px; font-size: 11px; color: var(--mg-faint); }
+
+.mg-empty {
+  margin: 0 20px 20px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  border: 1px dashed #DAD7D0;
+  border-radius: 12px;
+}
+.mg-empty__title { font-size: 15px; font-weight: 600; }
+.mg-empty__text { max-width: 440px; color: var(--mg-muted); }
+.mg-empty .mg-btn { margin-top: 6px; }
+
+/* ---------- Shared bits ---------- */
+.mg-num { text-align: right; font-variant-numeric: tabular-nums; }
+.mg-spark { display: flex; align-items: flex-end; gap: 1px; height: 20px; }
+.mg-spark--sm { height: 18px; }
+.mg-spark--tile { height: 34px; gap: 2px; }
+.mg-spark__bar { flex: 1; min-height: 1px; border-radius: 1px; background: var(--mg-spark); }
+.mg-spark--muted .mg-spark__bar { background: #C9C6BF; }
+.mg-spark--tile .mg-spark__bar { border-radius: 2px 2px 0 0; }
+.mg-row-actions { display: flex; justify-content: flex-end; gap: 2px; }
+
+/* ---------- List view ---------- */
+.mg-table { border-top: 1px solid var(--mg-hairline); padding: 6px 8px 12px; }
+.mg-grid-row { display: grid; grid-template-columns: 28px minmax(0, 1fr) 84px 64px 92px 68px; gap: 0 10px; align-items: center; }
+.mg-table__head { padding: 8px 12px; font-size: 12px; color: var(--mg-faint); }
+.mg-group-row { padding: 10px 12px; border-radius: 10px; cursor: pointer; }
+.mg-group-row:hover { background: var(--mg-row-hover); }
+.mg-group-row__name { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.mg-group-row__name strong { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mg-group-row__meta { font-size: 12px; color: var(--mg-faint); white-space: nowrap; }
+.mg-group-row__chev { display: flex; color: var(--mg-faint); }
+.mg-group-row__kwh { font-weight: 600; }
+.mg-group-row__peak { color: var(--mg-ink-2); }
+
+.mg-children { display: flex; flex-direction: column; margin: 0 0 6px 26px; padding-left: 12px; border-left: 1px solid #ECEAE5; }
+.mg-child-row { grid-template-columns: 24px minmax(0, 1fr) 84px 64px 92px 68px; padding: 8px 12px 8px 4px; border-radius: 9px; cursor: pointer; }
+.mg-child-row:hover { background: var(--mg-row-hover); }
+.mg-child-row__icon { display: flex; justify-content: center; color: var(--mg-muted); }
+.mg-child-row__name { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.mg-child-row__name span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mg-child-row__type { font-size: 12px; color: var(--mg-icon-muted); white-space: nowrap; }
+.mg-child-row__peak { color: var(--mg-muted); }
+.mg-children .mg-btn--ghost { align-self: flex-start; height: 30px; margin: 2px 0 4px; padding: 0 8px; border-radius: 7px; }
+
+/* ---------- Cards view ---------- */
+.mg-cards { border-top: 1px solid var(--mg-hairline); padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 22px; }
+.mg-cards__group { display: flex; flex-direction: column; gap: 10px; }
+.mg-cards__head { display: flex; align-items: center; gap: 8px; }
+.mg-cards__head-icon { display: flex; color: var(--mg-ink-2); }
+.mg-cards__head .mg-btn--ghost { margin-left: auto; height: 30px; padding: 0 8px; border-radius: 7px; }
+.mg-cards__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.mg-load-tile {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #ECEAE5;
+  border-radius: 12px;
+  background: #FCFCFA;
+  color: var(--mg-ink);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease, box-shadow 120ms ease;
+}
+.mg-load-tile:hover { border-color: #BFDDD6; background: #fff; box-shadow: var(--mg-shadow-lift); }
+.mg-load-tile__top { display: flex; align-items: center; gap: 8px; }
+.mg-load-tile__icon { width: 26px; height: 26px; border-radius: 7px; display: flex; align-items: center; justify-content: center; background: var(--mg-fill); color: var(--mg-ink-2); }
+.mg-load-tile__name { font-weight: 600; line-height: 1.25; }
+.mg-load-tile__stats { display: flex; justify-content: space-between; font-size: 12px; color: var(--mg-muted); font-variant-numeric: tabular-nums; }
+
+/* ---------- Diagram view ---------- */
+.mg-diagram-wrap { border-top: 1px solid var(--mg-hairline); padding: 24px 20px 28px; overflow-x: auto; }
+.mg-diagram { display: grid; grid-template-columns: minmax(200px, 1fr) 64px minmax(240px, 1.3fr); min-width: 540px; }
+.mg-diagram__label { padding-bottom: 12px; font-size: 12px; color: var(--mg-faint); }
+.mg-diagram__label--bus { text-align: center; color: var(--mg-accent); }
+.mg-diagram__col { display: flex; flex-direction: column; gap: 10px; }
+.mg-diagram__bus { display: flex; justify-content: center; }
+.mg-diagram__bus span { width: 4px; height: 100%; border-radius: 4px; background: var(--mg-accent); }
+.mg-node {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--mg-control-border);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--mg-ink);
+  text-align: left;
+  cursor: pointer;
+  transition: box-shadow 120ms ease;
+}
+.mg-node:hover { box-shadow: var(--mg-shadow-lift); }
+.mg-node--off { border-style: dashed; border-color: #DAD7D0; background: #FAFAF8; }
+.mg-node--load { align-items: flex-start; }
+.mg-node__text { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.mg-node__name { font-weight: 600; }
+.mg-node--off .mg-node__name { color: var(--mg-muted); }
+.mg-node__sub { font-size: 12px; color: var(--mg-muted); }
+.mg-node__kwh { padding-top: 5px; font-size: 13px; color: var(--mg-ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.mg-node__wire { position: absolute; width: 32px; height: 2px; border-radius: 2px; }
+.mg-node__wire--out { right: -33px; top: 50%; }
+.mg-node__wire--in { left: -33px; top: 24px; background: #C9C6BF; }
+
+/* ---------- Supply card ---------- */
+.mg-supply { padding: 18px 12px 10px; }
+.mg-supply__head { display: flex; align-items: baseline; justify-content: space-between; padding: 0 8px 10px; }
+.mg-supply__row { display: flex; align-items: center; gap: 12px; padding: 10px 8px; border-radius: 10px; cursor: pointer; }
+.mg-supply__row:hover { background: var(--mg-row-hover); }
+.mg-supply__text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.mg-supply__name { font-weight: 600; }
+.mg-supply__row.is-off .mg-supply__name { color: var(--mg-muted); }
+.mg-supply__detail { font-size: 12px; color: var(--mg-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- Typical day card ---------- */
+.mg-day { padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+.mg-meter { display: flex; flex-direction: column; gap: 6px; }
+.mg-meter__row { display: flex; justify-content: space-between; font-size: 13px; }
+.mg-meter__value { font-weight: 600; font-variant-numeric: tabular-nums; }
+.mg-meter__track { height: 6px; overflow: hidden; border-radius: 6px; background: var(--mg-fill); }
+.mg-meter__fill { height: 100%; border-radius: 6px; }
+.mg-day__note { font-size: 12px; color: var(--mg-muted); text-wrap: pretty; }

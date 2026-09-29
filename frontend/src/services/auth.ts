@@ -1,1 +1,0 @@
-export { loginUser, registerUser } from "../utils/firebase/auth";

@@ -36,7 +36,10 @@ def run_simulation(
         calc_daily_energy,
         predict20years,
         calculate_20_year_expenses,
+        calculate_recurring_cost,
+        calculate_fuel_cost_stream,
         compute_20_year_revenue,
+        system_degradation_rate,
         EnergyStorageSystem,
         STCIrr,
         STCTemp,
@@ -115,6 +118,15 @@ def run_simulation(
 
     hourly_load_serviced = load_values - load_not_serviced
 
+    # Annual degradation applied to the 20-year projection and revenue: weighted
+    # by the renewable share of energy actually served.
+    total_served = float(np.sum(hourly_load_serviced))
+    renewable_served = float(np.sum(solar_power) + np.sum(wind_power))
+    renewable_share = renewable_served / total_served if total_served > 0 else 0.0
+    degradation_rate = system_degradation_rate(renewable_share, using_battery)
+    print("[run_simulation] renewable_share=", round(renewable_share, 3),
+          "degradation_rate=", round(degradation_rate, 5))
+
     csvs: dict[str, str | None] = {}
 
     input_df = nlr_df.copy()
@@ -164,7 +176,7 @@ def run_simulation(
 
     try:
         if daily_load_serviced and len(daily_load_serviced) > 0:
-            ls_20yr = predict20years(daily_load_serviced)
+            ls_20yr = predict20years(daily_load_serviced, degradation_rate)
             csvs["twenty_year_daily"] = _df_to_csv(pd.DataFrame({
                 "day": np.arange(len(ls_20yr)),
                 "load_serviced_kW": ls_20yr,
@@ -218,7 +230,31 @@ def run_simulation(
                 safe_int(wind_inputs.get("lifespan")),
             )
 
-        total_exp = battery_exp + generator_exp + solar_exp + wind_exp
+        # Generator fuel cost: annual diesel energy converted to liters, inflating.
+        fuel_exp = np.zeros(20)
+        if using_generator and generator_inputs:
+            annual_diesel_kwh = float(np.sum(diesel_power))
+            fuel_price = safe_float(generator_inputs.get("fuel_price"))
+            if annual_diesel_kwh > 0 and fuel_price > 0:
+                fuel_exp = calculate_fuel_cost_stream(
+                    inflation_rate, annual_diesel_kwh, fuel_price,
+                )
+
+        # Project-level fixed costs: licensing + other CAPEX up front, labor and
+        # land lease as inflating annual operating costs. (Previously ignored.)
+        fixed_capex = (
+            safe_float(financial_inputs.get("licensing_cost"))
+            + safe_float(financial_inputs.get("other_capex"))
+        )
+        annual_fixed = (
+            safe_float(financial_inputs.get("labor_cost"))
+            + safe_float(financial_inputs.get("land_leasing_cost"))
+        )
+        fixed_exp = calculate_recurring_cost(inflation_rate, annual_fixed, fixed_capex)
+
+        total_exp = (
+            battery_exp + generator_exp + solar_exp + wind_exp + fuel_exp + fixed_exp
+        )
         cumulative_exp = np.cumsum(total_exp)
 
         fin_df = pd.DataFrame({
@@ -227,6 +263,8 @@ def run_simulation(
             "generator_expenses": generator_exp,
             "solar_expenses": solar_exp,
             "wind_expenses": wind_exp,
+            "fuel_expenses": fuel_exp,
+            "fixed_expenses": fixed_exp,
             "total_expenses": total_exp,
             "cumulative_expenses": cumulative_exp,
         })
@@ -241,6 +279,7 @@ def run_simulation(
         if daily_load_serviced and len(daily_load_serviced) > 0 and energy_price > 0:
             revenue_yearly = compute_20_year_revenue(
                 daily_load_serviced, energy_price, inflation_raw,
+                degradation_rate=degradation_rate,
             )
             cumulative_rev = list(np.cumsum(revenue_yearly))
             csvs["revenue"] = _df_to_csv(pd.DataFrame({

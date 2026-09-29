@@ -5,8 +5,10 @@ import type {
   BatteryData,
   WindData,
   GeneratorData,
+  LocationData,
+  EconomicsData,
   LoadProfilerSettings,
-} from "../../components/ProjectWizard/types";
+} from "../../components/wizard/types";
 import type { Load } from "./load";
 
 export type User = {
@@ -31,6 +33,8 @@ export type Project = {
   battery?: BatteryData;
   wind?: WindData;
   generator?: GeneratorData;
+  location?: LocationData;
+  economics?: EconomicsData;
   /** Workbench load tree; typically one “Site demand” root with a 24 h profile in kW. */
   loads?: Load[];
   loadProfiler?: LoadProfilerSettings;
