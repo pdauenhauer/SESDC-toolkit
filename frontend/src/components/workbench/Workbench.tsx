@@ -1,7 +1,6 @@
 import { useMemo } from "preact/hooks";
 import type { Load } from "../../database/models/load";
 import type { Project } from "../../database/models/metadata";
-import { sum } from "../../utils/format";
 import type { SourceId } from "../ui";
 import DemandCard from "./DemandCard";
 import { SupplyCard, TypicalDayCard } from "./SupplyCards";
@@ -20,7 +19,7 @@ type WorkbenchProps = {
 
 /** Workbench tab: Demand (loads) on the left, Supply + Typical day on the right. */
 export default function Workbench({ loads, onLoadsChange, project, onToggleSource, onOpenSource, onEditLoad }: WorkbenchProps) {
-  const demandKwh = useMemo(() => sum(totalProfile(loads)), [loads]);
+  const demand = useMemo(() => totalProfile(loads), [loads]);
   return (
     <div class="mg-wb" data-screen-label="Workbench">
       <DemandCard
@@ -32,7 +31,7 @@ export default function Workbench({ loads, onLoadsChange, project, onToggleSourc
       />
       <aside class="mg-wb__aside">
         <SupplyCard project={project} onToggleSource={onToggleSource} onOpenSource={onOpenSource} />
-        <TypicalDayCard project={project} demandKwh={demandKwh} />
+        <TypicalDayCard project={project} load={demand} />
       </aside>
     </div>
   );

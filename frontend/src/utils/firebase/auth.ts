@@ -113,8 +113,10 @@ export async function deleteAccount(password: string): Promise<string> {
         await Promise.all(projects.docs.map((p) => deleteDoc(p.ref)));
         await deleteDoc(doc(db, "users", user.uid));
 
-        // 3. Delete Storage folder, including per-project subfolders ({uid}/{projectId}/...)
+        // 3. Delete Storage folders: the user's own ({uid}/...) and their simulation results
+        //    (simulations/{uid}/{projectId}/...), written by the backend.
         await deleteFolder(ref(storage, `${user.uid}/`));
+        await deleteFolder(ref(storage, `simulations/${user.uid}/`));
 
         // 4. Delete Authentication user
         await deleteUser(user);

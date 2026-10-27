@@ -322,6 +322,53 @@ body:has(.mg-root) { margin-top: 0; background: var(--mg-bg); }
 .mg-input--lg + .mg-input-unit { right: 14px; font-size: 13px; }
 .mg-field-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
 
+/* ---------- Tags ---------- */
+.mg-tags__box {
+  min-height: 38px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border: 1px solid var(--mg-control-border);
+  border-radius: 9px;
+  background: #fff;
+  cursor: text;
+}
+.mg-tags__box:focus-within { border-color: var(--mg-accent); box-shadow: var(--mg-ring); }
+.mg-tags__input { flex: 1; min-width: 120px; height: 26px; border: none; outline: none; background: transparent; color: var(--mg-ink); font-size: 14px; }
+.mg-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 4px 0 9px;
+  border-radius: 999px;
+  background: var(--mg-accent-tint);
+  color: var(--mg-accent-ink);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.mg-tag--static { padding-right: 9px; }
+.mg-tag__x { display: flex; padding: 2px; border: none; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; }
+.mg-tag__x:hover { background: rgba(10, 94, 81, 0.12); }
+.mg-tags__suggest { display: flex; flex-wrap: wrap; gap: 6px; }
+.mg-tags__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 10px 0 8px;
+  border: 1px dashed #D6D3CC;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mg-ink-2);
+  font-size: 12px;
+  cursor: pointer;
+}
+.mg-tags__chip:hover { border-color: var(--mg-accent); color: var(--mg-accent-ink); background: var(--mg-accent-ghost); }
+
 /* ---------- Option card (presets, patterns) ---------- */
 .mg-option {
   display: flex;

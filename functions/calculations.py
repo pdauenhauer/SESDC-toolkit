@@ -36,53 +36,105 @@ diesel_losses = {
 # Typical gensets burn ~0.28-0.33 L/kWh near rated load; 0.30 is a reasonable default.
 DIESEL_LITERS_PER_KWH = 0.30
 
-# Annual performance degradation of renewable assets.
+# Annual performance degradation of renewable assets. Each asset's age resets
+# when it is replaced at the end of its lifespan.
 SOLAR_DEGRADATION_PER_YEAR = 0.005   # ~0.5%/yr panel output decline (industry standard)
 BATTERY_DEGRADATION_PER_YEAR = 0.015  # ~1.5%/yr effective usable-capacity fade
 
+# Minimum state of charge as a fraction of usable capacity.
+BATTERY_MIN_SOC_FRACTION = {"lithium-ion": 0.1}
+BATTERY_MIN_SOC_DEFAULT = 0.5  # lead-acid and anything else
 
-def system_degradation_rate(renewable_share, using_battery):
-    """Approximate annual decline in delivered energy from renewable degradation.
 
-    Weighted by how much of the served load is renewable, since diesel/grid
-    backup does not degrade. This is a simplification: a full model would
-    re-dispatch each year with derated assets, but a single annual factor
-    captures the first-order trend for the 20-year projection and revenue.
+def generator_max_output_kw(capacity_w):
+    """Usable generator output (kW) after engine/alternator/transmission/converter losses."""
+    return capacity_w * float(np.prod(list(diesel_losses.values()))) / 1000.0
+
+
+def asset_age(year, lifespan):
+    """Years since the asset was installed or last replaced (replacement every `lifespan` years)."""
+    return year % lifespan if lifespan and lifespan > 0 else year
+
+
+def degradation_factor(rate, year, lifespan):
+    """Remaining performance fraction in `year` (0-based), resetting at each replacement."""
+    return (1.0 - rate) ** asset_age(year, lifespan)
+
+
+def dispatch_year(load, solar, wind, gen_max_kw=0.0, battery=None, soc_start=None):
+    """Hour-by-hour energy dispatch for one year.
+
+    See docs/decisions/0003-backend-owns-dispatch.md. The frontend's Typical
+    day estimate (frontend/src/components/workbench/model.ts) mirrors this
+    order and must be changed together with it.
+
+    Order each hour:
+      1. Solar and wind serve the load directly.
+      2. Any renewable surplus charges the battery (limited by its kW rate and
+         free capacity); the remainder is `excess` (curtailed).
+      3. Any deficit is drawn from the battery (limited by its kW rate and its
+         minimum state of charge).
+      4. The generator covers what is still missing, up to `gen_max_kw`.
+      5. Whatever is left is `unmet`.
+
+    `battery` is None or {"max_kwh", "min_frac", "rate_kw"}. `soc_start` carries
+    the state of charge in from the previous year (defaults to the minimum).
+    Returns a dict of numpy arrays plus `soc_end`.
     """
-    share = max(0.0, min(1.0, float(renewable_share)))
-    rate = SOLAR_DEGRADATION_PER_YEAR * share
-    if using_battery:
-        rate += BATTERY_DEGRADATION_PER_YEAR * 0.5 * share
-    return rate
+    load = np.nan_to_num(np.asarray(load, dtype=float))
+    solar = np.nan_to_num(np.asarray(solar, dtype=float))
+    wind = np.nan_to_num(np.asarray(wind, dtype=float))
+    n = len(load)
 
-class EnergyStorageSystem:
-    def __init__(self, capacity, max_storage, battery_type): #capacity in kw
-        self.capacity = capacity #(draw/charge per hour)
-        if (battery_type == "lithium-ion"):
-            self.min_storage = 0.1 * max_storage  # Set min_storage to 10% of max
-        else :
-            self.min_storage = 0.5 * max_storage  # Set min_storage to 50% of max
-        
-        self.storage = self.min_storage  # Initialize State of Charge (SoC) to min SoC
-        self.charging = False  # Flag to indicate if the system is currently charging
-        self.max_storage = max_storage
+    diesel = np.zeros(n)
+    soc_arr = np.zeros(n)
+    charge = np.zeros(n)
+    discharge = np.zeros(n)
+    unmet = np.zeros(n)
+    excess = np.zeros(n)
 
-    def charge(self, energy):
-        if (not (self.storage == self.max_storage)):  # If storage is not fully charged
-            self.storage = min(self.max_storage, self.storage + self.capacity, self.storage + energy)  # Add energy to storage #add energy storage 
-            
-        #(keep track of the excess?)
-        #if (current self.storage < past self.storage + energy):
-        #    excess = past self.storage + energy -  current storage
-                       
-        return self.storage
+    has_battery = bool(battery) and battery.get("max_kwh", 0) > 0
+    max_kwh = float(battery["max_kwh"]) if has_battery else 0.0
+    min_kwh = max_kwh * float(battery.get("min_frac", BATTERY_MIN_SOC_DEFAULT)) if has_battery else 0.0
+    rate = float(battery.get("rate_kw", 0)) if has_battery else 0.0
+    soc = min_kwh if soc_start is None else min(max(float(soc_start), min_kwh), max_kwh)
+    gen_max = max(0.0, float(gen_max_kw or 0.0))
 
-    def discharge(self, demand):
-        if (not (self.storage == self.min_storage)):  # If the system is not at the minimum
-            self.storage = max(self.storage + demand, self.min_storage)  # Discharge energy from storage
+    for i in range(n):
+        need = max(0.0, load[i])
+        renew = max(0.0, solar[i]) + max(0.0, wind[i])
+        direct = min(need, renew)
+        deficit = need - direct
+        surplus = renew - direct
 
-        
-        return self.storage
+        if surplus > 0:
+            stored = min(surplus, rate, max_kwh - soc) if has_battery else 0.0
+            stored = max(0.0, stored)
+            soc += stored
+            charge[i] = stored
+            excess[i] = surplus - stored
+        elif deficit > 0 and has_battery:
+            drawn = max(0.0, min(deficit, rate, soc - min_kwh))
+            soc -= drawn
+            discharge[i] = drawn
+            deficit -= drawn
+
+        if deficit > 0 and gen_max > 0:
+            diesel[i] = min(deficit, gen_max)
+            deficit -= diesel[i]
+
+        unmet[i] = deficit
+        soc_arr[i] = soc
+
+    return {
+        "diesel": diesel,
+        "battery_soc": soc_arr,
+        "battery_charge": charge,
+        "battery_discharge": discharge,
+        "unmet": unmet,
+        "excess": excess,
+        "soc_end": soc,
+    }
 
 """
 class SolarPanel:
@@ -124,19 +176,6 @@ def calculate_solar_energy(irradiance, ambient_temp_C, panel_name_plate_W, losse
 
     return p_out
 
-
-# Calculate net energy (storage +- hourly_net)
-def calculate_net_energy(energy_system, hourly_net, time_interval = 1):
-    net_energy = np.zeros(len(hourly_net))
-
-    for i in range(len(hourly_net)):
-        if (hourly_net[i] < 0):
-            net_energy[i] = energy_system.discharge(hourly_net[i])
-        else:
-            net_energy[i] = energy_system.charge(hourly_net[i])
-
-
-    return net_energy
 
 # Calculate net energy for graph (solar + wind + diesel - load)
 def net_energy_for_graph(solar_power, load_values, wind_values, diesel_values, time_interval = 1):
@@ -192,33 +231,6 @@ def calculate_hourly_diesel_energy(fuel_consumption, generator_output, losses):
     return hourly_energy
 
 
-def calc_load_not_serviced(time_points, battery_charge, battery_type, max_storage, net_energy):
-    loadNotServiced = [0] * len(time_points)
-    minSOC = 0
-    if(battery_type == "lithium-ion"):
-        minSOC = 0.1 * max_storage 
-    else:
-        minSOC = 0.5 * max_storage
-    
-    # charge or discharge (solar + wind + diesel - load)
-    # power in the battery is what's left over at the end of the hour, with restrictions
-    # if what's left over in the battery is the minimum, it is possible that some load
-    #    wasn't serviced that hour
-    # the amount that wasn't serviced was load - load serviced
-
-    # so we can look at the previous state batt[i-1] minus (actually +) net_energy[i] discharged amount
-    #if its less than minSOC then minSOC - subtracted value is the load not serviced
-    for i in range(1, len(time_points)):
-        #value after discharge without limitations (without blocking at minSOC)
-        v_a_d = battery_charge[i - 1] + net_energy[i]
-
-        if (v_a_d <= minSOC):
-            loadNotServiced[i] = minSOC - v_a_d
-
-
-    return loadNotServiced
-
-
 #calculate daily load serviced
 def calc_daily_load_serviced(days, load_hourly, loadNotServiced):
     loadserviced = [0] * len(days)
@@ -258,23 +270,6 @@ def calc_daily_energy(lengthOfTime, energy_subset_hourly):
     
     return daily_loads
 
-def predict20years(load, degradation_rate=0.0):
-    """Project a single year's daily series across 20 years.
-
-    With `degradation_rate > 0`, each subsequent year's delivered energy is
-    scaled by (1 - rate)^year to reflect renewable-asset degradation, instead
-    of repeating year 1 unchanged.
-    """
-    load20 = [0] * (365 * 20)
-
-    for year in range(0, 20):
-        start_addr = year * 365
-        end_addr = start_addr + 365
-        factor = (1.0 - degradation_rate) ** year
-        load20[start_addr: end_addr] = [v * factor for v in load]
-
-    return load20
-
 def calculate_20_year_expenses(inflation_rate, capex, opex, replacement_cost, lifespan, years=20):
     """
     Calculate the total expenses over 20 years considering inflation.
@@ -308,11 +303,17 @@ def calculate_fuel_cost_stream(inflation_rate, annual_diesel_kwh, fuel_price,
                                liters_per_kwh=DIESEL_LITERS_PER_KWH, years=20):
     """Annual diesel fuel cost over the horizon, inflating each year.
 
-    `fuel_price` is in $/liter; diesel energy is converted to liters via
-    `liters_per_kwh`.
+    `annual_diesel_kwh` is either one number (same every year) or a per-year
+    sequence. `fuel_price` is in $/liter; diesel energy is converted to liters
+    via `liters_per_kwh`.
     """
-    base_cost = annual_diesel_kwh * liters_per_kwh * fuel_price
-    return np.array([base_cost * ((1 + inflation_rate) ** year) for year in range(years)])
+    per_year = (
+        list(annual_diesel_kwh) if np.ndim(annual_diesel_kwh) else [annual_diesel_kwh] * years
+    )
+    return np.array([
+        float(per_year[year]) * liters_per_kwh * fuel_price * ((1 + inflation_rate) ** year)
+        for year in range(min(years, len(per_year)))
+    ])
 
 
 # Revenue Calculation Helper Functions
@@ -326,23 +327,15 @@ def normalize_inflation(inflation_raw):
     value = float(inflation_raw)
     return value / 100.0 if value > 1 else value
 
-def compute_20_year_revenue(daily_load_serviced, price_per_kwh, inflation,
-                            years=20, degradation_rate=0.0):
-    """
-    Calculate the 20 year revenue for a given daily load serviced, price per kWh,
-    inflation rate, and annual energy degradation.
+def compute_yearly_revenue(served_kwh_by_year, price_per_kwh, inflation):
+    """Revenue per year from each simulated year's energy served.
 
-    Physical energy delivered declines by (1 - degradation_rate)^year while the
-    nominal sale price rises with inflation.
+    The nominal sale price rises with inflation; the physical energy comes from
+    that year's own dispatch (so equipment wear and replacements show up).
     """
-
-    annual_energy = compute_annual_energy(daily_load_serviced)
     price = float(price_per_kwh)
-    base_revenue = annual_energy * price
     inflation_rate = normalize_inflation(inflation)
-    revenue_yearly = [
-        base_revenue * ((1 - degradation_rate) ** year) * ((1 + inflation_rate) ** year)
-        for year in range(years)
+    return [
+        float(kwh) * price * ((1 + inflation_rate) ** year)
+        for year, kwh in enumerate(served_kwh_by_year)
     ]
-    return revenue_yearly
-    

@@ -1,12 +1,22 @@
 rules_version = '2';
 
-// Craft rules based on data in your Firestore database
-// allow write: if firestore.get(
-//    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
+// Cloud Functions use the Admin SDK, which bypasses these rules; they only
+// apply to the browser (Firebase client SDK).
 service firebase.storage {
   match /b/{bucket}/o {
-    match /{allPaths=**} {
-      allow read, write: if true;
+    function isOwner(uid) { return request.auth != null && request.auth.uid == uid; }
+
+    // Per-user folder (created at sign-up, emptied on account deletion).
+    match /{uid}/{allPaths=**} {
+      allow read, write: if isOwner(uid);
     }
+
+    // Simulation results are written only by the backend. Users may read
+    // their own and delete them (account deletion).
+    match /simulations/{uid}/{allPaths=**} {
+      allow read, delete: if isOwner(uid);
+    }
+
+    // Everything else is denied by default.
   }
 }

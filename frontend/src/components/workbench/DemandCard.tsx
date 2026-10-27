@@ -1,5 +1,5 @@
 import { useMemo, useState } from "preact/hooks";
-import { Building, ChevronDown, ChevronRight, LayoutGrid, List, Pencil, Plug, Plus, Trash2, Workflow } from "lucide-preact";
+import { Building, ChartColumnStacked, ChevronDown, ChevronRight, LayoutGrid, List, Pencil, Plug, Plus, Trash2, Workflow } from "lucide-preact";
 import type { Load } from "../../database/models/load";
 import type { Project } from "../../database/models/metadata";
 import { getLoadLabelById } from "../../data/loadLabels";
@@ -28,8 +28,9 @@ import {
   totalProfile,
   zeros,
 } from "./model";
+import { SchemaBreakdown } from "./SchemaBreakdown";
 
-type View = "table" | "cards" | "diagram";
+type View = "table" | "cards" | "diagram" | "breakdown";
 
 type Row = {
   id: string;
@@ -47,6 +48,7 @@ type Group = {
   name: string;
   labelId: string;
   meta: string;
+  tags: string[];
   profile: number[];
   rows: Row[];
 };
@@ -136,6 +138,7 @@ export default function DemandCard({ loads, onLoadsChange, project, onOpenSource
         name: l.name,
         labelId: l.labelId,
         meta: `${typeName(l.labelId)} · ${l.children?.length ?? 0}`,
+        tags: l.tags ?? [],
         profile: effectiveProfile(l),
         rows,
       };
@@ -150,6 +153,7 @@ export default function DemandCard({ loads, onLoadsChange, project, onOpenSource
         name: "Standalone",
         labelId: "misc",
         meta: `${standalone.length} load${standalone.length === 1 ? "" : "s"}`,
+        tags: [],
         profile: p,
         rows: standalone.map((l) => ({ id: l.id, name: l.name, labelId: l.labelId, typeName: typeName(l.labelId), profile: effectiveProfile(l) })),
       });
@@ -206,18 +210,19 @@ export default function DemandCard({ loads, onLoadsChange, project, onOpenSource
     <section class="mg-card mg-wb__demand">
       <div class="mg-demand__head">
         <div class="mg-demand__title">
-          <h2 class="mg-h2">Demand</h2>
+          <h2 class="mg-h2">Schema</h2>
           <div class="mg-meta">{meta}</div>
         </div>
         <Segmented<View>
           variant="icon"
-          ariaLabel="Demand view"
+          ariaLabel="Schema view"
           value={view}
           onChange={setView}
           options={[
             { id: "table", title: "List view", icon: <List size={16} strokeWidth={STROKE} /> },
             { id: "cards", title: "Card view", icon: <LayoutGrid size={16} strokeWidth={STROKE} /> },
             { id: "diagram", title: "Diagram view", icon: <Workflow size={16} strokeWidth={STROKE} /> },
+            { id: "breakdown", title: "Breakdown view", icon: <ChartColumnStacked size={16} strokeWidth={STROKE} /> },
           ]}
         />
         <Button size="sm" icon={<Building size={16} strokeWidth={STROKE} />} onClick={addBuilding}>
@@ -228,7 +233,10 @@ export default function DemandCard({ loads, onLoadsChange, project, onOpenSource
         </Button>
       </div>
 
-      <AggregateChart total={total} />
+      {/* The breakdown view draws its own stacked version of the aggregate. */}
+      {view !== "breakdown" && <AggregateChart total={total} />}
+
+      {view === "breakdown" && loads.length > 0 && <SchemaBreakdown loads={loads} />}
 
       {!loads.length && (
         <div class="mg-empty">
@@ -263,6 +271,15 @@ export default function DemandCard({ loads, onLoadsChange, project, onOpenSource
                   <span class="mg-group-row__name">
                     <strong>{g.name}</strong>
                     <span class="mg-group-row__meta">{g.meta}</span>
+                    {g.tags.length > 0 && (
+                      <span class="mg-group-row__tags">
+                        {g.tags.map((t) => (
+                          <span key={t} class="mg-tag mg-tag--static">
+                            {t}
+                          </span>
+                        ))}
+                      </span>
+                    )}
                     <span class="mg-group-row__chev">
                       {open ? <ChevronDown size={14} strokeWidth={STROKE} /> : <ChevronRight size={14} strokeWidth={STROKE} />}
                     </span>
@@ -336,6 +353,11 @@ export default function DemandCard({ loads, onLoadsChange, project, onOpenSource
                 <span class="mg-caption">
                   {g.meta} · {f1(sum(g.profile))} kWh/day
                 </span>
+                {g.tags.map((t) => (
+                  <span key={t} class="mg-tag mg-tag--static">
+                    {t}
+                  </span>
+                ))}
                 {g.isBuilding && (
                   <Button variant="ghost" size="sm" icon={<Plus size={16} strokeWidth={STROKE} />} onClick={() => addAppliance(g.key)}>
                     Add appliance

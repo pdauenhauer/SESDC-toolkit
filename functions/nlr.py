@@ -22,9 +22,13 @@ def fetch_nlr_data(
     longitude,
     api_key: str | None = None,
     year="2022",
-    interval="30",
+    interval="60",
 ):
     """Fetch NLR weather/irradiance data and return a parsed DataFrame.
+
+    The simulation treats every row as one hour (the 24-value load profile is
+    tiled row by row and kW per row is summed as kWh), so the data must be
+    hourly: 8760 rows. Sub-hourly data is averaged down to hourly.
 
     Columns returned:
         Datetime, Irradiance (W/m2), Temp_C (oC), Wind_speed(m/s)
@@ -78,5 +82,19 @@ def fetch_nlr_data(
     result["Temp_C (oC)"] = df["Temperature"].values
     result["Wind_speed(m/s)"] = df["Wind Speed"].values
 
+    result = to_hourly(result, ts["Timestamp"])
     print("[fetch_nlr_data] Parsed", len(result), "rows")
     return result
+
+
+def to_hourly(result, timestamps):
+    """Average sub-hourly rows into one row per hour (no-op for hourly data)."""
+    hour = timestamps.dt.floor("h")
+    if hour.nunique() == len(result):
+        return result
+    numeric = result.drop(columns=["Datetime"])
+    hourly = numeric.groupby(hour.values).mean()
+    out = hourly.reset_index(drop=True)
+    out.insert(0, "Datetime", hourly.index.strftime("%m/%d/%Y %H:%M"))
+    print("[fetch_nlr_data] Averaged", len(result), "sub-hourly rows to", len(out), "hours")
+    return out

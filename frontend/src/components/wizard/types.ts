@@ -64,12 +64,9 @@ export interface LoadProfilerSettings {
   usagePattern?: "residential" | "commercial";
   pattern?: "residential" | "commercial";
   buildingSize?: "small" | "medium" | "large";
-  baseLoadKw: number;
-  /**
-   * Raw per-hour load "shape" (24 values), independent of the base-load floor.
-   * Effective hourly load = max(baseLoadKw, shape[h]). Storing the shape keeps
-   * base-load changes reversible and preserves manual per-bar edits.
-   */
+  /** Legacy: projects created before base load was removed may still store it. */
+  baseLoadKw?: number;
+  /** Per-hour load from the wizard (24 values). */
   shape?: number[];
 }
 

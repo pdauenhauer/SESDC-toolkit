@@ -101,7 +101,7 @@ export function DemandStep({ d, upd, blocks, blocksOpen, overlapError, setBlocks
               onClick={() =>
                 upd((x) => {
                   x.pattern = p.id;
-                  if (x.size) x.shape = buildHourlyLoads(p.id, x.size, 0);
+                  if (x.size) x.shape = buildHourlyLoads(p.id, x.size);
                 })
               }
             >
@@ -127,7 +127,7 @@ export function DemandStep({ d, upd, blocks, blocksOpen, overlapError, setBlocks
                   onClick={() =>
                     upd((x) => {
                       x.size = s;
-                      x.shape = buildHourlyLoads(x.pattern!, s, 0);
+                      x.shape = buildHourlyLoads(x.pattern!, s);
                     })
                   }
                 >
@@ -151,23 +151,6 @@ export function DemandStep({ d, upd, blocks, blocksOpen, overlapError, setBlocks
               {daily ? `Peak ${f1(peak)} kW · ${f1(daily)} kWh per day` : "Pick a pattern and size, or draw the profile directly"}
             </span>
           </div>
-          <label class="mg-inline-field">
-            Base load
-            <span class="mg-input-wrap">
-              <input
-                type="number"
-                step={0.1}
-                min={0}
-                class="mg-input mg-input--sm has-unit"
-                value={d.base}
-                onInput={(e) => {
-                  const raw = (e.currentTarget as HTMLInputElement).value;
-                  upd((x) => (x.base = raw));
-                }}
-              />
-              <span class="mg-input-unit">kW</span>
-            </span>
-          </label>
         </div>
         <PaintBars
           values={loads}
@@ -245,7 +228,7 @@ export function DemandStep({ d, upd, blocks, blocksOpen, overlapError, setBlocks
   );
 }
 
-/** Build a shape from non-overlapping time blocks (0 outside blocks; base applies as a floor). */
+/** Build a shape from non-overlapping time blocks (0 outside blocks). */
 export function shapeFromBlocks(blocks: TimeBlock[]): number[] {
   const shape = Array(24).fill(0) as number[];
   blocks.forEach((b) => hoursIn(b.start, b.end).forEach((h) => (shape[h] = Math.round(num(b.kw) * 100) / 100)));

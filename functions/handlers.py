@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from firebase_functions import https_fn
 from firebase_functions.params import SecretParam
 
+from caller_auth import AuthError, caller_uid
 from config import cors_settings
 
 NLR_API_KEY = SecretParam("NLR_API_KEY")
@@ -16,6 +17,18 @@ from nlr import fetch_nlr_data
 from simulation import run_simulation
 from storage import download_csv, upload_csv_bundle
 from utils import safe_float, safe_int
+
+# Years 2–20 of the hourly tables are large, so they are stored but only sent
+# when the client asks for them by key (e.g. ?keys=hourly_year_07).
+ON_DEMAND_PREFIX = "hourly_year_"
+
+
+def _default_bundle_keys(keys):
+    return [k for k in keys if not k.startswith(ON_DEMAND_PREFIX)]
+
+
+def _auth_failure(e: AuthError) -> https_fn.Response:
+    return https_fn.Response(str(e), status=e.status)
 
 
 @https_fn.on_request(cors=cors_settings, secrets=[NLR_API_KEY])
@@ -33,11 +46,17 @@ def run_simulation_post(req: https_fn.Request) -> https_fn.Response:
             print("[run_simulation_post] Rejected: no JSON body")
             return https_fn.Response("Invalid request: No JSON data provided", status=400)
 
-        userId = data.get("userId")
+        # The caller's identity comes from their verified ID token, not the body.
+        try:
+            userId = caller_uid(req.headers, claimed_uid=data.get("userId"))
+        except AuthError as e:
+            print("[run_simulation_post] Rejected:", str(e))
+            return _auth_failure(e)
+
         projectId = data.get("projectId")
-        if not userId or not projectId:
-            print("[run_simulation_post] Rejected: missing userId or projectId")
-            return https_fn.Response("Missing userId or projectId", status=400)
+        if not projectId:
+            print("[run_simulation_post] Rejected: missing projectId")
+            return https_fn.Response("Missing projectId", status=400)
 
         print("[run_simulation_post] userId=", userId, "projectId=", projectId)
 
@@ -146,7 +165,7 @@ def run_simulation_post(req: https_fn.Request) -> https_fn.Response:
         payload = {
             "storagePath": storage_path,
             "csvKeys": csv_keys,
-            "csvBundle": csv_dict,
+            "csvBundle": {k: csv_dict[k] for k in _default_bundle_keys(csv_dict.keys())},
         }
         print("[run_simulation_post] Done, storagePath=", storage_path)
         return https_fn.Response(
@@ -162,18 +181,28 @@ def run_simulation_post(req: https_fn.Request) -> https_fn.Response:
 
 @https_fn.on_request(cors=cors_settings)
 def get_stored_simulation(req: https_fn.Request) -> https_fn.Response:
-    """GET: return stored simulation CSVs for a project (userId, projectId query params)."""
+    """GET: return the caller's stored simulation CSVs for a project (?projectId=).
+
+    The user is the one in the verified ID token. Without `keys`, returns every
+    table except the on-demand hourly years. With `keys=a,b`, returns just those
+    tables.
+    """
     if req.method == "OPTIONS":
         return https_fn.Response("", status=204)
     if req.method != "GET":
         return https_fn.Response("Method Not Allowed", status=405)
 
     try:
-        userId = req.args.get("userId")
+        try:
+            userId = caller_uid(req.headers, claimed_uid=req.args.get("userId"))
+        except AuthError as e:
+            print("[get_stored_simulation] Rejected:", str(e))
+            return _auth_failure(e)
+
         projectId = req.args.get("projectId")
-        if not userId or not projectId:
+        if not projectId:
             return https_fn.Response(
-                "Missing userId or projectId query params",
+                "Missing projectId query param",
                 status=400,
                 headers={"Content-Type": "application/json; charset=utf-8"},
             )
@@ -186,7 +215,16 @@ def get_stored_simulation(req: https_fn.Request) -> https_fn.Response:
                 headers={"Content-Type": "application/json; charset=utf-8"},
             )
 
-        paths = last_run["paths"]
+        requested = [k.strip() for k in (req.args.get("keys") or "").split(",") if k.strip()]
+        all_paths = last_run["paths"]
+        wanted = requested or _default_bundle_keys(all_paths.keys())
+        paths = {k: all_paths[k] for k in wanted if k in all_paths}
+        if not paths:
+            return https_fn.Response(
+                json.dumps({"csvBundle": {}}),
+                status=200,
+                headers={"Content-Type": "application/json; charset=utf-8"},
+            )
 
         def _fetch_one(key: str, gs_url: str) -> tuple[str, str | None]:
             try:

@@ -11,6 +11,8 @@ New to the project? See [docs/PROJECT-INIT.md](docs/PROJECT-INIT.md) for a step-
 
 For required environment variables, see [docs/ENV-VARS.md](docs/ENV-VARS.md).
 
+For how the system fits together, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Significant technical decisions are recorded in [docs/decisions/](docs/decisions/README.md); add one when you change the data model, the simulation, or a major dependency.
+
 ## Tools and Languages used
 <img src="https://img.shields.io/badge/Python-FFD43B?style=for-the-badge&logo=python&logoColor=blue" />
 <img src="https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white" />

@@ -4,6 +4,7 @@ export { Switch } from "./Switch";
 export { NumberField, TextField, SelectField, num } from "./Field";
 export { Drawer } from "./Drawer";
 export { PaintBars } from "./PaintBars";
+export { TagInput, SUGGESTED_TAGS } from "./TagInput";
 export { ToastProvider, useToast } from "./Toast";
 export {
   STROKE,

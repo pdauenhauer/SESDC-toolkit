@@ -12,11 +12,11 @@ import {
   saveProjectLoads,
   updateProject,
 } from "../database/firestore";
-import { buildSimulationPayload, fetchStoredSimulation, runSimulation, type SimulationResult } from "../services/simulation";
+import { buildSimulationPayload, fetchSimulationYear, fetchStoredSimulation, runSimulation, type SimulationResult } from "../services/simulation";
 import ResultsTab from "../components/results/ResultsTab";
 import GraphsTab from "../components/graphs/GraphsTab";
 import Workbench from "../components/workbench/Workbench";
-import { findWithParent, initialsOf, isNestable, removeLoad, saveLoadEdit, sourceConfig } from "../components/workbench/model";
+import { findWithParent, initialsOf, isNestable, projectTags, removeLoad, saveLoadEdit, sourceConfig } from "../components/workbench/model";
 import ConfigDrawer, { type SupplyDraft } from "../components/drawers/ConfigDrawer";
 import LoadProfilerDrawer from "../components/drawers/LoadProfilerDrawer";
 import ProjectSwitcher from "../components/shell/ProjectSwitcher";
@@ -327,7 +327,11 @@ export default function Projects() {
         onEditInputs={() => setActiveTab("workbench")}
       />
     ) : (
-      <GraphsTab result={simulationResult} />
+      <GraphsTab
+        key={activeProjectId}
+        result={simulationResult}
+        loadYear={user && activeProjectId ? (year) => fetchSimulationYear(user.uid, activeProjectId, year) : undefined}
+      />
     );
   };
 
@@ -429,12 +433,12 @@ export default function Projects() {
           parentId={editing.parent ? editing.parent.id : "none"}
           isGroup={editing.isGroup}
           groups={workbenchLoads.filter(isNestable).map((g) => ({ id: g.id, name: g.name }))}
+          knownTags={projectTags(workbenchLoads)}
           onClose={() => setEditingLoadId(null)}
           onSave={(result) => {
             const id = editing.load.id;
-            editLoads((prev) =>
-              saveLoadEdit(prev, id, { name: result.name, labelId: result.labelId, profile: result.profile }, result.parentId)
-            );
+            const { name, labelId, profile, tags } = result;
+            editLoads((prev) => saveLoadEdit(prev, id, { name, labelId, profile, ...(tags ? { tags } : {}) }, result.parentId));
             setEditingLoadId(null);
             flash(editing.isGroup ? "Building saved" : "Load saved");
           }}

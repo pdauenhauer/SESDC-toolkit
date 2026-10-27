@@ -11,6 +11,8 @@ export type Load = {
   profile: number[];
   /** One level of nesting only; only when label canNest (e.g. building, business). */
   children?: Load[];
+  /** Free-form category tags on a building (e.g. "Residential", "Productive use"). */
+  tags?: string[];
 };
 
 /** Default 24h profile: all zeros (no default inputs). */

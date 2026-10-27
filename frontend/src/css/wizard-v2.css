@@ -113,8 +113,6 @@
 .mg-profile { display: flex; flex-direction: column; gap: 12px; padding: 16px 16px 12px; border: 1px solid var(--mg-border); border-radius: 14px; background: #fff; }
 .mg-profile__head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .mg-profile__title { display: flex; flex-direction: column; margin-right: auto; }
-.mg-inline-field { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--mg-muted); }
-.mg-inline-field .mg-input-wrap { width: 96px; }
 .mg-disclosure {
   align-self: flex-start;
   display: flex;

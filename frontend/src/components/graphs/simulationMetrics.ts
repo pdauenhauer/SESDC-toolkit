@@ -26,6 +26,9 @@ export type SimulationMetrics = {
   /** Per-year cumulative series for charting (length up to 20). */
   cumulativeExpenses: number[];
   cumulativeRevenue: number[];
+
+  /** From `yearly_summary` (every year simulated); null for results that only cover year 1. */
+  lifetime: { years: number; servedKwh: number; unmetKwh: number; fuelLiters: number } | null;
 };
 
 function safeFraction(numerator: number, denominator: number): number {
@@ -77,12 +80,26 @@ export function computeSimulationMetrics(
     }
   }
 
+  const summaryCsv = result["yearly_summary"];
+  const summary = summaryCsv ? parseNumericCsv(summaryCsv) : null;
+  const lifetime =
+    summary && summary.rowCount > 0
+      ? {
+          years: summary.rowCount,
+          servedKwh: sumColumn(summary.columns["served_kWh"]),
+          unmetKwh: sumColumn(summary.columns["unmet_kWh"]),
+          fuelLiters: sumColumn(summary.columns["fuel_liters"]),
+        }
+      : null;
+
   // Simplified LCOE: lifetime cost / lifetime energy served (undiscounted).
   let lcoe: number | null = null;
-  const twentyCsv = result["twenty_year_daily"];
-  if (twentyCsv && totalExpenses20y > 0) {
-    const twenty = parseNumericCsv(twentyCsv);
-    const lifetimeServedKwh = sumColumn(twenty.columns["load_serviced_kW"]) * 24;
+  if (totalExpenses20y > 0) {
+    let lifetimeServedKwh = lifetime?.servedKwh ?? 0;
+    const twentyCsv = result["twenty_year_daily"];
+    if (!lifetimeServedKwh && twentyCsv) {
+      lifetimeServedKwh = sumColumn(parseNumericCsv(twentyCsv).columns["load_serviced_kW"]) * 24;
+    }
     if (lifetimeServedKwh > 0) lcoe = totalExpenses20y / lifetimeServedKwh;
   }
 
@@ -102,5 +119,6 @@ export function computeSimulationMetrics(
     lcoe,
     cumulativeExpenses,
     cumulativeRevenue,
+    lifetime,
   };
 }

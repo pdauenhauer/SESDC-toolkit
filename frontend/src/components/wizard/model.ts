@@ -16,9 +16,7 @@ export type WizardData = {
   location: { latitude: string | number; longitude: string | number; name: string };
   pattern: LoadPattern | null;
   size: BuildingSize | null;
-  /** Base load floor (kW). Effective hourly load = max(base, shape). */
-  base: string | number;
-  /** Raw hourly shape before the base-load floor. */
+  /** Hourly load (kW), 24 values. */
   shape: number[];
   solar: Dict;
   battery: Dict;
@@ -45,7 +43,7 @@ export const STEPS: StepDef[] = [
 
 export const TIPS: Record<StepId, string> = {
   project: "The site coordinates choose the solar and wind weather data used in the simulation. Use decimal degrees; you can copy them from any map app.",
-  demand: "Residential loads peak in the evening; commercial loads peak during the day. Base load is the minimum drawn every hour, such as fridges, standby devices and networking.",
+  demand: "Residential loads peak in the evening; commercial loads peak during the day. Remember loads that run around the clock, such as fridges, standby devices and networking.",
   solar: "System size is the rated power of the panel array. Losses from wiring, dust, panel mismatch, aging and the inverter reduce real output. The presets fill in typical values.",
   battery: "Capacity is how much energy the battery stores (kWh). Charge rate is how fast it can charge or discharge (kW). Lithium-ion lasts about 10 years, lead-acid about 5.",
   wind: "Nameplate is the combined rated power of all turbines. A turbine starts turning at the cut-in speed, reaches full output at the rated speed and shuts down above cut-out.",
@@ -65,7 +63,6 @@ export function initWizardData(): WizardData {
     location: { latitude: base.location.latitude, longitude: base.location.longitude, name: "" },
     pattern: null,
     size: null,
-    base: 0,
     shape: Array(24).fill(0),
     // Design defaults: solar and battery included, wind and generator skipped.
     solar: { ...base.solar, enabled: true },
@@ -76,10 +73,7 @@ export function initWizardData(): WizardData {
   };
 }
 
-export const effectiveLoads = (d: WizardData): number[] => {
-  const b = Math.max(0, num(d.base));
-  return d.shape.map((v) => Math.max(b, num(v)));
-};
+export const effectiveLoads = (d: WizardData): number[] => d.shape.map((v) => Math.max(0, num(v)));
 
 /** Suggested sizes: solar = daily kWh ÷ (4.6 × 0.86); battery = kWh used 18:00–06:00; generator = peak × 1.25. */
 export function suggestions(loads: number[]) {
@@ -127,7 +121,6 @@ export function toProjectData(d: WizardData): ProjectData {
     loads: effectiveLoads(d),
     // Firestore rejects undefined values, so optional keys are only set when chosen.
     loadProfiler: {
-      baseLoadKw: Math.max(0, num(d.base)),
       shape: d.shape.map((v) => num(v)),
       ...(d.pattern ? { usagePattern: d.pattern, pattern: d.pattern } : {}),
       ...(d.size ? { buildingSize: d.size } : {}),

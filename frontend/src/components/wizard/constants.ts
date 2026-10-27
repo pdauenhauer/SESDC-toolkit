@@ -93,5 +93,5 @@ export const INITIAL_PROJECT_DATA: ProjectData = {
     otherCapex: 0
   },
   loads: Array(24).fill(0),
-  loadProfiler: { baseLoadKw: 0 }
+  loadProfiler: {}
 };

@@ -8,6 +8,9 @@ export type ParsedView = {
 
 export type Season = "all" | "summer" | "winter";
 export type Resolution = "daily" | "hourly";
+/** Hourly views are sliced to one day or one week at a time. */
+export type SliceWindow = "day" | "week";
+export const WINDOW_DAYS: Record<SliceWindow, number> = { day: 1, week: 7 };
 
 // Ordered month lists (0-indexed). Winter is Dec → Jan → Feb so the view reads
 // continuously across the year-end instead of wrapping (Jan, Feb, … then Dec).
@@ -54,20 +57,114 @@ export function aggregateDaily(view: ParsedView): ParsedView {
   return { x, columns, names: view.names };
 }
 
-/** Bucket-average every column together down to at most maxPoints rows. */
-export function downsampleView(view: ParsedView, maxPoints: number): ParsedView {
-  const n = view.x.length;
-  if (n <= maxPoints) return view;
-  const bucket = Math.ceil(n / maxPoints);
-  const x: number[] = [];
+/** Row index where each calendar day starts (local time), in order. */
+export function dayStarts(parsed: ParsedView): number[] {
+  const out: number[] = [];
+  let prev = -1;
+  parsed.x.forEach((ts, i) => {
+    const d = new Date(ts * 1000);
+    const key = d.getFullYear() * 10000 + d.getMonth() * 100 + d.getDate();
+    if (key !== prev) out.push(i);
+    prev = key;
+  });
+  return out;
+}
+
+/** The hourly rows for `count` days starting at day index `startDay`. */
+export function sliceDays(parsed: ParsedView, starts: number[], startDay: number, count: number): ParsedView {
+  const from = starts[startDay] ?? 0;
+  const to = starts[startDay + count] ?? parsed.x.length;
   const columns: Record<string, (number | null)[]> = {};
-  for (const name of view.names) columns[name] = [];
-  for (let i = 0; i < n; i += bucket) {
-    const end = Math.min(n, i + bucket);
-    x.push(view.x[i]);
-    for (const name of view.names) columns[name].push(average(view.columns[name].slice(i, end)));
-  }
-  return { x, columns, names: view.names };
+  for (const n of parsed.names) columns[n] = parsed.columns[n].slice(from, to);
+  return { x: parsed.x.slice(from, to), columns, names: parsed.names };
+}
+
+/** "2026-03-04" for a date input, in local time. */
+export function isoDay(ts: number): string {
+  const d = new Date(ts * 1000);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+export type DayProfile = {
+  /** Average kW by hour of day (24 values). Supply series are what served the load. */
+  load: number[];
+  solar: number[];
+  wind: number[];
+  generator: number[];
+  battery: number[];
+  unmet: number[];
+  days: number;
+};
+
+/**
+ * Average hour-of-day profile over the given months (null = all), splitting each
+ * hour's load into what served it. Solar and wind serve first (shared pro rata).
+ *
+ * Current results report battery discharge, diesel and unmet load per hour, so
+ * those are used directly. Results from before the 20-year dispatch had no
+ * discharge column and only reported unmet load when a battery was simulated;
+ * for those the split is derived (generator, then battery, remainder unmet).
+ */
+export function averageDayProfile(parsed: ParsedView, months: number[] | null): DayProfile {
+  const keys = ["load", "solar", "wind", "generator", "battery", "unmet"] as const;
+  const acc = Object.fromEntries(keys.map((k) => [k, Array(24).fill(0) as number[]])) as Record<(typeof keys)[number], number[]>;
+  const cnt = Array(24).fill(0) as number[];
+  const col = (n: string) => parsed.columns[n] ?? [];
+  const [L, S, W, G, U, SOC, B] = [
+    "load_kW",
+    "solar_kW",
+    "wind_kW",
+    "diesel_kW",
+    "load_not_serviced_kW",
+    "battery_soc_kWh",
+    "battery_discharge_kW",
+  ].map(col);
+  const direct = parsed.names.includes("battery_discharge_kW");
+  const hasBattery = SOC.some((v) => (v ?? 0) > 0);
+  const daySet = new Set<string>();
+  const allow = months ? new Set(months) : null;
+
+  parsed.x.forEach((ts, i) => {
+    const d = new Date(ts * 1000);
+    if (allow && !allow.has(d.getMonth())) return;
+    const h = d.getHours();
+    const load = Math.max(0, L[i] ?? 0);
+    const s = Math.max(0, S[i] ?? 0);
+    const w = Math.max(0, W[i] ?? 0);
+    const renew = s + w;
+    const used = Math.min(load, renew);
+    let gen: number;
+    let battery: number;
+    let unmet: number;
+    if (direct) {
+      battery = Math.max(0, B[i] ?? 0);
+      gen = Math.max(0, G[i] ?? 0);
+      unmet = Math.max(0, U[i] ?? 0);
+    } else {
+      gen = Math.min(Math.max(0, G[i] ?? 0), load - used);
+      const left = load - used - gen;
+      unmet = hasBattery ? Math.min(left, Math.max(0, U[i] ?? 0)) : left;
+      battery = hasBattery ? left - unmet : 0;
+    }
+    acc.load[h] += load;
+    acc.solar[h] += renew > 0 ? used * (s / renew) : 0;
+    acc.wind[h] += renew > 0 ? used * (w / renew) : 0;
+    acc.generator[h] += gen;
+    acc.battery[h] += battery;
+    acc.unmet[h] += unmet;
+    cnt[h] += 1;
+    daySet.add(`${d.getMonth()}-${d.getDate()}`);
+  });
+  const avg = (a: number[]) => a.map((v, h) => (cnt[h] ? v / cnt[h] : 0));
+  return {
+    load: avg(acc.load),
+    solar: avg(acc.solar),
+    wind: avg(acc.wind),
+    generator: avg(acc.generator),
+    battery: avg(acc.battery),
+    unmet: avg(acc.unmet),
+    days: daySet.size,
+  };
 }
 
 function average(vals: (number | null)[]): number | null {

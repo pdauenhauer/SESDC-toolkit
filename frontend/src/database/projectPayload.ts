@@ -35,6 +35,6 @@ export function projectPatchFromWizardData(data: ProjectData): Partial<Project> 
     economics: data.economics,
     loads: hourlyProfileToSiteLoads(data.loads, siteLoadLabelId(data))
   };
-  patch.loadProfiler = { baseLoadKw: 0, ...data.loadProfiler };
+  patch.loadProfiler = { ...data.loadProfiler };
   return patch;
 }

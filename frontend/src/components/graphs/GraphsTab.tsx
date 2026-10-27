@@ -1,21 +1,28 @@
 import { Fragment } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { Chart, ChartConfiguration } from "chart.js";
-import { RotateCcw } from "lucide-preact";
+import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-preact";
 import type { SimulationResult } from "../../services/simulation";
 import ChartCanvas from "../charts/ChartCanvas";
-import { Button, Segmented, STROKE } from "../ui";
+import { Button, IconButton, Segmented, STROKE } from "../ui";
 import { f2 } from "../../utils/format";
 import { parseDatetimeWideCsv } from "./parseDateTimeCsv";
+import DailyProfileCard from "./DailyProfileCard";
+import YearlyOverviewCard from "./YearlyOverviewCard";
+import { parseNumericCsv } from "./parseNumericCsv";
 import {
+  WINDOW_DAYS,
   aggregateDaily,
   dateLabel,
-  downsampleView,
+  dayStarts,
   filterBySeason,
+  isoDay,
   monthHourAverages,
+  sliceDays,
   type ParsedView,
   type Resolution,
   type Season,
+  type SliceWindow,
 } from "./timeseries";
 import "../../css/graphs-v2.css";
 
@@ -46,31 +53,108 @@ const AXIS = { color: "#9A9EA5", font: { size: 11, family: "Geist, system-ui, sa
 
 type Hover = { index: number; px: number; top: number; bottom: number; width: number } | null;
 
-export default function GraphsTab({ result }: { result: SimulationResult }) {
-  const hourlyCsv = result["hourly_simulation"];
-  const parsed = useMemo<ParsedView | null>(() => {
-    if (!hourlyCsv) return null;
-    try {
-      return parseDatetimeWideCsv(hourlyCsv);
-    } catch (e) {
-      console.error("[GraphsTab] Failed to parse hourly simulation CSV", e);
-      return null;
-    }
-  }, [hourlyCsv]);
+function parseHourly(csv: string | null | undefined): ParsedView | null {
+  if (!csv) return null;
+  try {
+    return parseDatetimeWideCsv(csv);
+  } catch (e) {
+    console.error("[GraphsTab] Failed to parse hourly simulation CSV", e);
+    return null;
+  }
+}
 
+type GraphsTabProps = {
+  result: SimulationResult;
+  /** Loads a later year's hourly table from the stored run (years 2–20 aren't in the bundle). */
+  loadYear?: (year: number) => Promise<string | null>;
+};
+
+export default function GraphsTab({ result, loadYear }: GraphsTabProps) {
+  const summaryCsv = result["yearly_summary"];
+  const summary = useMemo(() => (summaryCsv ? parseNumericCsv(summaryCsv) : null), [summaryCsv]);
+  const [year, setYear] = useState(1);
+  const [cache, setCache] = useState<Record<number, string>>({});
+  const [error, setError] = useState<string | null>(null);
+  // The loader is recreated on every parent render, so keep the latest in a ref.
+  const loadRef = useRef(loadYear);
+  loadRef.current = loadYear;
+  const pending = useRef<number | null>(null);
+
+  // A new run invalidates the cached years.
+  useEffect(() => {
+    setCache({});
+    setYear(1);
+    setError(null);
+  }, [result]);
+
+  useEffect(() => {
+    setError(null);
+    if (year === 1 || cache[year] || pending.current === year) return;
+    const load = loadRef.current;
+    if (!load) return setError("Sign in to load other years.");
+    pending.current = year;
+    load(year)
+      .then((csv) => {
+        if (csv) setCache((c) => ({ ...c, [year]: csv }));
+        else setError(`Year ${year} isn't stored for this run. Re-run the simulation to see it.`);
+      })
+      .catch((e) => setError(String(e?.message ?? e)))
+      .finally(() => {
+        if (pending.current === year) pending.current = null;
+      });
+  }, [year, cache]);
+
+  const baseline = useMemo(() => parseHourly(result["hourly_simulation"]), [result]);
+  const yearCsv = year === 1 ? result["hourly_simulation"] : cache[year];
+  const parsed = useMemo(() => (year === 1 ? baseline : parseHourly(yearCsv)), [year, yearCsv, baseline]);
+  const loading = year !== 1 && !yearCsv && !error;
+
+  if (!result["hourly_simulation"]) return <div class="mg-card mg-state">This simulation has no hourly table to chart.</div>;
+
+  return (
+    <div class="mg-graphs" data-screen-label="Graphs">
+      {summary && summary.rowCount > 0 ? (
+        <YearlyOverviewCard summary={summary} year={year} onYear={setYear} loading={loading} />
+      ) : (
+        <div class="mg-card mg-year-note">These results only cover year 1. Re-run the simulation to see all 20 years.</div>
+      )}
+      {error ? (
+        <div class="mg-card mg-state">{error}</div>
+      ) : loading || !parsed ? (
+        <div class="mg-state mg-state--loading">Loading year {year}…</div>
+      ) : (
+        <YearCharts parsed={parsed} year={year} baseline={year === 1 ? null : baseline} />
+      )}
+    </div>
+  );
+}
+
+function YearCharts({ parsed, year, baseline }: { parsed: ParsedView; year: number; baseline: ParsedView | null }) {
   const available = useMemo(() => SERIES.filter((s) => parsed?.names.includes(s.column)), [parsed]);
   const [enabled, setEnabled] = useState<Record<string, boolean>>(() => Object.fromEntries(SERIES.map((s) => [s.key, DEFAULT_ON.has(s.key)])));
   const [season, setSeason] = useState<Season>("all");
   const [resolution, setResolution] = useState<Resolution>("daily");
+  // Hourly mode shows one day or one week at a time, starting at day index `sliceDay`.
+  const [win, setWin] = useState<SliceWindow>("week");
+  const [sliceDay, setSliceDay] = useState(0);
   const [hover, setHover] = useState<Hover>(null);
   const [zoomed, setZoomed] = useState(false);
   const chartRef = useRef<Chart | null>(null);
 
+  const starts = useMemo(() => (parsed ? dayStarts(parsed) : []), [parsed]);
+  const span = WINDOW_DAYS[win];
+  const lastStart = Math.max(0, starts.length - span);
+  const startDay = Math.min(sliceDay, lastStart);
+
   const view = useMemo<ParsedView | null>(() => {
     if (!parsed) return null;
-    const seasonal = filterBySeason(parsed, season);
-    return resolution === "daily" ? aggregateDaily(seasonal) : downsampleView(seasonal, 1000);
-  }, [parsed, season, resolution]);
+    return resolution === "daily" ? aggregateDaily(filterBySeason(parsed, season)) : sliceDays(parsed, starts, startDay, span);
+  }, [parsed, season, resolution, starts, startDay, span]);
+
+  const jumpTo = (iso: string) => {
+    const idx = starts.findIndex((i) => parsed && isoDay(parsed.x[i]) === iso);
+    if (idx >= 0) setSliceDay(Math.min(idx, lastStart));
+  };
 
   const on = available.filter((s) => enabled[s.key]);
   const onKey = on.map((s) => s.key).join("|");
@@ -162,19 +246,18 @@ export default function GraphsTab({ result }: { result: SimulationResult }) {
   const heat = useMemo(() => (parsed ? monthHourAverages(parsed, "solar_kW") : null), [parsed]);
   const heatMax = heat ? Math.max(...heat.flat(), 0) : 0;
 
-  if (!hourlyCsv) return <div class="mg-card mg-state">This simulation has no hourly table to chart.</div>;
-  if (!parsed || !view || !view.x.length) return <div class="mg-state mg-state--loading">Preparing charts…</div>;
+  if (!view || !view.x.length) return <div class="mg-state mg-state--loading">Preparing charts…</div>;
 
   const n = view.x.length;
   const range = `${dateLabel(view.x[0], false)} – ${dateLabel(view.x[n - 1], false)}`;
   const hoverIdx = hover && hover.index < n ? hover.index : null;
 
   return (
-    <div class="mg-graphs" data-screen-label="Graphs">
+    <>
       <section class="mg-card mg-flows">
         <div class="mg-flows__head">
           <div class="mg-flows__title">
-            <h2 class="mg-h2">Energy flows</h2>
+            <h2 class="mg-h2">Energy flows · Year {year}</h2>
             <span class="mg-meta">
               {range} · {n.toLocaleString("en")} {resolution === "daily" ? "daily averages" : "hourly points"}
             </span>
@@ -193,16 +276,45 @@ export default function GraphsTab({ result }: { result: SimulationResult }) {
               Reset zoom
             </Button>
           )}
-          <Segmented<Season>
-            ariaLabel="Season"
-            value={season}
-            onChange={setSeason}
-            options={[
-              { id: "all", label: "Full year" },
-              { id: "summer", label: "Jun–Aug" },
-              { id: "winter", label: "Dec–Feb" },
-            ]}
-          />
+          {resolution === "daily" ? (
+            <Segmented<Season>
+              ariaLabel="Season"
+              value={season}
+              onChange={setSeason}
+              options={[
+                { id: "all", label: "Full year" },
+                { id: "summer", label: "Jun–Aug" },
+                { id: "winter", label: "Dec–Feb" },
+              ]}
+            />
+          ) : (
+            <div class="mg-slice" role="group" aria-label="Time window">
+              <Segmented<SliceWindow>
+                ariaLabel="Window length"
+                value={win}
+                onChange={setWin}
+                options={[
+                  { id: "day", label: "Day" },
+                  { id: "week", label: "Week" },
+                ]}
+              />
+              <IconButton label={`Previous ${win}`} disabled={startDay <= 0} onClick={() => setSliceDay(Math.max(0, startDay - span))}>
+                <ChevronLeft size={16} strokeWidth={STROKE} />
+              </IconButton>
+              <input
+                type="date"
+                class="mg-slice__date"
+                aria-label="Start date"
+                value={parsed && starts.length ? isoDay(parsed.x[starts[startDay]]) : ""}
+                min={parsed && starts.length ? isoDay(parsed.x[starts[0]]) : undefined}
+                max={parsed && starts.length ? isoDay(parsed.x[starts[lastStart]]) : undefined}
+                onChange={(e) => jumpTo((e.currentTarget as HTMLInputElement).value)}
+              />
+              <IconButton label={`Next ${win}`} disabled={startDay >= lastStart} onClick={() => setSliceDay(Math.min(lastStart, startDay + span))}>
+                <ChevronRight size={16} strokeWidth={STROKE} />
+              </IconButton>
+            </div>
+          )}
           <Segmented<Resolution>
             ariaLabel="Resolution"
             value={resolution}
@@ -264,12 +376,17 @@ export default function GraphsTab({ result }: { result: SimulationResult }) {
             </>
           )}
         </div>
-        <div class="mg-flows__caption">Power in kW on the left axis · battery charge in kWh on the right · drag to zoom, shift-drag to pan</div>
+        <div class="mg-flows__caption">
+          Power in kW on the left axis · battery charge in kWh on the right · drag to zoom, shift-drag to pan
+          {resolution === "daily" ? " · switch to Hourly to step through single days or weeks" : ""}
+        </div>
       </section>
+
+      <DailyProfileCard parsed={parsed} year={year} baseline={baseline} />
 
       <section class="mg-card mg-heat">
         <div class="mg-heat__head">
-          <h2 class="mg-h3">Solar output by month and hour</h2>
+          <h2 class="mg-h3">Solar output by month and hour · Year {year}</h2>
           <span class="mg-caption">{heatMax > 0 ? `Average kW · peak ${f2(heatMax)} kW` : "No solar output in this simulation"}</span>
         </div>
         {heat && heatMax > 0 && (
@@ -303,6 +420,6 @@ export default function GraphsTab({ result }: { result: SimulationResult }) {
           </div>
         )}
       </section>
-    </div>
+    </>
   );
 }

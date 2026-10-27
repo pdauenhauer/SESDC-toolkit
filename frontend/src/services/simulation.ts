@@ -2,6 +2,7 @@ import type { Load } from "../database/models/load";
 import type { Project } from "../database/models/metadata";
 import type { CostData } from "../components/wizard/types";
 import { combined24hProfile } from "../utils/loadUtils";
+import { auth } from "../utils/firebase/firebase-init";
 
 const REGION = "us-central1";
 const POST_FUNCTION = "run_simulation_post";
@@ -13,8 +14,48 @@ function getProjectId(): string {
   return projectId;
 }
 
+/**
+ * Cloud Functions base URL. Set VITE_FUNCTIONS_BASE_URL to use the local
+ * emulator, e.g. http://127.0.0.1:5001/<project-id>/us-central1
+ */
+function functionsBase(): string {
+  const override = import.meta.env.VITE_FUNCTIONS_BASE_URL as string | undefined;
+  return override ? override.replace(/\/+$/, "") : `https://${REGION}-${getProjectId()}.cloudfunctions.net`;
+}
+
 function getPostUrl(): string {
-  return `https://${REGION}-${getProjectId()}.cloudfunctions.net/${POST_FUNCTION}`;
+  return `${functionsBase()}/${POST_FUNCTION}`;
+}
+
+/**
+ * The signed-in user's Firebase ID token as an Authorization header. The
+ * functions act as the user in this token (any userId sent alongside must
+ * match it). getIdToken() refreshes the token when it is close to expiring.
+ */
+async function authHeaders(): Promise<Record<string, string>> {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Sign in to run or view simulations.");
+  return { Authorization: `Bearer ${await user.getIdToken()}` };
+}
+
+/** CSV key for a simulated year (1-based). Year 1 is the original hourly table. */
+export function hourlyYearKey(year: number): string {
+  return year === 1 ? "hourly_simulation" : `hourly_year_${String(year).padStart(2, "0")}`;
+}
+
+/**
+ * Fetch one year's hourly table from the last stored run. Years 2–20 are not
+ * part of the normal bundle (they are large), so they are loaded on demand.
+ */
+export async function fetchSimulationYear(userId: string, projectId: string, year: number): Promise<string | null> {
+  const key = hourlyYearKey(year);
+  const url =
+    `${functionsBase()}/${STORED_FUNCTION}?userId=${encodeURIComponent(userId)}` +
+    `&projectId=${encodeURIComponent(projectId)}&keys=${encodeURIComponent(key)}`;
+  const res = await fetch(url, { method: "GET", headers: await authHeaders() });
+  if (!res.ok) throw new Error(`Couldn't load year ${year} (${res.status})`);
+  const data = await res.json();
+  return (data?.csvBundle?.[key] as string | undefined) ?? null;
 }
 
 /** Fetch stored simulation CSVs for a project (GET); returns csvBundle for display on Data tab. */
@@ -22,9 +63,9 @@ export async function fetchStoredSimulation(
   userId: string,
   projectId: string
 ): Promise<SimulationResult> {
-  const base = `https://${REGION}-${getProjectId()}.cloudfunctions.net/${STORED_FUNCTION}`;
+  const base = `${functionsBase()}/${STORED_FUNCTION}`;
   const url = `${base}?userId=${encodeURIComponent(userId)}&projectId=${encodeURIComponent(projectId)}`;
-  const res = await fetch(url, { method: "GET" });
+  const res = await fetch(url, { method: "GET", headers: await authHeaders() });
   const data = res.ok ? await res.json() : null;
   const csvBundle = (data?.csvBundle ?? {}) as SimulationResult;
   console.log("[Simulation GET stored] response", {
@@ -333,7 +374,7 @@ export async function runSimulation(
   const url = getPostUrl();
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
     body: JSON.stringify(payload),
   });
 

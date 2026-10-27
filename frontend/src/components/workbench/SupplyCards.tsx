@@ -1,7 +1,9 @@
+import { useMemo, useState } from "preact/hooks";
+import { CircleAlert } from "lucide-preact";
 import type { Project } from "../../database/models/metadata";
-import { f1 } from "../../utils/format";
+import { f1, f2, hourLabel } from "../../utils/format";
 import { SOURCE_IDS, SOURCE_META, SOURCE_OFF, STROKE, Switch, type SourceId } from "../ui";
-import { renewableDayKwh, sourceConfig, sourceDetail } from "./model";
+import { sourceConfig, sourceDetail, typicalDayDispatch } from "./model";
 
 type SupplyCardProps = {
   project: Project | null;
@@ -38,37 +40,111 @@ export function SupplyCard({ project, onToggleSource, onOpenSource }: SupplyCard
   );
 }
 
-type TypicalDayCardProps = { project: Project | null; demandKwh: number };
+type TypicalDayCardProps = { project: Project | null; load: number[] };
 
-export function TypicalDayCard({ project, demandKwh }: TypicalDayCardProps) {
-  const supplyKwh = renewableDayKwh(project);
-  const max = Math.max(supplyKwh, demandKwh, 1);
-  const genOn = !!sourceConfig(project, "generator").enabled;
-  const note =
-    supplyKwh >= demandKwh
-      ? `Renewables cover an average day with ${f1(supplyKwh - demandKwh)} kWh to spare.`
-      : `Renewables fall ${f1(demandKwh - supplyKwh)} kWh short on an average day${genOn ? "; the generator covers the gap." : "."}`;
+/**
+ * Stack order (validated for colorblind separation: wind and battery must not
+ * touch), with unmet on top. It's a composition, not the dispatch order: the
+ * simulation uses the battery before the generator.
+ */
+const DAY_SERIES = [
+  { key: "solar", label: "Solar", color: "var(--mg-solar)" },
+  { key: "wind", label: "Wind", color: "var(--mg-wind)" },
+  { key: "generator", label: "Generator", color: "var(--mg-diesel)" },
+  { key: "battery", label: "Battery", color: "var(--mg-battery)" },
+] as const;
 
-  const meters = [
-    { label: "Demand", value: demandKwh, color: "var(--mg-ink)" },
-    { label: "Renewable supply", value: supplyKwh, color: "var(--mg-solar)" },
-  ];
+export function TypicalDayCard({ project, load }: TypicalDayCardProps) {
+  const d = useMemo(() => typicalDayDispatch(project, load), [project, load]);
+  const [hover, setHover] = useState<number | null>(null);
+  const { totals: t, hours } = d;
+  const series = DAY_SERIES.filter((s) => d.enabled[s.key]);
+  const peak = Math.max(...hours.load, 0.01);
+  const pct = (v: number) => (t.load > 0 ? Math.round((v / t.load) * 100) : 0);
+
+  const note = !t.load
+    ? "Add loads to see how supply meets an average day."
+    : t.unmet > 0.05
+      ? `${f1(t.unmet)} kWh (${pct(t.unmet)}%) of demand goes unmet on an average day.`
+      : t.generator > 0.05
+        ? `All demand is met; the generator supplies ${pct(t.generator)}% of it.`
+        : "All demand is met without the generator.";
 
   return (
     <section class="mg-card mg-day">
-      <div class="mg-meta">Typical day</div>
-      {meters.map((m) => (
-        <div key={m.label} class="mg-meter">
-          <div class="mg-meter__row">
-            <span>{m.label}</span>
-            <span class="mg-meter__value">{f1(m.value)} kWh</span>
-          </div>
-          <div class="mg-meter__track">
-            <div class="mg-meter__fill" style={{ width: `${(m.value / max) * 100}%`, background: m.color }} />
-          </div>
+      <div class="mg-day__head">
+        <span class="mg-meta">Typical day</span>
+        <span class="mg-caption mg-faint" title="Clear-day solar curve, average wind, same dispatch order as the simulation">
+          Estimate
+        </span>
+      </div>
+
+      {t.load > 0 && (
+        <div class="mg-day__chart" onMouseLeave={() => setHover(null)}>
+          {hours.load.map((need, h) => (
+            <div key={h} class={`mg-day__col${hover === h ? " is-hover" : ""}`} onMouseEnter={() => setHover(h)}>
+              <div class="mg-day__bar" style={{ height: `${(need / peak) * 100}%` }}>
+                {series.map((s) => (hours[s.key][h] > 0 ? <span key={s.key} style={{ flexGrow: hours[s.key][h], background: s.color }} /> : null))}
+                {hours.unmet[h] > 0 && <span class="mg-day__unmet" style={{ flexGrow: hours.unmet[h] }} />}
+              </div>
+            </div>
+          ))}
+          {hover !== null && (
+            <div class={`mg-day__tip${hover > 11 ? " is-left" : ""}`} style={{ left: `${((hover + 0.5) / 24) * 100}%` }}>
+              <div class="mg-stack__tip-head">
+                <span>{hourLabel(hover)}</span>
+                <strong>{f2(hours.load[hover])} kW</strong>
+              </div>
+              {series
+                .filter((s) => hours[s.key][hover] > 0)
+                .map((s) => (
+                  <div key={s.key} class="mg-stack__tip-row">
+                    <i style={{ background: s.color }} />
+                    <span>{s.label}</span>
+                    <span class="mg-tnum">{f2(hours[s.key][hover])}</span>
+                  </div>
+                ))}
+              {hours.unmet[hover] > 0 && (
+                <div class="mg-stack__tip-row">
+                  <i class="mg-day__unmet" />
+                  <span>Unmet</span>
+                  <span class="mg-tnum">{f2(hours.unmet[hover])}</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      ))}
-      <div class="mg-day__note">{note}</div>
+      )}
+
+      <div class="mg-day__rows">
+        <div class="mg-day__row mg-day__row--total">
+          <span />
+          <span>Demand</span>
+          <span class="mg-tnum">{f1(t.load)} kWh</span>
+          <span />
+        </div>
+        {series.map((s) => (
+          <div key={s.key} class="mg-day__row">
+            <i style={{ background: s.color }} aria-hidden="true" />
+            <span>{s.label}</span>
+            <span class="mg-tnum">{f1(t[s.key])} kWh</span>
+            <span class="mg-tnum mg-faint">{pct(t[s.key])}%</span>
+          </div>
+        ))}
+        <div class={`mg-day__row${t.unmet > 0.05 ? " is-alert" : ""}`}>
+          <i class="mg-day__unmet" aria-hidden="true" />
+          <span>Unmet demand</span>
+          <span class="mg-tnum">{f1(t.unmet)} kWh</span>
+          <span class="mg-tnum">{pct(t.unmet)}%</span>
+        </div>
+      </div>
+      <div class="mg-day__note">
+        {t.unmet > 0.05 && <CircleAlert size={14} strokeWidth={STROKE} />}
+        <span>
+          {note}
+          {t.excess > 0.05 ? ` ${f1(t.excess)} kWh of renewable energy can't be stored.` : ""}
+        </span>
+      </div>
     </section>
   );
 }

@@ -15,7 +15,8 @@ const WARN = "#B4513A";
 
 const RAW_LABELS: Record<string, string> = {
   input_data: "Input data (NLR + load)",
-  hourly_simulation: "Hourly simulation",
+  hourly_simulation: "Hourly simulation (year 1)",
+  yearly_summary: "Yearly energy summary (20y)",
   daily_averages: "Daily averages",
   twenty_year_daily: "20-year daily load serviced",
   financial_expenses: "Financial expenses (20y)",
@@ -154,7 +155,7 @@ export default function ResultsTab({ result, project, simulatedAt, onEditInputs 
 
   const metricCols = [
     {
-      title: "Energy · per year",
+      title: m.lifetime ? "Energy · year 1" : "Energy · per year",
       rows: [
         { label: "Annual demand", value: fEnergy(m.totalLoadKwh) },
         { label: "Unmet load", value: fEnergy(m.totalUnservedKwh), color: m.totalUnservedKwh > m.totalLoadKwh * 0.01 ? WARN : undefined },
@@ -172,6 +173,16 @@ export default function ResultsTab({ result, project, simulatedAt, onEditInputs 
         { label: "Net", value: fMoney(m.netCashflow20y), color: m.netCashflow20y < 0 ? WARN : "var(--mg-accent-ink)" },
         { label: "LCOE", value: m.lcoe != null ? `$${m.lcoe.toFixed(3)}/kWh` : "—" },
         { label: "Up-front capital", value: fMoney(upfrontCapital) },
+        ...(m.lifetime
+          ? [
+              { label: "Fuel used, all years", value: `${Math.round(m.lifetime.fuelLiters).toLocaleString("en")} L` },
+              {
+                label: "Unmet load, all years",
+                value: fEnergy(m.lifetime.unmetKwh),
+                color: m.lifetime.unmetKwh > (m.lifetime.servedKwh + m.lifetime.unmetKwh) * 0.01 ? WARN : undefined,
+              },
+            ]
+          : []),
       ],
     },
   ];
@@ -183,7 +194,8 @@ export default function ResultsTab({ result, project, simulatedAt, onEditInputs 
         <div class="mg-results-head__title">
           <h1 class="mg-h1">Results</h1>
           <div class="mg-meta">
-            {simulatedAt ? `Simulated ${formatSimulated(simulatedAt)}` : "Last saved simulation"} · one year, hourly ·{" "}
+            {simulatedAt ? `Simulated ${formatSimulated(simulatedAt)}` : "Last saved simulation"} ·{" "}
+            {m.lifetime ? `${m.lifetime.years} years, hourly` : "one year, hourly"} ·{" "}
             {sources.join(", ") || "no generation"}
           </div>
         </div>
