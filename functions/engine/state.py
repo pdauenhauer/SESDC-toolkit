@@ -1,4 +1,4 @@
-"""Central SimulationState object holding Structure-of-Arrays (SoA) time-series and seeded PRNG."""
+"""Central SimulationState object holding Structure-of-Arrays (SoA) time-series, EpochModifiers, and seeded PRNG."""
 
 from __future__ import annotations
 
@@ -9,6 +9,37 @@ import numpy as np
 import pandas as pd
 
 from contracts import SimulationSummaryKPIs, Tier1SimulationSummaries
+
+
+@dataclass
+class EpochModifiers:
+    """Per-epoch (annual) dynamic modifiers controlled by Behavioral Agents and Event Schedulers.
+
+    When all modifier vectors equal 1.0, the simulation reproduces the static baseline.
+    Behavioral agents (`Operator_Agent`, `Customer_Agent`), degradation models, and
+    `EventScheduler` shocks mutate these vectors across the multi-year horizon without
+    requiring changes to component physics kernels.
+    """
+
+    horizon_years: int = 20
+    solar_derating: np.ndarray = field(default_factory=lambda: np.ones(20, dtype=float))
+    wind_derating: np.ndarray = field(default_factory=lambda: np.ones(20, dtype=float))
+    battery_soh: np.ndarray = field(default_factory=lambda: np.ones(20, dtype=float))
+    load_multiplier: np.ndarray = field(default_factory=lambda: np.ones(20, dtype=float))
+    generator_available: np.ndarray = field(default_factory=lambda: np.ones(20, dtype=float))
+    dispatch_mode: str = "coupled_load_following"
+
+    @classmethod
+    def default(cls, horizon_years: int = 20, dispatch_mode: str = "coupled_load_following") -> "EpochModifiers":
+        return cls(
+            horizon_years=horizon_years,
+            solar_derating=np.ones(horizon_years, dtype=float),
+            wind_derating=np.ones(horizon_years, dtype=float),
+            battery_soh=np.ones(horizon_years, dtype=float),
+            load_multiplier=np.ones(horizon_years, dtype=float),
+            generator_available=np.ones(horizon_years, dtype=float),
+            dispatch_mode=dispatch_mode,
+        )
 
 
 @dataclass
@@ -34,6 +65,10 @@ class SimulationState:
     seed: int = 42
     rng: np.random.Generator = field(default_factory=lambda: np.random.default_rng(42))
 
+    # Multi-year horizon & dynamic agent/event epoch modifiers
+    horizon_years: int = 20
+    epoch_modifiers: EpochModifiers = field(default_factory=EpochModifiers.default)
+
     # Hourly time-series (kW / kWh)
     solar_power: np.ndarray = field(default_factory=lambda: np.zeros(0))
     wind_power: np.ndarray = field(default_factory=lambda: np.zeros(0))
@@ -42,6 +77,7 @@ class SimulationState:
     battery_soc: np.ndarray = field(default_factory=lambda: np.zeros(0))
     load_not_serviced: np.ndarray = field(default_factory=lambda: np.zeros(0))
     hourly_load_serviced: np.ndarray = field(default_factory=lambda: np.zeros(0))
+    curtailed_power: np.ndarray = field(default_factory=lambda: np.zeros(0))
 
     # Daily averages (lists of floats)
     daily_load: list[float] | None = None
@@ -82,6 +118,8 @@ class SimulationState:
         battery_inputs: dict[str, Any] | None = None,
         financial_inputs: dict[str, Any] | None = None,
         seed: int = 42,
+        horizon_years: int = 20,
+        dispatch_mode: str = "coupled_load_following",
     ) -> "SimulationState":
         n_rows = len(nlr_df)
         time_points = np.arange(n_rows)
@@ -109,6 +147,11 @@ class SimulationState:
             financial_inputs=financial_inputs or {},
             seed=seed,
             rng=np.random.default_rng(seed),
+            horizon_years=horizon_years,
+            epoch_modifiers=EpochModifiers.default(
+                horizon_years=horizon_years,
+                dispatch_mode=dispatch_mode,
+            ),
             solar_power=np.zeros(n_rows, dtype=float),
             wind_power=np.zeros(n_rows, dtype=float),
             diesel_power=np.zeros(n_rows, dtype=float),
@@ -116,4 +159,5 @@ class SimulationState:
             battery_soc=np.zeros(n_rows, dtype=float),
             load_not_serviced=np.zeros(n_rows, dtype=float),
             hourly_load_serviced=np.zeros(n_rows, dtype=float),
+            curtailed_power=np.zeros(n_rows, dtype=float),
         )

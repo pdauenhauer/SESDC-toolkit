@@ -1,4 +1,4 @@
-"""Central SimulationEngine ('Clock') orchestrating component models and CSV serialization."""
+"""Central SimulationEngine ('Clock') orchestrating component models and lazy CSV serialization."""
 
 from __future__ import annotations
 
@@ -8,7 +8,8 @@ import pandas as pd
 
 from engine.kpis import compute_summary_kpis, compute_tier1_summaries
 from engine.models.battery import BatteryModel
-from engine.models.financial import FinancialModel, predict20years
+from engine.models.dispatch import CoupledDispatchModel
+from engine.models.financial import FinancialModel, predict_multi_year_daily
 from engine.models.generator import GeneratorModel
 from engine.models.solar import PVModel
 from engine.models.wind import WindModel
@@ -29,12 +30,14 @@ class SimulationEngine:
         self,
         pv_model: ComponentModelProtocol | None = None,
         wind_model: ComponentModelProtocol | None = None,
+        dispatch_model: ComponentModelProtocol | None = None,
         generator_model: ComponentModelProtocol | None = None,
         battery_model: ComponentModelProtocol | None = None,
         financial_model: ComponentModelProtocol | None = None,
     ):
         self.pv_model = pv_model or PVModel()
         self.wind_model = wind_model or WindModel()
+        self.dispatch_model = dispatch_model or CoupledDispatchModel()
         self.generator_model = generator_model or GeneratorModel()
         self.battery_model = battery_model or BatteryModel()
         self.financial_model = financial_model or FinancialModel()
@@ -49,13 +52,11 @@ class SimulationEngine:
         if state.using_wind and state.wind_inputs:
             print("[SimulationEngine] Wind done, total kWh=", float(np.sum(state.wind_power)))
 
-        self.generator_model.step(state)
-        if state.using_generator and state.generator_inputs:
-            print("[SimulationEngine] Diesel done, total kWh=", float(np.sum(state.diesel_power)))
-
-        self.battery_model.step(state)
-        if state.using_battery and state.battery_inputs:
-            print("[SimulationEngine] Battery done")
+        if state.epoch_modifiers.dispatch_mode == "legacy_sequential":
+            self.generator_model.step(state)
+            self.battery_model.step(state)
+        else:
+            self.dispatch_model.step(state)
 
         self.financial_model.step(state)
         state.summary_kpis = compute_summary_kpis(state)
@@ -99,21 +100,16 @@ class SimulationEngine:
         else:
             csvs["daily_averages"] = None
 
-        if state.daily_load_serviced and len(state.daily_load_serviced) == 365:
-            ls_20yr = predict20years(state.daily_load_serviced)
+        if state.daily_load_serviced and len(state.daily_load_serviced) > 0:
+            ls_20yr = predict_multi_year_daily(
+                state.daily_load_serviced,
+                state.epoch_modifiers.load_multiplier,
+                years=state.horizon_years,
+            )
             csvs["twenty_year_daily"] = _df_to_csv(pd.DataFrame({
                 "day": np.arange(len(ls_20yr)),
                 "load_serviced_kW": ls_20yr,
             }))
-        elif state.daily_load_serviced and len(state.daily_load_serviced) > 0:
-            try:
-                ls_20yr = predict20years(state.daily_load_serviced)
-                csvs["twenty_year_daily"] = _df_to_csv(pd.DataFrame({
-                    "day": np.arange(len(ls_20yr)),
-                    "load_serviced_kW": ls_20yr,
-                }))
-            except Exception:
-                csvs["twenty_year_daily"] = None
         else:
             csvs["twenty_year_daily"] = None
 

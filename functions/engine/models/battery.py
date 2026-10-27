@@ -35,7 +35,12 @@ class EnergyStorageSystem:
 
     def discharge(self, demand: float) -> float:
         if not (self.storage == self.min_storage):
-            self.storage = max(self.storage + demand, self.min_storage)
+            # Cap hourly discharge by both self.capacity (kW rating) and self.min_storage
+            self.storage = max(
+                self.min_storage,
+                self.storage - self.capacity,
+                self.storage + demand,
+            )
         return self.storage
 
 
@@ -77,7 +82,7 @@ def calc_load_not_serviced(
 
 
 class BatteryModel:
-    """Modular Battery Storage component model."""
+    """Modular Battery Storage component model (used in legacy sequential dispatch mode)."""
 
     def step(self, state: SimulationState) -> None:
         """Compute hourly battery SoC and load not serviced on `state`."""

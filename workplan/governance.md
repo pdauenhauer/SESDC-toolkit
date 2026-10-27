@@ -81,11 +81,13 @@ The project uses two separate `.env` files (both gitignored and never committed)
 
 ### Backend & Simulation Standards
 - **Architecture & Structural Typing**:
-    - The simulation core follows a **modular, data-oriented, agent-based** design using a central **"Clock" engine** (`SimulationEngine` in `functions/engine/clock.py`), a unified **State Object** (`SimulationState` in `functions/engine/state.py`), and modular component models (`PVModel`, `WindModel`, `GeneratorModel`, `BatteryModel`, `FinancialModel` in `functions/engine/models/`).
+    - The simulation core follows a **modular, data-oriented, agent-based** design using a central **"Clock" engine** (`SimulationEngine` in `functions/engine/clock.py`), a unified **State Object** (`SimulationState` and `EpochModifiers` in `functions/engine/state.py`), and modular component models (`PVModel`, `WindModel`, `CoupledDispatchModel`, `GeneratorModel`, `BatteryModel`, `FinancialModel` in `functions/engine/models/`).
     - Component models, agents, and persistence adapters must conform to explicit `typing.Protocol` interfaces defined in `functions/engine/protocols.py` (`ComponentModelProtocol`, `BehavioralAgentProtocol`, `EvaluativeAgentProtocol`, `SimulationRepositoryProtocol`) rather than relying on untyped duck typing or deep inheritance trees.
-- **Two-Timescale Execution & Data-Oriented Design**:
-    - `SimulationState` stores time-series data as contiguous 1D/2D `float64` NumPy arrays (Structure of Arrays).
-    - Exogenous physical potentials (solar, wind) are computed vectorially (`NumPy`), inner state-dependent dispatch loops are structured as pure numeric functions suitable for **Numba (`@njit`)** compilation over epochs, and Behavioral Agents execute at decision boundaries (daily/monthly/event-driven).
+- **Two-Timescale Execution, Coupled Dispatch & Data-Oriented Design**:
+    - `SimulationState` stores time-series data as contiguous 1D/2D `float64` NumPy arrays (Structure of Arrays) alongside `EpochModifiers` vectors (`solar_derating`, `wind_derating`, `battery_soh`, `load_multiplier`, `generator_available`).
+    - Exogenous physical potentials (solar, wind) are computed vectorially (`NumPy`).
+    - State-dependent hourly dispatch runs in a single-pass, Numba `@njit`-compatible kernel (`run_coupled_dispatch_kernel` in `CoupledDispatchModel`) that enforces both battery charge and discharge kW ratings, discharges available battery storage *before* firing backup diesel generation, and tracks curtailed renewable power (`curtailed_power`).
+    - Behavioral Agents execute at epoch/decision boundaries (daily/monthly/annually or event-driven) by mutating `EpochModifiers`.
 - **Deterministic Reproducibility**:
     - All stochastic operations (agent perception noise, equipment failure events, Monte Carlo draws) must use an explicit seeded `np.random.Generator` (`np.random.default_rng(seed)`) attached to `SimulationState`—never global `random` or `np.random.seed()`.
 - **Repository & Adapter Pattern (Offline/Emulator Parity)**:

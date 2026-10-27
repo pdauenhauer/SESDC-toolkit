@@ -26,7 +26,7 @@ This document outlines the architecture for a scalable, cloud-native, agent-base
 The architecture is founded on four key principles:
 - **Modularity & Structural Typing**: The simulation core is composed of independent, swappable components and agents conforming to strict `typing.Protocol` interfaces.
 - **Scalability**: The serverless cloud infrastructure automatically scales with demand, from zero to thousands of simulations, without manual intervention.
-- **Performance (Data-Oriented Design)**: A hybrid two-timescale execution strategy combines NumPy vectorization, Numba JIT-compiled epoch kernels over contiguous arrays, and server-side aggregation.
+- **Performance (Data-Oriented Design)**: A hybrid two-timescale execution strategy combines NumPy vectorization, Numba JIT-compiled coupled dispatch kernels over contiguous arrays, and server-side aggregation.
 - **Accessibility**: A "thin client, powerful server" model ensures that all computationally intensive work is performed in the cloud, making the tool accessible from any modern web browser, regardless of local device power.
 
 ## 2. System Architecture Overview
@@ -64,13 +64,13 @@ The core simulation is a modular Python application designed for both behavioral
 - **Structural Protocols (`functions/engine/protocols.py`)**: Defines `@runtime_checkable` `typing.Protocol` interfaces (`ComponentModelProtocol`, `BehavioralAgentProtocol`, `EvaluativeAgentProtocol`, `SimulationRepositoryProtocol`) for static type safety and plug-and-play modularity.
 - **Two-Timescale Simulation Engine ("Clock")**:
     1. *Vectorized Exogenous Pass*: Weather-driven potential generation (`PVModel`, `WindModel`) is computed across the time horizon using vectorized NumPy array operations.
-    2. *Compiled Epoch Dispatch Kernel*: State-dependent hourly loops (battery SoC, diesel backup, unmet load) operate on flat, contiguous `float64` arrays suitable for **Numba (`@njit`)** compilation over an epoch (e.g., 1 day, 1 month, or until the next scheduled event).
-    3. *Agent Decision Boundaries*: Behavioral Agents (`Operator_Agent`, `Customer_Agent`) execute at decision intervals (daily/monthly/annually or on event triggers), updating numeric policy parameters passed into the next epoch's dispatch kernel.
-- **State Object (`SimulationState`)**: A Structure-of-Arrays (SoA) dataclass holding contiguous NumPy arrays, compact Tier-1 summaries (`tier1_summaries`), evaluative KPIs (`summary_kpis`), and an isolated, seeded pseudo-random number generator (`rng = np.random.default_rng(seed)`) for 100% deterministic reproducibility.
-- **Component Models**: Independent modules representing system physics and financials (`PVModel`, `WindModel`, `BatteryModel`, `GeneratorModel`, `FinancialModel`).
+    2. *Compiled Coupled Dispatch Kernel (`CoupledDispatchModel` / `run_coupled_dispatch_kernel`)*: State-dependent hourly loops (battery SoC charge/discharge, diesel backup, curtailed renewable power, and unmet load) execute in a single-pass, Numba `@njit`-compatible kernel over contiguous `float64` arrays. Unlike legacy sequential dispatch, the coupled kernel prioritizes discharging stored renewable battery energy (enforcing both charge and discharge kW ratings) before firing the backup diesel generator.
+    3. *Agent Decision Boundaries (`EpochModifiers`)*: Behavioral Agents (`Operator_Agent`, `Customer_Agent`), degradation models, and `EventScheduler` shocks execute at epoch boundaries (daily/monthly/annually), updating numeric modifier vectors on `EpochModifiers` (`solar_derating`, `wind_derating`, `battery_soh`, `load_multiplier`, `generator_available`).
+- **State Object (`SimulationState` & `EpochModifiers`)**: A Structure-of-Arrays (SoA) dataclass holding contiguous NumPy arrays (including `curtailed_power`), multi-year `EpochModifiers`, compact Tier-1 summaries (`tier1_summaries`), evaluative KPIs (`summary_kpis`), and an isolated, seeded pseudo-random number generator (`rng = np.random.default_rng(seed)`) for 100% deterministic reproducibility.
+- **Component Models**: Independent modules representing system physics, dispatch, and financials (`PVModel`, `WindModel`, `CoupledDispatchModel`, `BatteryModel`, `GeneratorModel`, `FinancialModel`).
 - **Behavioral Agents**: Dynamic actors (`Operator_Agent`, `Customer_Agent`) that make operational/tariff/demand decisions and adapt over time.
 - **Comprehension Layer**: An agent-specific perception filter on `SimulationState` that models information latency, measurement error, and cognitive/operational bias using the state's seeded `rng`.
-- **Evaluative Agents**: Read-only observers (`compute_summary_kpis` and sustainability evaluators) that synthesize `SimulationState` into high-level KPIs and health scores.
+- **Evaluative Agents**: Read-only observers (`compute_summary_kpis`, `SummaryKPIEvaluator`, and sustainability evaluators) that synthesize `SimulationState` into high-level KPIs and health scores.
 - **Event Scheduler**: A priority timeline used to inject discrete, scheduled or stochastic events into the simulation (e.g., external economic shocks, fuel price spikes, or equipment derating/failures).
 
 ## 5. Data & Storage Architecture (3-Tier Hybrid Strategy)
@@ -89,11 +89,11 @@ Rather than serializing multiple redundant datasets into text CSV blobs, the sys
 ## 6. Performance & Optimization Strategy
 
 ### Core Calculation Speed
-- **Vectorization (NumPy)**: Used for all non-state-dependent calculations (`PVModel`, `WindModel`, `GeneratorModel` deficit) to leverage pre-compiled C loops.
-- **JIT Compilation (Numba `@njit`)**: Used on state-dependent epoch loops (battery SoC and dispatch) operating on contiguous NumPy arrays. Lazy-loaded inside execution paths to preserve fast Cloud Function cold starts.
+- **Vectorization (NumPy)**: Used for all non-state-dependent calculations (`PVModel`, `WindModel`).
+- **Single-Pass Coupled Dispatch Kernel (Numba `@njit`)**: `run_coupled_dispatch_kernel` in `functions/engine/models/dispatch.py` executes battery charge/discharge, curtailment, diesel backup, and unmet load in a single pass over contiguous `float64` arrays, using `@numba.njit(cache=True)` automatically when `numba` is installed.
 
 ### Scenario Throughput
-- **Parallelization (`multiprocessing`)**: Used to execute multiple independent simulation scenarios in parallel on multi-core Cloud Run instances, with isolated `np.random.SeedSequence` streams per worker.
+- **Parallelization (`multiprocessing`)**: Used to execute multiple independent simulation scenarios in parallel on multi-core Cloud Run instances, with isolated `np.random.SeedSequence` streams per worker and lazy serialization (skipping CSV string formatting during intermediate Monte Carlo runs).
 
 ### End-User Experience
 - **Server-Side Aggregation & Downsampling**: All queries and downsampling against the hourly Parquet/BigQuery dataset are performed on the server. The backend sends only small, pre-aggregated (`tier1Summaries`) or viewport-downsampled numeric arrays to the client, ensuring a responsive experience even on low-bandwidth connections.
@@ -116,23 +116,24 @@ Rather than serializing multiple redundant datasets into text CSV blobs, the sys
 - **Unit & Contract Test Suite**: Added `pytest` unit and contract test suites (`test_contracts.py`, `test_models.py`, `test_engine.py`) verifying component models, full-year engine execution, and frontend-backend contract compliance.
 - **Summary KPI Persistence**: Computed summary KPIs (`SimulationSummaryKPIs`) during simulation runs and persisted them additively in Firestore (`save_last_simulation_run`).
 
-### Phase 1B: Structural Protocols, Deterministic State, Repository Pattern & Tier-1 Summaries (Completed — Zero Frontend Impact)
-*Goal: Establish modern Python structural typing (`Protocol`), deterministic PRNG seeding, offline-testable `SimulationRepository` adapters, and Tier-1 native JSON summary structures before introducing agents and cloud scale-out.*
+### Phase 1B: Structural Protocols, Coupled Dispatch Kernel, Epoch Modifiers, Repository Pattern & Tier-1 Summaries (Completed — Zero Frontend Impact)
+*Goal: Establish modern Python structural typing (`Protocol`), a Numba-ready Coupled Dispatch Kernel fixing battery/generator dispatch order and discharge rate limits, `EpochModifiers` for multi-year agent hooks, deterministic PRNG seeding, offline-testable `SimulationRepository` adapters, and Tier-1 native JSON summary structures.*
 - **Structural Protocols (`functions/engine/protocols.py`)**: Defined `@runtime_checkable` `ComponentModelProtocol`, `BehavioralAgentProtocol`, `EvaluativeAgentProtocol`, and `SimulationRepositoryProtocol`.
-- **Deterministic Seeded PRNG on `SimulationState`**: Added `seed` and `rng: np.random.Generator` (`np.random.default_rng`) to `SimulationState` (`functions/engine/state.py`) and `SimulationRequestContract`.
-- **Tier-1 Compact Summary Contract (`Tier1SimulationSummaries`)**: Added structured 20-year financial (`financial_expenses_20yr`, `revenue_20yr`) and 12-month solar summary series (`monthly_solar_averages`) to `functions/contracts.py`, `SimulationState`, `SimulationResponseContract` (`tier1Summaries`), and Firestore (`save_last_simulation_run`), enabling instant dashboard/chart rendering without GCS downloads.
+- **Coupled Renewable-First Dispatch Kernel (`functions/engine/models/dispatch.py`)**: Implemented `CoupledDispatchModel` and `run_coupled_dispatch_kernel` (`@njit`-ready), fixing the legacy sequential bug so stored battery energy is discharged (with proper kW discharge limits) *before* firing backup diesel generation, and tracking `curtailed_power`.
+- **EpochModifiers & Project Overhead Costs (`functions/engine/state.py`, `functions/engine/models/financial.py`)**: Added `EpochModifiers` (`solar_derating`, `wind_derating`, `battery_soh`, `load_multiplier`, `generator_available`) and wired project-level fixed costs (`other_capex`, `labor_cost`, `land_leasing_cost`, `licensing_cost`) into `FinancialModel`.
+- **Deterministic Seeded PRNG on `SimulationState`**: Added `seed` and `rng: np.random.Generator` (`np.random.default_rng`) to `SimulationState` and `SimulationRequestContract`.
+- **Tier-1 Compact Summary Contract (`Tier1SimulationSummaries`)**: Added structured 20-year financial (`financial_expenses_20yr`, `revenue_20yr`) and 12-month solar summary series (`monthly_solar_averages`) to `functions/contracts.py`, `SimulationState`, `SimulationResponseContract` (`tier1Summaries`), and Firestore (`save_last_simulation_run`).
 - **Repository Pattern (`functions/repository.py`)**: Implemented `InMemorySimulationRepository` and `GcpSimulationRepository` so simulation persistence is decoupled from live GCP services during unit/integration tests.
 
 ### Phase 2: Multi-Year Epoch Clock, Behavioral Agents & Event Scheduler (Next Up — Provisional, To Be Fleshed Out at Phase Gate)
-*Goal: Evolve the simulation core from a 1-year repeated calculation to a true multi-year epoch-stepping engine with Behavioral Agents, Comprehension Layer, and Stress-Test Events, locking in the final time-series schema before BigQuery/Cloud Run deployment.*
-- **Two-Timescale Epoch Clock & Degradation**: Upgrade `SimulationEngine` to support multi-year epoch stepping with component degradation and replacement dynamics.
-- **Behavioral Agents (`Operator_Agent`, `Customer_Agent`)**: Implement `BehavioralAgentProtocol` actors that adjust tariffs, dispatch reserves, and demand profiles at epoch boundaries.
-- **Comprehension Layer & Event Scheduler**: Implement imperfect agent perception filters (`ComprehensionLayer` using `state.rng`) and discrete shock injection (`EventScheduler` for equipment failures, fuel price spikes, weather anomalies).
+*Goal: Build Behavioral Agents, Comprehension Layer, and Stress-Test Events on top of `EpochModifiers` and `CoupledDispatchModel`, locking in the final time-series schema before BigQuery/Cloud Run deployment.*
+- **Behavioral Agents (`Operator_Agent`, `Customer_Agent`)**: Implement `BehavioralAgentProtocol` actors that adjust tariffs, dispatch reserves, and `EpochModifiers.load_multiplier` across the 20-year horizon.
+- **Comprehension Layer & Event Scheduler**: Implement imperfect agent perception filters (`ComprehensionLayer` using `state.rng`) and discrete shock injection (`EventScheduler` mutating `EpochModifiers` for equipment failures, fuel price spikes, weather anomalies).
 - **Evaluative Agents**: Expand `engine/kpis.py` into `EvaluativeAgentProtocol` implementations producing sustainability and financial health scores, and lock in the final canonical time-series schema in `contracts.py`.
 
-### Phase 3: Cloud Scale-Out, Parquet/BigQuery Pipeline, Numba JIT & Frontend Sync (Provisional — Directional Outline)
+### Phase 3: Cloud Scale-Out, Parquet/BigQuery Pipeline, Multiprocessing & Frontend Sync (Provisional — Directional Outline)
 *Goal: Scale the finalized multi-year agent engine to massive datasets and parallel scenario sweeps in the cloud, and synchronize the frontend with Tier-1 summaries and Tier-3 columnar `uPlot` endpoints.*
-- **Numba `@njit` Inner Dispatch & `multiprocessing`**: Compile the inner hourly battery/generator dispatch loop with Numba (`@njit`, lazy-loaded) and parallelize multi-scenario runs with `multiprocessing`.
+- **Scenario Parallelization (`multiprocessing`)**: Parallelize multi-scenario sensitivity and Monte Carlo runs across CPU cores using isolated `SeedSequence` streams.
 - **Tier 2 Storage (Canonical Parquet on GCS -> BigQuery)**: Replace the legacy 8-file `.csv.gz` bundle with a single `{run_id}_hourly.parquet` artifact in GCS bridged to a partitioned, clustered **BigQuery** table.
 - **Tier 3 API (Windowed Columnar `uPlot` JSON & On-Demand CSV Export)**: Serve downsampled columnar numeric arrays (`[timestamps[], series1[], ...]`) to `SimulationGraphsPanel.tsx` and move CSV generation to an on-demand export endpoint.
 - **Asynchronous Execution (Pub/Sub -> Cloud Run) & CI/CD**: Deploy containerized Cloud Run workers triggered via Pub/Sub for long-running scenario batches, and extend GitHub Actions workflows for Cloud Run and `main` branch production releases.
@@ -145,22 +146,22 @@ Rather than serializing multiple redundant datasets into text CSV blobs, the sys
 ### Current Codebase State (Audit Summary)
 - **Frontend (`frontend/`)**: Migrated to **Preact + TypeScript + Vite** with authentication, project management, hierarchical load `Workbench`, CSV preview/download (`SimulationResults.tsx`), and interactive `uPlot` time-series charts (`SimulationGraphsPanel.tsx`). *(Note: Frontend files are currently frozen in this workspace to avoid conflicts with active parallel frontend development; the Project Wizard is deprioritized).*
 - **Backend API, Contracts & Repository (`functions/main.py`, `functions/handlers.py`, `functions/contracts.py`, `functions/repository.py`)**: Exposes Python 3.13 HTTP Cloud Functions (`run_simulation_post` and `get_stored_simulation`) backed by validated contracts (`SimulationRequestContract`, `SimulationResponseContract`, `StoredSimulationResponseContract`, `Tier1SimulationSummaries`) and a pluggable `SimulationRepositoryProtocol` (`InMemorySimulationRepository` / `GcpSimulationRepository`).
-- **Simulation Core (`functions/engine/`, `functions/simulation.py`, `functions/calculations.py`)**: Refactored into modular `SimulationEngine` ("Clock"), `SimulationState` (with deterministic `np.random.Generator` seeding), `protocols.py` (`ComponentModelProtocol`, `BehavioralAgentProtocol`, `EvaluativeAgentProtocol`), `compute_summary_kpis`, `compute_tier1_summaries`, and vectorized component models (`PVModel`, `WindModel`, `GeneratorModel`, `BatteryModel`, `FinancialModel`). Behavioral agents, comprehension layer, and event scheduler are scoped for Phase 2.
+- **Simulation Core (`functions/engine/`, `functions/simulation.py`, `functions/calculations.py`)**: Refactored into modular `SimulationEngine` ("Clock"), `SimulationState` (with `EpochModifiers`, `curtailed_power`, and deterministic `np.random.Generator` seeding), `protocols.py` (`ComponentModelProtocol`, `BehavioralAgentProtocol`, `EvaluativeAgentProtocol`, `SimulationRepositoryProtocol`), `compute_summary_kpis`, `compute_tier1_summaries`, and component models (`PVModel`, `WindModel`, `CoupledDispatchModel`, `GeneratorModel`, `BatteryModel`, `FinancialModel`). Behavioral agents, comprehension layer, and event scheduler are scoped for Phase 2.
 - **Data Storage (`functions/storage.py`, `functions/firestore_helpers.py`, `functions/repository.py`)**: Records **Tier-1** `summaryKpis` and `tier1Summaries` (20-year financials and monthly solar averages) directly in **Firestore** alongside backward-compatible `.csv.gz` bundles in **Google Cloud Storage**. Migration of Tier-2 (single canonical **Parquet** on GCS / **BigQuery**) and Tier-3 (columnar JSON wire format + on-demand CSV export) is scoped in Phase 3 once Phase 2 locks in the agent time-series schema.
-- **Testing (`tests/`, `functions/tests/`)**: Vitest + Firebase Emulators test Firestore rules and project CRUD (`e2e-emulators.yml`). `pytest` tests contracts (`test_contracts.py`), modular component models (`test_models.py`), protocols, repository adapters, deterministic seeding, Tier-1 summaries, and full-year engine execution (`test_engine.py`), Firestore helpers (`test_firestore_helpers.py`), storage (`test_storage.py`), and utilities (`test_utils.py`).
+- **Testing (`tests/`, `functions/tests/`)**: Vitest + Firebase Emulators test Firestore rules and project CRUD (`e2e-emulators.yml`). `pytest` tests contracts (`test_contracts.py`), modular component models & coupled dispatch (`test_models.py`), protocols, repository adapters, deterministic seeding, Tier-1 summaries, and full-year engine execution (`test_engine.py`), bidirectional governance compliance (`test_governance.py`), Firestore helpers (`test_firestore_helpers.py`), storage (`test_storage.py`), and utilities (`test_utils.py`).
 
 ### Key Discrepancies Checklist
 - [x] **Frontend Framework & Interactive Charts**: Preact + TypeScript + Vite + `uPlot` implemented (`frontend/`).
 - [x] **Frontend–Backend Interface Contracts (Phase 1A)**: Request, response, CSV header, KPI, and Tier-1 summary contracts implemented in `functions/contracts.py` and verified by `functions/tests/test_contracts.py`.
 - [x] **Modular Engine & Vectorized Component Models (Phase 1A)**: `SimulationEngine`, `SimulationState`, and vectorized `PVModel`, `WindModel`, `GeneratorModel`, `BatteryModel`, `FinancialModel` implemented in `functions/engine/`.
-- [x] **Structural Protocols, Deterministic PRNG, Repository Adapter & Tier-1 Summaries (Phase 1B)**: Implemented in `functions/engine/protocols.py`, `functions/engine/state.py`, `functions/repository.py`, and `functions/engine/kpis.py`.
-- [ ] **Multi-Year Epoch Clock, Behavioral Agents & Event Scheduler (Phase 2)**: Need multi-year epoch stepping, `Operator_Agent`, `Customer_Agent`, `Comprehension Layer`, and `Event Scheduler`.
-- [ ] **Tier-2/Tier-3 Storage & Async Cloud Execution (Phase 3)**: Transition from 8 `.csv.gz` blobs to canonical **Parquet** in GCS / **BigQuery**, columnar JSON `uPlot` endpoints, Numba `@njit`, `multiprocessing`, and **Pub/Sub -> Cloud Run**.
+- [x] **Structural Protocols, Coupled Dispatch Kernel, Epoch Modifiers, Deterministic PRNG, Repository Adapter & Tier-1 Summaries (Phase 1B)**: Implemented in `functions/engine/protocols.py`, `functions/engine/models/dispatch.py`, `functions/engine/state.py`, `functions/repository.py`, and `functions/engine/kpis.py`.
+- [ ] **Behavioral Agents, Comprehension Layer & Event Scheduler (Phase 2)**: Need `Operator_Agent`, `Customer_Agent`, `Comprehension Layer`, and `Event Scheduler` operating on `EpochModifiers`.
+- [ ] **Tier-2/Tier-3 Storage & Async Cloud Execution (Phase 3)**: Transition from 8 `.csv.gz` blobs to canonical **Parquet** in GCS / **BigQuery**, columnar JSON `uPlot` endpoints, `multiprocessing`, and **Pub/Sub -> Cloud Run**.
 - [ ] **CI/CD & Infrastructure (Phase 3)**: Extend GitHub Actions workflows to cover **Cloud Run** container builds/deployments and production release gates on `main`.
 
 ### Progress Tracker & Next Phase Gate
 - [x] Phase 1A: Backend Modularization, Vectorization & Interface Contracts (Completed)
-- [x] Phase 1B: Structural Protocols, Deterministic State, Repository Pattern & Tier-1 Summaries (Completed)
-- [ ] **Phase-Gate Review**: Re-audit codebase & requirements, then fully scope and flesh out **Phase 2 (Multi-Year Epoch Clock, Behavioral Agents & Event Scheduler)** before implementation.
-- [ ] Phase 2: Multi-Year Epoch Clock, Behavioral Agents & Event Scheduler (Provisional)
-- [ ] Phase 3: Cloud Scale-Out, Parquet/BigQuery Pipeline, Numba JIT & Frontend Sync (Provisional)
+- [x] Phase 1B: Structural Protocols, Coupled Dispatch Kernel, Epoch Modifiers, Repository Pattern & Tier-1 Summaries (Completed)
+- [ ] **Phase-Gate Review**: Re-audit codebase & requirements, then fully scope and flesh out **Phase 2 (Behavioral Agents, Comprehension Layer & Event Scheduler)** before implementation.
+- [ ] Phase 2: Behavioral Agents, Comprehension Layer & Event Scheduler (Provisional)
+- [ ] Phase 3: Cloud Scale-Out, Parquet/BigQuery Pipeline, Multiprocessing & Frontend Sync (Provisional)

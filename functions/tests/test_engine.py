@@ -7,6 +7,7 @@ import pytest
 from contracts import SimulationResponseContract, validate_csv_bundle_schema
 from engine import (
     ComponentModelProtocol,
+    CoupledDispatchModel,
     EvaluativeAgentProtocol,
     SimulationEngine,
     SimulationRepositoryProtocol,
@@ -37,6 +38,7 @@ class TestProtocolsAndDeterminism:
     def test_component_models_satisfy_protocol(self):
         assert isinstance(PVModel(), ComponentModelProtocol)
         assert isinstance(WindModel(), ComponentModelProtocol)
+        assert isinstance(CoupledDispatchModel(), ComponentModelProtocol)
         assert isinstance(GeneratorModel(), ComponentModelProtocol)
         assert isinstance(BatteryModel(), ComponentModelProtocol)
         assert isinstance(FinancialModel(), ComponentModelProtocol)
@@ -171,6 +173,38 @@ class TestSimulationEngineAndRepository:
         ).to_dict()
         assert "tier1Summaries" in resp
         assert len(resp["tier1Summaries"]["monthly_solar_averages"]) == 12
+
+    def test_epoch_modifiers_and_project_fixed_costs_scale_outputs(self):
+        nlr_df = _make_weather_df(hours=24)
+        state = SimulationState.initialize(
+            nlr_df=nlr_df,
+            load_list=[2.0] * 24,
+            using_solar=False,
+            using_wind=False,
+            using_generator=True,
+            generator_inputs={"capacity": 10000.0, "capex": 1000.0, "opex": 100.0, "lifespan": 10, "replacement_cost": 500.0},
+            using_battery=False,
+            financial_inputs={
+                "inflation": 0.0,
+                "energy_price": 0.50,
+                "other_capex": 500.0,
+                "labor_cost": 200.0,
+                "land_leasing_cost": 50.0,
+                "licensing_cost": 50.0,
+            },
+        )
+        # Double load in year 1 via EpochModifiers
+        state.epoch_modifiers.load_multiplier[1] = 2.0
+        engine = SimulationEngine()
+        engine.run(state)
+
+        # Year 0 expenses: 1000 (gen capex) + 100 (gen opex) + 500 (other_capex) + 300 (fixed opex) = 1900
+        assert state.total_expenses[0] == pytest.approx(1900.0)
+        # Year 1 expenses: 100 (gen opex) + 300 (fixed opex) = 400
+        assert state.total_expenses[1] == pytest.approx(400.0)
+        # Revenue in year 1 is 2x revenue in year 0 due to load_multiplier[1] == 2.0
+        assert state.revenue_yearly is not None
+        assert state.revenue_yearly[1] == pytest.approx(2.0 * state.revenue_yearly[0])
 
     def test_run_simulation_facade_returns_dict(self):
         nlr_df = _make_weather_df(hours=24)

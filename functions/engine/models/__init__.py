@@ -6,6 +6,7 @@ from engine.models.battery import (
     calc_load_not_serviced,
     calculate_net_energy,
 )
+from engine.models.dispatch import CoupledDispatchModel, run_coupled_dispatch_kernel
 from engine.models.financial import (
     FinancialModel,
     calc_daily_energy,
@@ -16,6 +17,7 @@ from engine.models.financial import (
     compute_annual_energy,
     normalize_inflation,
     predict20years,
+    predict_multi_year_daily,
 )
 from engine.models.generator import (
     GeneratorModel,
@@ -46,6 +48,7 @@ from engine.models.wind import (
 
 __all__ = [
     "BatteryModel",
+    "CoupledDispatchModel",
     "EnergyStorageSystem",
     "FinancialModel",
     "GeneratorModel",
@@ -76,6 +79,8 @@ __all__ = [
     "panel_coef",
     "panel_losses",
     "predict20years",
+    "predict_multi_year_daily",
     "process_csv",
     "ross_coef",
+    "run_coupled_dispatch_kernel",
 ]

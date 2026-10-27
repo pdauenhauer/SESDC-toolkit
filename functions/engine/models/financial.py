@@ -53,6 +53,26 @@ def predict20years(load: Sequence[float]) -> list[float]:
     return load20
 
 
+def predict_multi_year_daily(
+    daily_load_serviced: Sequence[float],
+    load_multipliers: Sequence[float] | np.ndarray | None = None,
+    years: int = 20,
+) -> list[float]:
+    """Project daily load serviced across `years`, applying per-year `load_multipliers` if provided."""
+    base = np.asarray(daily_load_serviced, dtype=float)
+    n_days = len(base)
+    if load_multipliers is None:
+        mults = np.ones(years, dtype=float)
+    else:
+        mults = np.asarray(load_multipliers, dtype=float)
+
+    out = np.zeros(n_days * years, dtype=float)
+    for y in range(years):
+        m = float(mults[y]) if y < len(mults) else 1.0
+        out[y * n_days : (y + 1) * n_days] = base * m
+    return out.tolist()
+
+
 def calculate_20_year_expenses(
     inflation_rate: float,
     capex: float,
@@ -114,14 +134,15 @@ class FinancialModel:
                 0, state.hourly_load_serviced[:trim].tolist()
             )
 
+        years = state.horizon_years
         inflation_raw = safe_float(state.financial_inputs.get("inflation", 3.0), 3.0)
         inflation_rate = normalize_inflation(inflation_raw)
 
-        state.years_arr = np.arange(20)
-        state.battery_expenses = np.zeros(20, dtype=float)
-        state.generator_expenses = np.zeros(20, dtype=float)
-        state.solar_expenses = np.zeros(20, dtype=float)
-        state.wind_expenses = np.zeros(20, dtype=float)
+        state.years_arr = np.arange(years)
+        state.battery_expenses = np.zeros(years, dtype=float)
+        state.generator_expenses = np.zeros(years, dtype=float)
+        state.solar_expenses = np.zeros(years, dtype=float)
+        state.wind_expenses = np.zeros(years, dtype=float)
 
         if state.using_battery and state.battery_inputs:
             state.battery_expenses = calculate_20_year_expenses(
@@ -130,6 +151,7 @@ class FinancialModel:
                 safe_float(state.battery_inputs.get("opex")),
                 safe_float(state.battery_inputs.get("replacement_cost")),
                 safe_int(state.battery_inputs.get("lifespan")),
+                years=years,
             )
         if state.using_generator and state.generator_inputs:
             state.generator_expenses = calculate_20_year_expenses(
@@ -138,6 +160,7 @@ class FinancialModel:
                 safe_float(state.generator_inputs.get("opex")),
                 safe_float(state.generator_inputs.get("replacement_cost")),
                 safe_int(state.generator_inputs.get("lifespan")),
+                years=years,
             )
         if state.using_solar and state.solar_inputs:
             state.solar_expenses = calculate_20_year_expenses(
@@ -146,6 +169,7 @@ class FinancialModel:
                 safe_float(state.solar_inputs.get("opex")),
                 safe_float(state.solar_inputs.get("replacement_cost")),
                 safe_int(state.solar_inputs.get("lifespan")),
+                years=years,
             )
         if state.using_wind and state.wind_inputs:
             state.wind_expenses = calculate_20_year_expenses(
@@ -154,13 +178,26 @@ class FinancialModel:
                 safe_float(state.wind_inputs.get("opex")),
                 safe_float(state.wind_inputs.get("replacement_cost")),
                 safe_int(state.wind_inputs.get("lifespan")),
+                years=years,
             )
+
+        # Include project-level fixed CapEx and recurring annual OpEx (labor, land lease, licensing)
+        other_capex = safe_float(state.financial_inputs.get("other_capex", 0.0), 0.0)
+        annual_fixed_opex = (
+            safe_float(state.financial_inputs.get("labor_cost", 0.0), 0.0)
+            + safe_float(state.financial_inputs.get("land_leasing_cost", 0.0), 0.0)
+            + safe_float(state.financial_inputs.get("licensing_cost", 0.0), 0.0)
+        )
+        project_overhead = np.full(years, annual_fixed_opex, dtype=float)
+        if years > 0:
+            project_overhead[0] += other_capex
 
         state.total_expenses = (
             state.battery_expenses
             + state.generator_expenses
             + state.solar_expenses
             + state.wind_expenses
+            + project_overhead
         )
         state.cumulative_expenses = np.cumsum(state.total_expenses)
 
@@ -170,11 +207,17 @@ class FinancialModel:
             and len(state.daily_load_serviced) > 0
             and energy_price > 0
         ):
-            state.revenue_yearly = compute_20_year_revenue(
+            base_rev = compute_20_year_revenue(
                 state.daily_load_serviced,
                 energy_price,
                 inflation_raw,
+                years=years,
             )
+            load_mults = state.epoch_modifiers.load_multiplier
+            state.revenue_yearly = [
+                float(base_rev[y] * (float(load_mults[y]) if y < len(load_mults) else 1.0))
+                for y in range(years)
+            ]
             state.cumulative_revenue = [float(v) for v in np.cumsum(state.revenue_yearly)]
         else:
             state.revenue_yearly = None

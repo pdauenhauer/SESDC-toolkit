@@ -22,6 +22,7 @@ from calculations import (
     normalize_inflation,
     predict20years,
 )
+from engine.models.dispatch import run_coupled_dispatch_kernel
 
 
 class TestSolarModel:
@@ -77,19 +78,54 @@ class TestWindModel:
         np.testing.assert_allclose(vec_out, scalar_out, rtol=1e-12)
 
 
-class TestBatteryAndDispatchModel:
+class TestBatteryAndCoupledDispatchModel:
     def test_lithium_ion_vs_lead_acid_min_soc(self):
         li = EnergyStorageSystem(capacity=50.0, max_storage=200.0, battery_type="lithium-ion")
         la = EnergyStorageSystem(capacity=50.0, max_storage=200.0, battery_type="lead-acid")
         assert li.min_storage == pytest.approx(20.0)
         assert la.min_storage == pytest.approx(100.0)
 
-    def test_charge_and_discharge_clamping(self):
+    def test_charge_and_discharge_clamping_with_rate_limit(self):
         batt = EnergyStorageSystem(capacity=30.0, max_storage=100.0, battery_type="lithium-ion")
         # Starts at min_storage = 10.0; charge by 50 kW is capped by charge capacity (30 kW) -> 40.0
         assert batt.charge(50.0) == pytest.approx(40.0)
-        # Discharge by -50 kW clamps at min_storage (10.0)
+        # Discharge by -50 kW is capped by discharge capacity (30 kW) -> 40.0 - 30.0 = 10.0
         assert batt.discharge(-50.0) == pytest.approx(10.0)
+
+        # If charged to 80.0, discharging -50 kW with 30 kW capacity limits drop to 80 - 30 = 50.0
+        batt.storage = 80.0
+        assert batt.discharge(-50.0) == pytest.approx(50.0)
+
+    def test_coupled_dispatch_prioritizes_battery_before_diesel_and_tracks_curtailment(self):
+        # t0: 60 kW solar, 10 kW load -> +50 kW surplus. Battery cap=30 kW, max=100, min=10 (init=10).
+        #     Battery charges +30 kWh (SoC -> 40), 20 kW is curtailed, 0 diesel.
+        # t1: 0 kW solar, 25 kW load -> -25 kW deficit.
+        #     Battery discharges 25 kWh (SoC -> 15), 0 diesel needed!
+        # t2: 0 kW solar, 20 kW load -> -20 kW deficit.
+        #     Battery only has 5 kWh above min_soc (15 -> 10), diesel covers 10 kW (max_diesel=10),
+        #     leaving 5 kW unmet load!
+        load_kw = np.array([10.0, 25.0, 20.0])
+        solar_kw = np.array([60.0, 0.0, 0.0])
+        wind_kw = np.array([0.0, 0.0, 0.0])
+
+        diesel_kw, soc_kwh, unmet_kw, curtailed_kw, final_soc = run_coupled_dispatch_kernel(
+            load_kw=load_kw,
+            solar_kw=solar_kw,
+            wind_kw=wind_kw,
+            using_battery=True,
+            batt_power_cap_kw=30.0,
+            batt_max_kwh=100.0,
+            batt_min_kwh=10.0,
+            initial_soc_kwh=10.0,
+            using_generator=True,
+            max_diesel_kw=10.0,
+        )
+
+        np.testing.assert_allclose(soc_kwh, [40.0, 15.0, 10.0])
+        np.testing.assert_allclose(curtailed_kw, [20.0, 0.0, 0.0])
+        np.testing.assert_allclose(diesel_kw, [0.0, 0.0, 10.0])
+        np.testing.assert_allclose(unmet_kw, [0.0, 0.0, 5.0])
+        assert final_soc == pytest.approx(10.0)
 
     def test_calculate_net_energy_and_unmet_load(self):
         batt = EnergyStorageSystem(capacity=50.0, max_storage=100.0, battery_type="lithium-ion")
