@@ -3,24 +3,27 @@
 import json
 import time
 import traceback
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from firebase_functions import https_fn
 from firebase_functions.params import SecretParam
 
 from config import cors_settings
+from contracts import (
+    ContractValidationError,
+    SimulationRequestContract,
+    SimulationResponseContract,
+    StoredSimulationResponseContract,
+)
+from nlr import fetch_nlr_data
+from repository import GcpSimulationRepository
+from simulation import run_simulation_with_state
 
 NLR_API_KEY = SecretParam("NLR_API_KEY")
-from firestore_helpers import get_last_simulation_run, save_last_simulation_run
-from nlr import fetch_nlr_data
-from simulation import run_simulation
-from storage import download_csv, upload_csv_bundle
-from utils import safe_float, safe_int
 
 
 @https_fn.on_request(cors=cors_settings, secrets=[NLR_API_KEY])
 def run_simulation_post(req: https_fn.Request) -> https_fn.Response:
-    """POST: run simulation, upload primary CSV to GCS, return storagePath + csvBundle."""
+    """POST: validate contract, run simulation, persist via repository, return contract response."""
     if req.method == "OPTIONS":
         return https_fn.Response("", status=204)
     if req.method != "POST":
@@ -29,127 +32,70 @@ def run_simulation_post(req: https_fn.Request) -> https_fn.Response:
 
     try:
         data = req.get_json(silent=True)
-        if not data:
-            print("[run_simulation_post] Rejected: no JSON body")
-            return https_fn.Response("Invalid request: No JSON data provided", status=400)
+        try:
+            contract_req = SimulationRequestContract.from_dict(data)
+        except ContractValidationError as val_err:
+            print("[run_simulation_post] Rejected:", str(val_err))
+            return https_fn.Response(str(val_err), status=400)
 
-        userId = data.get("userId")
-        projectId = data.get("projectId")
-        if not userId or not projectId:
-            print("[run_simulation_post] Rejected: missing userId or projectId")
-            return https_fn.Response("Missing userId or projectId", status=400)
-
-        print("[run_simulation_post] userId=", userId, "projectId=", projectId)
-
-        latitude = data.get("latitude")
-        longitude = data.get("longitude")
-        load_list = data.get("loadInputs", [])
-
-        using_solar = bool(data.get("usingSolarPanel"))
-        using_wind = bool(data.get("usingWindTurbine"))
-        using_generator = bool(data.get("usingGenerator"))
-        using_battery = bool(data.get("usingBattery"))
-
-        solar_inputs = None
-        if using_solar:
-            losses = [
-                safe_float(data.get("wireLosses")) / 100.0,
-                safe_float(data.get("moduleMismatch")) / 100.0,
-                safe_float(data.get("moduleAging")) / 100.0,
-                safe_float(data.get("dustDirt")) / 100.0,
-                safe_float(data.get("converter")) / 100.0,
-            ]
-            solar_inputs = {
-                "losses": losses,
-                "solar_array_size": safe_float(data.get("solarArraySize")),
-                "capex": safe_float(data.get("solarCapex")),
-                "opex": safe_float(data.get("solarOpex")),
-                "lifespan": safe_int(data.get("solarLifespan")),
-                "replacement_cost": safe_float(data.get("solarReplacement")),
-            }
-
-        wind_inputs = None
-        if using_wind:
-            wind_inputs = {
-                "nameplate_capacity": safe_float(data.get("namePlateCapacity")),
-                "rated_power": safe_float(data.get("ratedPower")),
-                "cut_in_speed": safe_float(data.get("cutInSpeed")),
-                "rated_speed": safe_float(data.get("ratedSpeed")),
-                "cut_out_speed": safe_float(data.get("cutOutSpeed")),
-                "capex": safe_float(data.get("windCapex")),
-                "opex": safe_float(data.get("windOpex")),
-                "lifespan": safe_int(data.get("windLifespan")),
-                "replacement_cost": safe_float(data.get("windReplacement")),
-            }
-
-        generator_inputs = None
-        if using_generator:
-            generator_inputs = {
-                "capacity": safe_float(data.get("generatorCapacity")),
-                "capex": safe_float(data.get("generatorCapex")),
-                "opex": safe_float(data.get("generatorOpex")),
-                "lifespan": safe_int(data.get("generatorLifespan")),
-                "replacement_cost": safe_float(data.get("generatorReplacement")),
-            }
-
-        battery_inputs = None
-        if using_battery:
-            battery_inputs = {
-                "charge_capacity": safe_float(data.get("chargeCapacity")),
-                "maximum_storage": safe_float(data.get("maximumStorage")),
-                "battery_type": data.get("batteryType", "lithium-ion"),
-                "capex": safe_float(data.get("batteryCapex")),
-                "opex": safe_float(data.get("batteryOpex")),
-                "lifespan": safe_int(data.get("batteryLifespan")),
-                "replacement_cost": safe_float(data.get("batteryReplacement")),
-            }
-
-        financial_inputs = {
-            "inflation": safe_float(data.get("inflation", 3.0), 3.0),
-            "labor_cost": safe_float(data.get("laborCost")),
-            "land_leasing_cost": safe_float(data.get("landLeasingCost")),
-            "licensing_cost": safe_float(data.get("licensingCost")),
-            "other_capex": safe_float(data.get("otherCapex")),
-            "energy_price": safe_float(data.get("energyPrice", 0.15), 0.15),
-        }
+        print(
+            "[run_simulation_post] userId=",
+            contract_req.user_id,
+            "projectId=",
+            contract_req.project_id,
+        )
 
         print("[run_simulation_post] Fetching NLR data...")
-        nlr_df = fetch_nlr_data(latitude, longitude)
+        nlr_df = fetch_nlr_data(contract_req.latitude, contract_req.longitude)
         if nlr_df is None:
             print("[run_simulation_post] NLR fetch failed")
             return https_fn.Response("Failed to fetch NLR data (check logs)", status=502)
 
         print("[run_simulation_post] Running simulation...")
-        csv_dict = run_simulation(
+        csv_dict, state = run_simulation_with_state(
             nlr_df,
-            load_list,
-            using_solar, solar_inputs,
-            using_wind, wind_inputs,
-            using_generator, generator_inputs,
-            using_battery, battery_inputs,
-            financial_inputs,
+            contract_req.load_inputs,
+            contract_req.using_solar,
+            contract_req.solar_inputs.to_dict() if contract_req.solar_inputs else None,
+            contract_req.using_wind,
+            contract_req.wind_inputs.to_dict() if contract_req.wind_inputs else None,
+            contract_req.using_generator,
+            contract_req.generator_inputs.to_dict() if contract_req.generator_inputs else None,
+            contract_req.using_battery,
+            contract_req.battery_inputs.to_dict() if contract_req.battery_inputs else None,
+            contract_req.financial_inputs.to_dict(),
+            seed=contract_req.seed,
         )
 
         run_id = int(time.time())
         storage_path = None
+        summary_kpis_dict = state.summary_kpis.to_dict() if state.summary_kpis else None
+        tier1_dict = state.tier1_summaries.to_dict() if state.tier1_summaries else None
+        repo = GcpSimulationRepository()
         try:
-            paths = upload_csv_bundle(userId, projectId, run_id, csv_dict)
-            save_last_simulation_run(userId, projectId, run_id, paths)
-            storage_path = paths.get("hourly_simulation")
+            storage_path = repo.save_run(
+                user_id=contract_req.user_id,
+                project_id=contract_req.project_id,
+                run_id=run_id,
+                csv_bundle=csv_dict,
+                summary_kpis=summary_kpis_dict,
+                tier1_summaries=tier1_dict,
+            )
         except Exception as up_err:
             print("[run_simulation_post] Upload failed:", str(up_err))
             traceback.print_exc()
             return https_fn.Response("Failed to upload CSV to storage", status=500)
 
-        csv_keys = [k for k, v in csv_dict.items() if v is not None and len(str(v)) > 0]
-        payload = {
-            "storagePath": storage_path,
-            "csvKeys": csv_keys,
-            "csvBundle": csv_dict,
-        }
+        response_contract = SimulationResponseContract(
+            storage_path=storage_path,
+            csv_bundle=csv_dict,
+            run_id=run_id,
+            summary_kpis=state.summary_kpis,
+            tier1_summaries=state.tier1_summaries,
+        )
         print("[run_simulation_post] Done, storagePath=", storage_path)
         return https_fn.Response(
-            json.dumps(payload),
+            json.dumps(response_contract.to_dict()),
             status=200,
             headers={"Content-Type": "application/json; charset=utf-8"},
         )
@@ -177,34 +123,12 @@ def get_stored_simulation(req: https_fn.Request) -> https_fn.Response:
                 headers={"Content-Type": "application/json; charset=utf-8"},
             )
 
-        last_run = get_last_simulation_run(userId, projectId)
-        if not last_run or not last_run.get("paths"):
-            return https_fn.Response(
-                json.dumps({"csvBundle": {}}),
-                status=200,
-                headers={"Content-Type": "application/json; charset=utf-8"},
-            )
-
-        paths = last_run["paths"]
-
-        def _fetch_one(key: str, gs_url: str) -> tuple[str, str | None]:
-            try:
-                return key, download_csv(gs_url)
-            except Exception as e:
-                print("[get_stored_simulation] Failed to download", key, str(e))
-                return key, None
-
-        csv_bundle = {}
-        with ThreadPoolExecutor(max_workers=min(len(paths), 8)) as executor:
-            futures = {executor.submit(_fetch_one, key, gs_url): key for key, gs_url in paths.items()}
-            for future in as_completed(futures):
-                key, csv_str = future.result()
-                if csv_str is not None:
-                    csv_bundle[key] = csv_str
-
+        repo = GcpSimulationRepository()
+        csv_bundle = repo.get_stored_csv_bundle(userId, projectId)
         print("[get_stored_simulation] Returned", len(csv_bundle), "CSVs")
+        stored_contract = StoredSimulationResponseContract(csv_bundle=csv_bundle)
         return https_fn.Response(
-            json.dumps({"csvBundle": csv_bundle}),
+            json.dumps(stored_contract.to_dict()),
             status=200,
             headers={"Content-Type": "application/json; charset=utf-8"},
         )
