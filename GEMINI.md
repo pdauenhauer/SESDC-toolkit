@@ -31,10 +31,19 @@ All AI agents and contributors working in this repository MUST follow the rules 
 
 ---
 
-## 3. Post-Flight Verification Gate (Before Completing a Task)
-1. **Run Backend Unit, Contract & Governance Tests**:
-   - Execute `python -m pytest tests/ -v` from `functions/` (including `test_governance.py` and `test_contracts.py`).
+## 3. Reflexive Governance Loop (Mandatory Co-Update Protocol)
+Whenever any code change, refactor, workflow update, or architectural discussion revises our approach, you MUST reflexively perform this **3-part co-update in the same turn**:
+1. **Update `workplan/governance.md`** if any engineering standard, `Protocol` interface, component model, CI/CD workflow (`.github/workflows/*.yml`), runtime version (`firebase.json`), secret (`SecretParam`), or storage convention was added or modified.
+2. **Update `workplan/blueprint.md`** if any architectural component, storage tier, phase scope, or migration status changed.
+3. **Update `functions/tests/test_governance.py`** if a new architectural invariant or standard was introduced, so that the rule is permanently enforced as code.
+
+---
+
+## 4. Post-Flight Verification Gate (Before Completing a Task)
+1. **Run Backend Unit, Contract & Bidirectional Governance Tests**:
+   - Execute `python -m pytest tests/ -v` from `functions/`.
+   - Note: `test_governance.py` runs **bidirectional drift checks** that will fail if `.github/workflows/`, `firebase.json`, `protocols.py`, `engine/models/`, or `handlers.py` secrets are out of sync with `workplan/governance.md` and `workplan/blueprint.md`.
 2. **Run Frontend / Emulator Tests (When Frontend Changes Are in Scope)**:
    - Execute `npm run test:unit` or `npm run test:e2e`.
-3. **Update Audit & Progress Tracker**:
-   - Keep Section 7 and Section 8 of `workplan/blueprint.md` up to date when milestones are completed.
+3. **Verify Audit & Progress Tracker**:
+   - Confirm Section 7 and Section 8 of `workplan/blueprint.md` accurately reflect the verified state of the work.

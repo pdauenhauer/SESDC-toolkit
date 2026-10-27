@@ -24,7 +24,7 @@ The project is a microgrid design toolkit featuring a decoupled frontend and bac
 ### Environment, Prerequisites & Local Setup
 - **Required Runtime Versions**:
     - **Node.js**: `20` (for frontend builds, Firebase CLI, and Vitest execution).
-    - **Python**: `3.13` (for Firebase Cloud Functions and simulation execution).
+    - **Python**: `3.13` (for Firebase Cloud Functions and simulation execution, matching `python313` in `firebase.json`).
     - **Java**: `21` (Temurin distribution; required by `firebase-tools` to run the local/CI Firestore emulator).
 - **Initial Repository Setup**:
     1. Clone the repository and check out the `test` branch.
@@ -81,8 +81,8 @@ The project uses two separate `.env` files (both gitignored and never committed)
 
 ### Backend & Simulation Standards
 - **Architecture & Structural Typing**:
-    - The simulation core follows a **modular, data-oriented, agent-based** design using a central **"Clock" engine** (`SimulationEngine` in `functions/engine/clock.py`), a unified **State Object** (`SimulationState` in `functions/engine/state.py`), and modular component models (`functions/engine/models/`).
-    - Component models, agents, and persistence adapters must conform to explicit `typing.Protocol` interfaces defined in `functions/engine/protocols.py` rather than relying on untyped duck typing or deep inheritance trees.
+    - The simulation core follows a **modular, data-oriented, agent-based** design using a central **"Clock" engine** (`SimulationEngine` in `functions/engine/clock.py`), a unified **State Object** (`SimulationState` in `functions/engine/state.py`), and modular component models (`PVModel`, `WindModel`, `GeneratorModel`, `BatteryModel`, `FinancialModel` in `functions/engine/models/`).
+    - Component models, agents, and persistence adapters must conform to explicit `typing.Protocol` interfaces defined in `functions/engine/protocols.py` (`ComponentModelProtocol`, `BehavioralAgentProtocol`, `EvaluativeAgentProtocol`, `SimulationRepositoryProtocol`) rather than relying on untyped duck typing or deep inheritance trees.
 - **Two-Timescale Execution & Data-Oriented Design**:
     - `SimulationState` stores time-series data as contiguous 1D/2D `float64` NumPy arrays (Structure of Arrays).
     - Exogenous physical potentials (solar, wind) are computed vectorially (`NumPy`), inner state-dependent dispatch loops are structured as pure numeric functions suitable for **Numba (`@njit`)** compilation over epochs, and Behavioral Agents execute at decision boundaries (daily/monthly/event-driven).
@@ -102,12 +102,14 @@ The project uses two separate `.env` files (both gitignored and never committed)
 - **Additive Backward Compatibility**: Backend changes must preserve existing contract fields (`storagePath`, `csvKeys`, `csvBundle`, and CSV column schemas) until coordinated migrations occur; new capabilities (such as `summaryKpis`, `tier1Summaries`, `runId`, columnar series, or status fields) must be introduced additively.
 - **Contract Testing**: Every backend PR/push must pass automated contract unit tests in `functions/tests/test_contracts.py` that verify request parsing and response serialization against canonical frontend payload fixtures.
 
-### Iterative Workplan & Phase-Gate Governance
+### Iterative Workplan, Phase-Gate & Reflexive Governance
 - **Rolling-Wave Planning**: Future phases in `workplan/blueprint.md` are intentionally treated as evolving directional outlines rather than fixed, predetermined specifications.
 - **Phase-Transition Requirement**: As any current phase nears completion—or before beginning work on the next phase—contributors and AI agents must:
     1. Audit the actual state of the codebase (both `frontend/` and `functions/`) against `workplan/blueprint.md` and `workplan/governance.md`.
     2. Re-evaluate assumptions, technical constraints, parallel developer progress, and interface contracts based on lessons learned in the completing phase.
     3. Revise and fully flesh out the upcoming phase in `workplan/blueprint.md` into concrete, testable deliverables (and adjust or re-order later phases as needed) before writing implementation code.
+- **Reflexive Governance Co-Update Rule**: Governance is a living system. Any commit or agent turn that adds or modifies a `.github/workflows/*.yml` file, runtime version (`firebase.json`), backend secret (`SecretParam`), `Protocol` interface (`functions/engine/protocols.py`), component model (`functions/engine/models/`), or architectural approach **must reflexively update `workplan/governance.md`, `workplan/blueprint.md`, and `functions/tests/test_governance.py` in the same change**.
+- **Bidirectional Drift Enforcement (`functions/tests/test_governance.py`)**: Automated `pytest` assertions verify both that **code obeys governance** (lazy imports, `Protocol` conformance, seeded PRNG) and that **governance docs stay in sync with code** (every workflow, runtime version, secret, protocol, and component model in the repo must be documented in `workplan/governance.md` and `workplan/blueprint.md`).
 
 ## CI/CD, Testing & Deployment
 - **Tools**: Managed via **GitHub Actions** (`.github/workflows/`), deploying to the `sesdc-toolkit2` Firebase project.
@@ -119,5 +121,5 @@ The project uses two separate `.env` files (both gitignored and never committed)
 - **Testing Commands**:
     - **Frontend Unit Tests**: `npm run test:unit` (`vitest run`).
     - **Emulator E2E Tests**: `npm run test:e2e` (or `npm run test:emulators` — runs `vitest` inside `firebase emulators:exec --only auth,firestore --project demo-sesdc-toolkit`). In local dev mode (`import.meta.env.DEV`), `window.FirestoreSmokeTest` is also available in the browser console.
-    - **Backend Unit & Contract Tests**: `npm run test:functions` (or `cd functions && python -m pytest tests/ -v`).
+    - **Backend Unit, Contract & Governance Tests**: `npm run test:functions` (or `cd functions && python -m pytest tests/ -v`).
 - **Required GitHub Secrets**: `FIREBASE_TOKEN` for Firebase CLI deployment authentication, along with `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, and `VITE_FIREBASE_APP_ID` for frontend builds.
