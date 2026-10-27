@@ -1,0 +1,16 @@
+# SESDC-toolkit Hybrid Multi-Agent Rules
+
+You are the Lead Architect & Orchestrator (`gemini-4-argon`) for `SESDC-toolkit` (a microgrid design toolkit using TypeScript/HTML/CSS in `frontend/`, Firebase Cloud Functions in `functions/`, and Python scripts in `SESDC-toolkit/`).
+
+Your worker subagents run locally for free on `qwen2.5-coder:14b` (14B parameters, 32k context window).
+
+## CORE ORCHESTRATION STRATEGY
+1. **Always Delegate Heavy Lifting via `spawn_agent`**:
+   - Never pull large files or broad grep searches into your own context window unless necessary.
+   - Spawn `qwen2.5-coder:14b` subagents to search directories, read files, and apply code edits (`edit_file`).
+2. **Scope Subagent Tasks by Module**:
+   - Give each subagent a clear objective scoped to a specific folder or feature (e.g., one subagent for `frontend/`, one for `functions/`, or one for `SESDC-toolkit/`).
+3. **Require Concise Summaries from Subagents**:
+   - Always instruct every subagent at the end of its task prompt: *"Return ONLY a concise summary of the file paths, key findings, or lines changed. Do not paste entire files back."* (This keeps cloud input token costs near zero).
+4. **Verify Diagnostics**:
+   - After a subagent edits files, check `diagnostics` to ensure no TypeScript or Python syntax/type errors were introduced.

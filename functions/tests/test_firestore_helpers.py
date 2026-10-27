@@ -39,7 +39,25 @@ class TestSaveLastSimulationRun:
             "hourly_simulation": "gs://b/path/hourly.csv",
             "daily_averages": "gs://b/path/daily.csv",
         }
+        assert "summaryKpis" not in data["lastSimulationRun"]
         assert data["lastSimulationStorageUrl"] == "gs://b/path/hourly.csv"
+
+    @patch("google.cloud.firestore.Client")
+    def test_writes_summary_kpis_when_provided(self, mock_client):
+        mock_ref = MagicMock()
+        mock_client.return_value = _make_db_with_ref(mock_ref)
+
+        kpis = {"total_load_kwh": 1000.0, "renewable_fraction": 0.85}
+        firestore_helpers.save_last_simulation_run(
+            "user1",
+            "proj1",
+            run_id=12345,
+            paths={"hourly_simulation": "gs://b/path/hourly.csv"},
+            summary_kpis=kpis,
+        )
+
+        data = mock_ref.set.call_args[0][0]
+        assert data["lastSimulationRun"]["summaryKpis"] == kpis
 
     @patch("google.cloud.firestore.Client")
     def test_storage_url_fallback_when_no_hourly(self, mock_client):

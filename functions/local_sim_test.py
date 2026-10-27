@@ -69,12 +69,6 @@ def main():
     print("  yr1: ", rev[1])
     print("  yr20:", rev[-1])
 
-    print("\n=== Energy (year 1 vs year 20, kWh) ===")
-    import io
-    summary = pd.read_csv(io.StringIO(out["yearly_summary"]))
-    cols = ["solar_kWh", "battery_discharge_kWh", "diesel_kWh", "unmet_kWh", "battery_usable_kWh"]
-    print(summary.loc[[0, len(summary) - 1], ["year", *cols]].round(1).to_string(index=False))
-
 
 if __name__ == "__main__":
     main()
