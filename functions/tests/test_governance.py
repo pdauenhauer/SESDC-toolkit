@@ -2,7 +2,7 @@
 
 Enforces two-way alignment between the codebase and `workplan/governance.md` + `workplan/blueprint.md`:
 1. Code -> Docs compliance (lazy imports, deterministic PRNG, structural Protocol typing).
-2. Docs <-> Code reflexive sync (workflows, runtime versions, secrets, protocols, and models must be documented).
+2. Docs <-> Code reflexive sync (workflows, runtime versions, secrets, protocols, models, and autonomy/acceptance guardrails must be documented).
 """
 
 from __future__ import annotations
@@ -190,3 +190,18 @@ class TestReflexiveGovernanceSync:
             assert secret_name in governance_text, (
                 f"SecretParam '{secret_name}' is used in functions/handlers.py but is not documented in workplan/governance.md."
             )
+
+    def test_agent_autonomy_zones_and_dev_acceptance_documented(self):
+        """Enforce that the Green/Yellow/Red autonomy zones, Preliminary frontend status, and Dev Accepted lifecycle stay synced across GEMINI.md, governance.md, and blueprint.md."""
+        gemini_text = (REPO_ROOT / "GEMINI.md").read_text(encoding="utf-8")
+        governance_text = (WORKPLAN_DIR / "governance.md").read_text(encoding="utf-8")
+        blueprint_text = (WORKPLAN_DIR / "blueprint.md").read_text(encoding="utf-8")
+
+        for zone in ("Green Zone", "Yellow Zone", "Red Zone"):
+            assert zone in gemini_text, f"Missing '{zone}' in GEMINI.md"
+            assert zone in governance_text, f"Missing '{zone}' in workplan/governance.md"
+
+        for required_term in ("Dev Accepted", "Preliminary"):
+            assert required_term in gemini_text, f"Missing '{required_term}' in GEMINI.md"
+            assert required_term in governance_text, f"Missing '{required_term}' in workplan/governance.md"
+            assert required_term in blueprint_text, f"Missing '{required_term}' in workplan/blueprint.md"

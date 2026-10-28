@@ -32,20 +32,25 @@ The architecture is founded on four key principles:
 ## 2. System Architecture Overview
 The system operates on a client-server model. A lightweight web frontend provides the user interface, while a powerful serverless backend handles all simulation and data processing tasks.
 
-- **Client (The Browser)**: A modern web application allows users to configure simulation parameters, launch runs, and visualize results. It performs no calculations itself.
+- **Client (The Browser — Preliminary)**: A lightweight web application allows users to configure simulation parameters, launch runs, and visualize results without performing heavy local calculations. *(All client-side UI, UX, framework, and visualization details are preliminary pending input from the frontend developer).*
 - **Server (Google Cloud)**: A suite of serverless services that work in concert:
     - An API layer receives requests from the client and validates them against the API contract.
     - A long-running task service executes multi-year agent simulations and scenario sweeps.
-    - A 3-tier hybrid data storage system manages simulation metadata, compact summaries, and columnar time-series results behind a clean `SimulationRepository` abstraction.
+    - A 3-tier hybrid data storage system manages simulation metadata, compact summaries, operational run ledgers, weather caches, and columnar time-series results behind a clean `SimulationRepository` abstraction.
 - **Data Flow**: The client sends small configuration requests to the server. The server runs the entire simulation in memory using typed NumPy arrays, persists compact summaries to Firestore and canonical hourly time-series to columnar storage (Parquet on GCS / BigQuery), and returns only lightweight, pre-aggregated or downsampled numeric arrays to the client for visualization.
 - **Frontend–Backend Contract Isolation**: Communication between client and server is governed by explicit, versioned API contracts (`functions/contracts.py`) so frontend and backend development can proceed independently without breaking integrations.
 
-## 3. Frontend & Visualization Architecture
-- **Framework**: Preact + TypeScript (React-compatible ecosystem), bundled with Vite.
-    - *Rationale*: Modern component-based UI frameworks enable the creation of a rich, responsive user interface with minimal bundle size, ideal for low-bandwidth environments and student-led development.
-- **Visualization Strategy (`uPlot` + Pre-Aggregated Summaries)**:
-    - *Interactive Time-Series Charts (`uPlot`)*: `uPlot` is used as the primary interactive charting engine (`UPlotChart.tsx`, `SimulationGraphsPanel.tsx`) because of its tiny footprint, low CPU/memory overhead on older devices, and native support for columnar numeric arrays (`[timestamps[], series1[], ...]`). It supports toggling signals, zooming/panning across simulation windows, and viewport-aware downsampling so full datasets do not need to be rendered at once.
-    - *Summary & Report Views*: High-level KPIs, 20-year financial projections, and monthly summaries are rendered from lightweight pre-aggregated Tier-1 data (`tier1Summaries` and `summaryKpis`).
+## 3. Frontend & Visualization Architecture (Preliminary — Subject to Frontend Developer Review & Co-Design)
+> **Preliminary Status (Not Yet Canon)**: All frontend architectural items, framework/library selections, visualization strategies, and feature proposals in this section—and across this blueprint—are **preliminary baselines and discussion seeds**. None of the frontend specifications are established as canon until reviewed, brainstormed, deployed to `test`, and marked `Dev Accepted` with the frontend developer.
+
+- **Framework (Preliminary Baseline)**: Currently Preact + TypeScript (React-compatible ecosystem), bundled with Vite.
+    - *Rationale*: Modern component-based UI frameworks enable the creation of a rich, responsive user interface with minimal bundle size, ideal for low-bandwidth environments and student-led development (subject to frontend developer review).
+- **Visualization Strategy (`uPlot` + Pre-Aggregated Summaries — Preliminary)**:
+    - *Interactive Time-Series Charts (`uPlot` — Preliminary)*: `uPlot` is currently used as the baseline interactive charting engine (`UPlotChart.tsx`, `SimulationGraphsPanel.tsx`) because of its tiny footprint, low CPU/memory overhead on older devices, and native support for columnar numeric arrays (`[timestamps[], series1[], ...]`). Charting library choices, signal interactions, and downsampling UX remain open to frontend developer input.
+    - *Summary & Report Views (Preliminary)*: High-level KPIs, 20-year financial projections, and monthly summaries are designed to render from lightweight pre-aggregated Tier-1 data (`tier1Summaries` and `summaryKpis`), with exact UI layouts to be defined by the frontend developer.
+- **Runtime Admin Viewer (Preliminary Seeded Proposal)**:
+    - *Purpose*: A proposed role-gated administrative interface focused on four operational "Jobs to be Done": **Support & Triage**, **Curation & Hygiene**, **Cost/Quota Protection**, and **Adoption/Bottleneck Discovery**.
+    - *Design Philosophy (Preliminary)*: Focus custom UI on domain-specific state and high-leverage actions (simulation run ledger, one-click failure replay, cross-user project cloning, starter template promotion, and storage/weather cache hygiene), while delegating raw infrastructure telemetry via direct deep-links to native Firebase and GCP Consoles. To be co-designed and refined with the frontend developer.
 - **Hosting**: Firebase Hosting.
     - *Rationale*: Firebase Hosting provides a simple, secure, and globally distributed CDN for the web application. Its seamless integration with the backend and generous free tier make it a cost-effective and low-maintenance choice.
 
@@ -57,7 +62,7 @@ The system operates on a client-server model. A lightweight web frontend provide
 - **Long-Running Task Execution**: Google Cloud Run, triggered via Pub/Sub.
     - *Rationale*: Multi-year agent simulations and Monte Carlo sensitivity sweeps can exceed standard HTTP function timeouts. The "HTTP Function -> Pub/Sub -> Cloud Run" pattern provides asynchronous background processing with configurable CPU/memory and concurrency.
 - **Repository & Adapter Pattern (`functions/repository.py`)**:
-    - *Rationale*: Persistence operations are abstracted behind `SimulationRepositoryProtocol` (`InMemorySimulationRepository` for offline `pytest` and local emulators; `GcpSimulationRepository` for Firestore/GCS/BigQuery). This guarantees 100% offline testability and compliance with `governance.md`.
+    - *Rationale*: Persistence operations (simulation runs, Tier-1 summaries, weather cache lookups, and operational run ledgers) are abstracted behind `SimulationRepositoryProtocol` (`InMemorySimulationRepository` for offline `pytest` and local emulators; `GcpSimulationRepository` for Firestore/GCS/BigQuery). This guarantees 100% offline testability and compliance with `governance.md`.
 
 ### 4.2 Simulation Core Architecture (Data-Oriented & Protocol-Driven)
 The core simulation is a modular Python application designed for both behavioral realism and numerical speed:
@@ -76,14 +81,14 @@ The core simulation is a modular Python application designed for both behavioral
 ## 5. Data & Storage Architecture (3-Tier Hybrid Strategy)
 Rather than serializing multiple redundant datasets into text CSV blobs, the system uses a three-tier storage and delivery model optimized for speed, low bandwidth, cost, and analytical query capabilities:
 
-1. **Tier 1 — Metadata, KPIs & Compact Summaries (in Cloud Firestore)**:
-    - *What is stored*: User inputs, run status (`queued` | `running` | `completed` | `failed`), scalar summary KPIs (`summaryKpis`), and small pre-aggregated summary series (`tier1Summaries`: 20-year annual `financial_expenses` and `revenue` arrays [20 rows], and 12-month solar averages).
-    - *Rationale*: These datasets total less than 15 KB per run as native JSON. Storing them directly in Firestore (`users/{uid}/projects/{pid}` or a `simulations/{runId}` subcollection) allows the frontend to render KPIs, financial charts, and overview dashboards **instantly** without invoking a Cloud Function, downloading GCS blobs, or parsing CSV text.
+1. **Tier 1 — Metadata, KPIs, Compact Summaries & Operational Ledger (in Cloud Firestore)**:
+    - *What is stored*: User inputs, run status (`queued` | `running` | `completed` | `failed`), scalar summary KPIs (`summaryKpis`), small pre-aggregated summary series (`tier1Summaries`: 20-year annual `financial_expenses` and `revenue` arrays [20 rows], and 12-month solar averages), and lightweight operational run ledger records (`admin_run_logs`).
+    - *Rationale*: These datasets total less than 15 KB per run as native JSON. Storing them directly in Firestore (`users/{uid}/projects/{pid}` or a `simulations/{runId}` subcollection) allows the frontend and admin viewer to render KPIs, financial charts, and run diagnostics **instantly** without invoking a Cloud Function, downloading GCS blobs, or parsing CSV text.
 2. **Tier 2 — Canonical Hourly Time-Series (Apache Parquet on GCS + Google BigQuery)**:
     - *What is stored*: A single canonical hourly table per simulation run (8,760 to 175,200 rows) stored as a typed, compressed **Apache Parquet** file (`{run_id}_hourly.parquet`) in Google Cloud Storage and loaded/mounted into **Google BigQuery** (partitioned by time and clustered by `simulation_run_id`).
     - *Rationale*: Eliminates the 6 redundant derived CSV files (`daily_averages`, `twenty_year_daily`, `solar_heatmap`, `monthly_heatmap`, etc.). Parquet is 5–10x smaller and 10x faster to read/write than `.csv.gz`, preserves strict numeric types, supports reading only selected columns (column projection), and bridges natively into BigQuery with zero transformation overhead.
-3. **Tier 3 — Columnar Wire Delivery & On-Demand CSV Export**:
-    - *Interactive Chart Delivery*: Backend endpoints serve downsampled, time-windowed **columnar JSON arrays** (`[timestamps[], load_kW[], solar_kW[], ...]`) directly matching `uPlot`'s native input format, avoiding client-side CSV parsing on low-power devices.
+3. **Tier 3 — Columnar Wire Delivery & On-Demand CSV Export (Preliminary Frontend Alignment)**:
+    - *Interactive Chart Delivery (Preliminary)*: Backend endpoints are planned to serve downsampled, time-windowed **columnar JSON arrays** (`[timestamps[], load_kW[], solar_kW[], ...]`) matching `uPlot`'s input format to avoid client-side CSV parsing on low-power devices. Exact payload shapes and query parameters will be finalized with the frontend developer.
     - *On-Demand CSV Export*: CSV is treated strictly as an **end-user export format** (generated on the fly or served via signed URL only when a user clicks "Download CSV"), never as an internal storage or default API wire format.
 
 ## 6. Performance & Optimization Strategy
@@ -98,15 +103,16 @@ Rather than serializing multiple redundant datasets into text CSV blobs, the sys
 ### End-User Experience
 - **Server-Side Aggregation & Downsampling**: All queries and downsampling against the hourly Parquet/BigQuery dataset are performed on the server. The backend sends only small, pre-aggregated (`tier1Summaries`) or viewport-downsampled numeric arrays to the client, ensuring a responsive experience even on low-bandwidth connections.
 
-## 7. Phased Implementation Plan (Rolling-Wave & Contract-Driven)
+## 7. Phased Implementation Plan (Rolling-Wave, Guardrailed & Dev-Acceptance Driven)
 
-> **Expectation for Future Phased Work (Rolling-Wave Planning)**:
-> Future phases in this blueprint (`Phase 2`, `Phase 3`, and beyond) are **intentionally provisional** and are not fully predetermined. Architectural details, priorities, and scope may shift as the project evolves and as parallel frontend/backend work progresses.
->
-> **When a phase nears completion (or before starting the next phase), developers and AI agents MUST:**
-> 1. **Audit** the current repository state, active tests, CI/CD workflows, and Frontend–Backend contracts (`functions/contracts.py`).
-> 2. **Re-evaluate** the assumptions and scope of the upcoming phase based on lessons learned, performance observations, and team priorities.
-> 3. **Flesh out and revise** the next phase into detailed, actionable tasks, module boundaries, and test criteria in this document—and adjust subsequent phases accordingly—before implementing new features.
+> **Expectation for Future Phased Work & Multi-Developer Acceptance**:
+> 1. **Rolling-Wave Planning**: Future phases (`Phase 1C` through `Phase 4` and the `Parallel Frontend Track`) are **intentionally provisional**. All frontend-related items are **strictly preliminary** until co-designed with the frontend developer.
+> 2. **Tiered Agent Autonomy ("Traffic Light" Guardrails)**: Contributors and AI agents operate under the **🟢 Green / 🟡 Yellow / 🔴 Red** autonomy matrix defined in `workplan/governance.md` and `GEMINI.md` (requiring confirmation before Yellow-Zone phase transitions, additive contract extensions, or bulk file deletions, and a hard stop for Red-Zone cross-domain edits, breaking contract changes, security rules, or cloud cost/infra changes).
+> 3. **Scoped Branching & 4-Stage Dev Acceptance Lifecycle**:
+>    - Work is developed on scoped topic branches (`be/<topic>`, `fe/<topic>`, `chore/<topic>`) and merged via PR into `test` (which runs automated CI tests and auto-deploys to the `sesdc-toolkit2` staging environment).
+>    - Every phase and deliverable tracks its acceptance state: `In Progress` → `On test (Staging)` → `Dev Accepted [FE/BE Sign-Off]` → `Promoted to main`. Preliminary frontend items graduate to **Canon** only upon reaching `Dev Accepted`.
+
+---
 
 ### Phase 1A: Backend Modularization, Vectorization & Interface Contracts (Completed — Zero Frontend Impact)
 *Goal: Refactor the simulation core into modular components with vectorized math and lock in a stable Frontend–Backend contract with a comprehensive unit test suite.*
@@ -125,43 +131,129 @@ Rather than serializing multiple redundant datasets into text CSV blobs, the sys
 - **Tier-1 Compact Summary Contract (`Tier1SimulationSummaries`)**: Added structured 20-year financial (`financial_expenses_20yr`, `revenue_20yr`) and 12-month solar summary series (`monthly_solar_averages`) to `functions/contracts.py`, `SimulationState`, `SimulationResponseContract` (`tier1Summaries`), and Firestore (`save_last_simulation_run`).
 - **Repository Pattern (`functions/repository.py`)**: Implemented `InMemorySimulationRepository` and `GcpSimulationRepository` so simulation persistence is decoupled from live GCP services during unit/integration tests.
 
-### Phase 2: Multi-Year Epoch Clock, Behavioral Agents & Event Scheduler (Next Up — Provisional, To Be Fleshed Out at Phase Gate)
-*Goal: Build Behavioral Agents, Comprehension Layer, and Stress-Test Events on top of `EpochModifiers` and `CoupledDispatchModel`, locking in the final time-series schema before BigQuery/Cloud Run deployment.*
-- **Behavioral Agents (`Operator_Agent`, `Customer_Agent`)**: Implement `BehavioralAgentProtocol` actors that adjust tariffs, dispatch reserves, and `EpochModifiers.load_multiplier` across the 20-year horizon.
-- **Comprehension Layer & Event Scheduler**: Implement imperfect agent perception filters (`ComprehensionLayer` using `state.rng`) and discrete shock injection (`EventScheduler` mutating `EpochModifiers` for equipment failures, fuel price spikes, weather anomalies).
-- **Evaluative Agents**: Expand `engine/kpis.py` into `EvaluativeAgentProtocol` implementations producing sustainability and financial health scores, and lock in the final canonical time-series schema in `contracts.py`.
+---
 
-### Phase 3: Cloud Scale-Out, Parquet/BigQuery Pipeline, Multiprocessing & Frontend Sync (Provisional — Directional Outline)
-*Goal: Scale the finalized multi-year agent engine to massive datasets and parallel scenario sweeps in the cloud, and synchronize the frontend with Tier-1 summaries and Tier-3 columnar `uPlot` endpoints.*
-- **Scenario Parallelization (`multiprocessing`)**: Parallelize multi-scenario sensitivity and Monte Carlo runs across CPU cores using isolated `SeedSequence` streams.
-- **Tier 2 Storage (Canonical Parquet on GCS -> BigQuery)**: Replace the legacy 8-file `.csv.gz` bundle with a single `{run_id}_hourly.parquet` artifact in GCS bridged to a partitioned, clustered **BigQuery** table.
-- **Tier 3 API (Windowed Columnar `uPlot` JSON & On-Demand CSV Export)**: Serve downsampled columnar numeric arrays (`[timestamps[], series1[], ...]`) to `SimulationGraphsPanel.tsx` and move CSV generation to an on-demand export endpoint.
-- **Asynchronous Execution (Pub/Sub -> Cloud Run) & CI/CD**: Deploy containerized Cloud Run workers triggered via Pub/Sub for long-running scenario batches, and extend GitHub Actions workflows for Cloud Run and `main` branch production releases.
+### Phase 1C: Repository Hygiene, Weather Cache Adapter & Admin Run Ledger Hook (Next Up — Fast Foundation)
+*Goal: Clean out legacy student vestiges before adding Phase 2 modules, protect external NSRDB weather API quotas via caching, and record backend run diagnostics to power the future Runtime Admin Viewer MVP.*
+
+#### 1. Defensive Repository & Legacy Vestige Cleanup (3-Stage Protocol)
+- **Stage 1 — Automated Reference Audit & Triage Matrix (Completed — Read-Only Findings Recorded Below)**:
+    - **Bucket A — Confirmed Dead / Safe Immediate Removal (0 Active References)**:
+        - *Legacy Vanilla Website (`public/`, 32 files)*: `public/index.html`, `public/404.html`, `public/pages/*.html`, `public/js/*.js`, `public/css/*.css`, `public/media/*`. Zero references across `frontend/`, `functions/`, `tests/`, or `.github/workflows/`; `firebase.json` deploys `frontend/dist`.
+        - *Empty Nested Directory (`SESDC-toolkit/`)*: Empty nested directory at repository root.
+        - *Duplicate Root Python Dependencies (`requirements.txt`)*: Root `pip freeze` dump; unused by CI/CD or Cloud Functions (`functions/requirements.txt` is authoritative).
+        - *Obsolete Agent Rules (`.rules`)*: References old `SESDC-toolkit/` folder and local `qwen2.5-coder` setup; superseded by `GEMINI.md` and `workplan/`.
+        - *Dead Backend Scripts & Static Artifacts in `functions/`*:
+            - `functions/financial_calculations.py` & `functions/20_year_financial_expenses.png` (0 imports; standalone student script with hardcoded values that writes a local PNG via `matplotlib`).
+            - `functions/graph.py` & `functions/firebase_storage_setup.py` (0 imports in active modules; legacy server-side `matplotlib`/`seaborn` PNG plotters looking for local `serviceAccount.json`, superseded by `uPlot` and `functions/storage.py`).
+            - `functions/test.csv` (0 references; static student test CSV).
+        - *OS & Emulator Debug Clutter*: `.DS_Store`, `functions/.DS_Store`, `public/.DS_Store`, `firestore-debug.log`, `pglite-debug.log`.
+    - **Bucket B — Root Config Slimming & Caught Hidden Couplings**:
+        - *Caught Build-Time Coupling — KEEP `USER-GUIDE.md`*: Referenced in `frontend/src/pages/UserGuide.tsx` (`import guideMarkdown from '../../../USER-GUIDE.md?raw'`). Must **not** be deleted (can be relocated inside `frontend/src/` later in coordination with the frontend developer).
+        - *Root `package.json` Dependency Slimming*: Root `tests/*.ts` only import `vitest` and `firebase/*`. Unused UI/server packages at root (`@google-cloud/storage`, `@tailwindcss/postcss`, `tailwindcss`, `autoprefixer`, `postcss`, `http-server`, `papaparse`) are candidates for removal from root `package.json`.
+    - **Bucket C — Frontend Internal Vestiges (`frontend/src/` — Preliminary / Hold for Co-Review with Frontend Dev in Sync 1)**:
+        - *3 Unreferenced CSS Files (0 imports)*: `frontend/src/css/project-outputs.css`, `frontend/src/css/project-selection-test.css`, `frontend/src/css/project-selection.css`.
+        - *3 Unreferenced Components (0 imports)*: `frontend/src/components/projectModalTailwind.tsx`, `frontend/src/components/ProjectWizard/LoadProfileChart.tsx`, `frontend/src/components/ProjectWizard/steps/NameStep.tsx`.
+        - *9 Unreferenced Media Assets in `frontend/src/media/` (0 references)*: `boxes-3.svg`, `circle-user-2.svg`, `circle-user.svg`, `green.png`, `house-2.svg`, `info.svg`, `mail-4.svg`, `milad-fakurian-Kd2MCCeEhrc-unsplash-2.jpg`, `placeholder_user.png`.
+- **Stage 2 — Quarantined Removal & Multi-Gate Verification (🟡 Yellow Zone — Pending User Confirmation)**:
+    - Remove Bucket A & B vestiges on a scoped branch and verify zero regressions across `pytest` (`functions/tests/`), `npm run build` (`frontend/`), and emulator E2E tests (`tests/`).
+- **Stage 3 — Governance-as-Code Lock-In (`functions/tests/test_governance.py` & `.gitignore`)**:
+    - Extend `test_governance.py` and `.gitignore` to permanently forbid duplicate root `requirements.txt`, legacy `public/` directories, nested repository clones, dead backend plotting scripts, and committed debug/OS artifacts (`*.log`, `.DS_Store`).
+
+#### 2. NSRDB Weather Cache Adapter (`functions/nlr.py`, `functions/repository.py`)
+- Cache fetched NSRDB weather data by rounded `(latitude, longitude)` key through `SimulationRepositoryProtocol` (`InMemorySimulationRepository` & `GcpSimulationRepository`) so repeated simulations at the same site bypass external HTTP calls, protect `NLR_API_KEY` rate limits during workshops, and execute 5–10x faster.
+
+#### 3. Backend Admin Run Ledger & Failure Capture Hook (`functions/handlers.py`, `functions/repository.py`, `functions/contracts.py`)
+- Record lightweight structured run telemetry (`runId`, `userId`, `projectId`, `status`, `weatherCacheHit`, `weatherFetchMs`, `engineComputeMs`, `storageWriteMs`, `errorMessage`, and failing `SimulationRequestContract` snapshot) via `SimulationRepositoryProtocol` so backend observability is active immediately and ready for the **Runtime Admin Viewer MVP (Sync 1)**.
 
 ---
 
-## 8. Audit & Migration Tracking
-*This section tracks the exact current state of the repository against the Target Blueprint.*
+### Phase 2A: Multi-Year Epoch Clock, Comprehension Layer & Event Scheduler (Provisional — 🟡 Yellow-Zone Phase Gate Required)
+*Goal: Upgrade the deterministic engine mechanics from a 1-year pass to a multi-year epoch loop with imperfect agent perception and scheduled/stochastic shock injection.*
+- **Multi-Year Epoch Clock (`functions/engine/clock.py`, `functions/engine/state.py`)**: Extend `SimulationEngine` to execute across configurable multi-year horizons (`N` years × 8,760 hours) with epoch boundary callbacks (daily/monthly/annual).
+- **Comprehension Layer (`functions/engine/comprehension.py`)**: Implement agent perception filters on `SimulationState` modeling measurement noise, reporting latency, and forecast bias using `state.rng`.
+- **Event Scheduler (`functions/engine/events.py`)**: Implement a deterministic priority timeline injecting scheduled or stochastic shocks (equipment derating/outages, fuel price spikes, weather anomalies) into `EpochModifiers`.
+
+### Phase 2B: Behavioral & Evaluative Agents (Provisional — 🟡 Yellow-Zone Phase Gate Required)
+*Goal: Implement adaptive `Operator_Agent` and `Customer_Agent` decision rules and sustainability evaluators on top of the Phase 2A multi-year clock, locking in the canonical time-series schema.*
+- **Behavioral Agents (`Operator_Agent`, `Customer_Agent`)**: Implement `BehavioralAgentProtocol` actors that adjust tariffs, O&M spending, reserve margins, and `EpochModifiers.load_multiplier` across the 20-year horizon.
+- **Evaluative Agents (`functions/engine/kpis.py`)**: Expand `EvaluativeAgentProtocol` observers to compute multi-year sustainability, reliability, and financial health scores, and lock in the final canonical hourly + annual schema in `functions/contracts.py`.
+
+---
+
+### Phase 3: Tier-2 Parquet Storage, Tier-3 Columnar API & On-Demand CSV Export (Provisional — Zero New Cloud Infra)
+*Goal: Deliver full storage compression and low-bandwidth client performance using existing Cloud Functions and GCS before provisioning any heavy batch infrastructure.*
+- **Tier 2 Storage (Canonical Parquet on GCS)**: Replace the legacy 8-file `.csv.gz` bundle with a single typed `{run_id}_hourly.parquet` artifact in GCS via `SimulationRepositoryProtocol` (testable offline with `pyarrow` + `InMemorySimulationRepository`).
+- **Tier 3 API (Windowed Columnar JSON & On-Demand CSV Export)**: Serve downsampled, time-windowed columnar numeric arrays (`[timestamps[], series1[], ...]`) from Cloud Functions and move CSV generation to an on-demand export endpoint.
+
+---
+
+### Phase 4: Cloud Scale-Out — Multiprocessing, Cloud Run Workers & BigQuery Analytics (Provisional — 🔴 Red-Zone Infrastructure Gate)
+*Goal: Scale the mature 20-year agent engine to massive multi-scenario Monte Carlo sweeps and cross-project SQL analytics in the cloud.*
+- **Scenario Parallelization (`multiprocessing`)**: Parallelize multi-scenario sensitivity and Monte Carlo sweeps across CPU cores using isolated `SeedSequence` streams.
+- **Asynchronous Execution (Pub/Sub -> Cloud Run)**: Containerize heavy batch simulation workers on Cloud Run triggered via Pub/Sub to bypass HTTP function timeouts.
+- **BigQuery Native/External Table Bridge**: Mount GCS Parquet artifacts into partitioned, clustered BigQuery tables for cross-run and cohort-wide analytical queries.
+- **Production CI/CD Expansion**: Extend GitHub Actions workflows for Cloud Run deployments and `main` branch production release gates.
+
+---
+
+### Parallel Track: Frontend Development & Runtime Admin Viewer (Preliminary Placeholder — Not Canon Until Co-Designed & `Dev Accepted` on `test`)
+> **Preliminary Status & Parallel Execution**: Everything in this track is a **preliminary placeholder and brainstorming seed** organized around **3 Backend Sync Milestones** so the frontend developer can work in parallel on `fe/<topic>` branches without blocking on backend phases. Items graduate to **Canon** only after co-design, deployment to `test`, and `Dev Accepted` sign-off.
+
+#### Frontend Sync 1 (Unblocked Immediately / Pairs with Phase 1B & Phase 1C)
+- **Co-Design & Internal `frontend/` Vestige Cleanup (Bucket C — Preliminary)**:
+    - Review and confirm the Stage 1 audited student-era media assets (9 unreferenced files in `frontend/src/media/`), dead CSS files (`project-outputs.css`, `project-selection-test.css`, `project-selection.css`), and unreferenced components (`projectModalTailwind.tsx`, `LoadProfileChart.tsx`, `NameStep.tsx`) with the frontend developer, and decide whether to relocate `USER-GUIDE.md` inside `frontend/src/`.
+- **Tier-1 Instant Summary Rendering (Preliminary)**:
+    - Wire existing Firestore `summaryKpis` and `tier1Summaries` (completed in Phase 1B) into overview cards and 20-year financial/monthly solar charts.
+- **Seeded Feature Proposal — Runtime Admin Viewer MVP (Preliminary)**:
+    - Designed around four operational "Jobs to be Done" (**Support & Triage**, **Curation & Hygiene**, **Cost/Quota Protection**, and **Adoption/Bottleneck Discovery**):
+    1. **Simulation Run Ledger & One-Click Failure Replay**: Filterable table consuming Phase 1C run ledger records (`runId`, user, project, status, `weatherCacheHit`, `weatherFetchMs`, `engineComputeMs`, `storageWriteMs`), with one-click download of failing `SimulationRequestContract` JSON payloads for `pytest` reproduction.
+    2. **Cross-Tenant Project Browser & "Clone to Admin"**: Browse/search all projects with summary tags and a one-click **"Clone to My Account"** action for zero-risk support debugging.
+    3. **Curated "Starter Templates" & Asset Promotion**: Toggle to promote exemplary projects into public **Global Starter Templates** (`isTemplate: true`, e.g., *Rural Health Clinic*, *Agri-Processing Mill*).
+    4. **Storage, Quota & Weather Cache Hygiene Panel**: Display daily NSRDB API call counts, cached weather coordinates from Phase 1C, and controls to prune orphaned GCS blobs or stale test runs.
+    5. **Native Console Deep-Links**: Direct header links to Firebase Auth Console, Cloud Functions Error Logs (`severity>=ERROR`), and GCP Billing.
+
+#### Frontend Sync 2 (Pairs with Phase 2A & Phase 2B)
+- **Multi-Year Agent & Scenario Configuration UI (Preliminary)**:
+    - Co-design user-friendly controls for operator/customer agent parameters, shock scenario presets (`EventScheduler`), and multi-year sustainability health score cards.
+- **Broader Admin Capabilities (Preliminary)**:
+    - Expand the Runtime Admin Viewer with User Directory & Cohort Organization (`admin`, `researcher`, `standard` roles, workshop cohorts) and Workflow Completion Funnel analytics.
+
+#### Frontend Sync 3 (Pairs with Phase 3)
+- **Tier-3 Windowed Charting & On-Demand CSV Export (Preliminary)**:
+    - Connect interactive time-series charts (`SimulationGraphsPanel.tsx`) to the Phase 3 Tier-3 windowed columnar JSON endpoint, wire the "Download CSV" button to the on-demand export endpoint, and track low-bandwidth client render telemetry.
+
+---
+
+## 8. Audit, Migration & Dev Acceptance Tracking
+*This section tracks the exact current state of the repository and its 4-stage Dev Acceptance status (`In Progress` → `On test (Staging)` → `Dev Accepted` → `Promoted to main`).*
 
 ### Current Codebase State (Audit Summary)
-- **Frontend (`frontend/`)**: Migrated to **Preact + TypeScript + Vite** with authentication, project management, hierarchical load `Workbench`, CSV preview/download (`SimulationResults.tsx`), and interactive `uPlot` time-series charts (`SimulationGraphsPanel.tsx`). *(Note: Frontend files are currently frozen in this workspace to avoid conflicts with active parallel frontend development; the Project Wizard is deprioritized).*
+- **Frontend (`frontend/` — Preliminary Baseline, Subject to Frontend Developer Review)**: Currently uses **Preact + TypeScript + Vite** with authentication, project management, hierarchical load `Workbench`, CSV preview/download (`SimulationResults.tsx`), and interactive `uPlot` time-series charts (`SimulationGraphsPanel.tsx`). *(Note: Frontend files are currently frozen in this workspace to avoid conflicts with active parallel frontend development; all frontend architectural patterns and proposed features—including the Runtime Admin Viewer and `frontend/` Bucket C asset cleanup—are preliminary and not established as canon until co-designed with the frontend developer and marked `Dev Accepted` on `test`).*
 - **Backend API, Contracts & Repository (`functions/main.py`, `functions/handlers.py`, `functions/contracts.py`, `functions/repository.py`)**: Exposes Python 3.13 HTTP Cloud Functions (`run_simulation_post` and `get_stored_simulation`) backed by validated contracts (`SimulationRequestContract`, `SimulationResponseContract`, `StoredSimulationResponseContract`, `Tier1SimulationSummaries`) and a pluggable `SimulationRepositoryProtocol` (`InMemorySimulationRepository` / `GcpSimulationRepository`).
-- **Simulation Core (`functions/engine/`, `functions/simulation.py`, `functions/calculations.py`)**: Refactored into modular `SimulationEngine` ("Clock"), `SimulationState` (with `EpochModifiers`, `curtailed_power`, and deterministic `np.random.Generator` seeding), `protocols.py` (`ComponentModelProtocol`, `BehavioralAgentProtocol`, `EvaluativeAgentProtocol`, `SimulationRepositoryProtocol`), `compute_summary_kpis`, `compute_tier1_summaries`, and component models (`PVModel`, `WindModel`, `CoupledDispatchModel`, `GeneratorModel`, `BatteryModel`, `FinancialModel`). Behavioral agents, comprehension layer, and event scheduler are scoped for Phase 2.
-- **Data Storage (`functions/storage.py`, `functions/firestore_helpers.py`, `functions/repository.py`)**: Records **Tier-1** `summaryKpis` and `tier1Summaries` (20-year financials and monthly solar averages) directly in **Firestore** alongside backward-compatible `.csv.gz` bundles in **Google Cloud Storage**. Migration of Tier-2 (single canonical **Parquet** on GCS / **BigQuery**) and Tier-3 (columnar JSON wire format + on-demand CSV export) is scoped in Phase 3 once Phase 2 locks in the agent time-series schema.
+- **Simulation Core (`functions/engine/`, `functions/simulation.py`, `functions/calculations.py`)**: Refactored into modular `SimulationEngine` ("Clock"), `SimulationState` (with `EpochModifiers`, `curtailed_power`, and deterministic `np.random.Generator` seeding), `protocols.py` (`ComponentModelProtocol`, `BehavioralAgentProtocol`, `EvaluativeAgentProtocol`, `SimulationRepositoryProtocol`), `compute_summary_kpis`, `compute_tier1_summaries`, and component models (`PVModel`, `WindModel`, `CoupledDispatchModel`, `GeneratorModel`, `BatteryModel`, `FinancialModel`). Multi-year clock mechanics, comprehension layer, and event scheduler are scoped for Phase 2A; behavioral and evaluative agents are scoped for Phase 2B.
+- **Data Storage (`functions/storage.py`, `functions/firestore_helpers.py`, `functions/repository.py`)**: Records **Tier-1** `summaryKpis` and `tier1Summaries` (20-year financials and monthly solar averages) directly in **Firestore** alongside backward-compatible `.csv.gz` bundles in **Google Cloud Storage**. Weather caching and admin run ledger hooks are scoped for Phase 1C; Tier-2 Parquet and Tier-3 columnar JSON / on-demand CSV export are scoped for Phase 3; Cloud Run + BigQuery scale-out is scoped for Phase 4.
 - **Testing (`tests/`, `functions/tests/`)**: Vitest + Firebase Emulators test Firestore rules and project CRUD (`e2e-emulators.yml`). `pytest` tests contracts (`test_contracts.py`), modular component models & coupled dispatch (`test_models.py`), protocols, repository adapters, deterministic seeding, Tier-1 summaries, and full-year engine execution (`test_engine.py`), bidirectional governance compliance (`test_governance.py`), Firestore helpers (`test_firestore_helpers.py`), storage (`test_storage.py`), and utilities (`test_utils.py`).
 
 ### Key Discrepancies Checklist
-- [x] **Frontend Framework & Interactive Charts**: Preact + TypeScript + Vite + `uPlot` implemented (`frontend/`).
+- [x] **Frontend Framework & Interactive Charts (Preliminary Baseline)**: Preact + TypeScript + Vite + `uPlot` currently in place (`frontend/`); subject to frontend developer review and `Dev Accepted` sign-off before establishing as canon.
 - [x] **Frontend–Backend Interface Contracts (Phase 1A)**: Request, response, CSV header, KPI, and Tier-1 summary contracts implemented in `functions/contracts.py` and verified by `functions/tests/test_contracts.py`.
 - [x] **Modular Engine & Vectorized Component Models (Phase 1A)**: `SimulationEngine`, `SimulationState`, and vectorized `PVModel`, `WindModel`, `GeneratorModel`, `BatteryModel`, `FinancialModel` implemented in `functions/engine/`.
 - [x] **Structural Protocols, Coupled Dispatch Kernel, Epoch Modifiers, Deterministic PRNG, Repository Adapter & Tier-1 Summaries (Phase 1B)**: Implemented in `functions/engine/protocols.py`, `functions/engine/models/dispatch.py`, `functions/engine/state.py`, `functions/repository.py`, and `functions/engine/kpis.py`.
-- [ ] **Behavioral Agents, Comprehension Layer & Event Scheduler (Phase 2)**: Need `Operator_Agent`, `Customer_Agent`, `Comprehension Layer`, and `Event Scheduler` operating on `EpochModifiers`.
-- [ ] **Tier-2/Tier-3 Storage & Async Cloud Execution (Phase 3)**: Transition from 8 `.csv.gz` blobs to canonical **Parquet** in GCS / **BigQuery**, columnar JSON `uPlot` endpoints, `multiprocessing`, and **Pub/Sub -> Cloud Run**.
-- [ ] **CI/CD & Infrastructure (Phase 3)**: Extend GitHub Actions workflows to cover **Cloud Run** container builds/deployments and production release gates on `main`.
+- [ ] **Repo Hygiene, Weather Cache & Admin Run Ledger Hook (Phase 1C)**: Stage 1 Read-Only Audit recorded (Buckets A, B, C). Pending Stage 2/3 cleanup (`public/`, `SESDC-toolkit/`, root `requirements.txt`, `.rules`, dead scripts in `functions/`, debug logs, `test_governance.py` lock-in), NSRDB weather caching, and backend admin run ledger logging.
+- [ ] **Multi-Year Clock, Comprehension Layer & Event Scheduler (Phase 2A)**: Extend `SimulationEngine` to multi-year loops with `ComprehensionLayer` and `EventScheduler` shock injection.
+- [ ] **Behavioral & Evaluative Agents (Phase 2B)**: Implement `Operator_Agent`, `Customer_Agent`, and `EvaluativeAgentProtocol` scorers on `EpochModifiers`.
+- [ ] **Tier-2 Parquet & Tier-3 Columnar API (Phase 3 — Zero New Infra)**: Transition from 8 `.csv.gz` blobs to single `{run_id}_hourly.parquet` in GCS, windowed columnar JSON endpoint, and on-demand CSV export.
+- [ ] **Cloud Scale-Out & CI/CD (Phase 4 — 🔴 Red-Zone Infra)**: Add `multiprocessing` sweeps, **Pub/Sub -> Cloud Run** workers, **BigQuery** table mounting, and Cloud Run / `main` release workflows.
+- [ ] **Parallel Frontend Development Track & Runtime Admin Viewer (Preliminary Placeholder)**: Co-design and implement across **Sync 1** (Bucket C asset cleanup, Tier-1 summaries, Runtime Admin Viewer MVP), **Sync 2** (multi-year agent/shock UI), and **Sync 3** (Tier-3 windowed charts & on-demand CSV export).
 
-### Progress Tracker & Next Phase Gate
-- [x] Phase 1A: Backend Modularization, Vectorization & Interface Contracts (Completed)
-- [x] Phase 1B: Structural Protocols, Coupled Dispatch Kernel, Epoch Modifiers, Repository Pattern & Tier-1 Summaries (Completed)
-- [ ] **Phase-Gate Review**: Re-audit codebase & requirements, then fully scope and flesh out **Phase 2 (Behavioral Agents, Comprehension Layer & Event Scheduler)** before implementation.
-- [ ] Phase 2: Behavioral Agents, Comprehension Layer & Event Scheduler (Provisional)
-- [ ] Phase 3: Cloud Scale-Out, Parquet/BigQuery Pipeline, Multiprocessing & Frontend Sync (Provisional)
+### Progress & Dev Acceptance Tracker
+- [x] **Phase 1A: Backend Modularization, Vectorization & Interface Contracts** — *Status: Completed & Verified (`pytest`)*
+- [x] **Phase 1B: Structural Protocols, Coupled Dispatch Kernel, Epoch Modifiers, Repository Pattern & Tier-1 Summaries** — *Status: Completed & Verified (`pytest`)*
+- [x] **Phase 1C.1 (Stage 1): Defensive Repository Read-Only Reference Audit & Triage Matrix** — *Status: Completed & Recorded*
+- [ ] **Phase 1C (Remaining): Stage 2/3 Repo Cleanup, NSRDB Weather Cache & Admin Run Ledger Hook** — *Status: Next Up (🟡 Yellow-Zone Confirmation Required) -> `On test (Staging)` -> `Dev Accepted`*
+- [ ] **Phase 2A: Multi-Year Epoch Clock, Comprehension Layer & Event Scheduler** — *Status: Provisional (🟡 Yellow-Zone Phase Gate) -> `In Progress` -> `On test (Staging)` -> `Dev Accepted`*
+- [ ] **Phase 2B: Behavioral & Evaluative Agents** — *Status: Provisional (🟡 Yellow-Zone Phase Gate) -> `In Progress` -> `On test (Staging)` -> `Dev Accepted`*
+- [ ] **Phase 3: Tier-2 Parquet Storage, Tier-3 Columnar API & On-Demand CSV Export** — *Status: Provisional (🟡 Yellow-Zone Phase Gate) -> `In Progress` -> `On test (Staging)` -> `Dev Accepted`*
+- [ ] **Phase 4: Cloud Scale-Out (Multiprocessing, Pub/Sub -> Cloud Run & BigQuery)** — *Status: Provisional (🔴 Red-Zone Infrastructure Gate) -> `In Progress` -> `On test (Staging)` -> `Dev Accepted`*
+- [ ] **Parallel Frontend Track (Sync 1, Sync 2, Sync 3) & Runtime Admin Viewer** — *Status: Preliminary Placeholder (Co-Design with Frontend Dev -> `On test (Staging)` -> `Dev Accepted [Graduates to Canon]`)*
