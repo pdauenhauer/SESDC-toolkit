@@ -7,6 +7,7 @@ import traceback
 from firebase_functions import https_fn
 from firebase_functions.params import SecretParam
 
+from caller_auth import AuthError, caller_uid
 from config import cors_settings
 from contracts import (
     ContractValidationError,
@@ -21,6 +22,10 @@ from simulation import run_simulation_with_state
 NLR_API_KEY = SecretParam("NLR_API_KEY")
 
 
+def _auth_failure(e: AuthError) -> https_fn.Response:
+    return https_fn.Response(str(e), status=e.status)
+
+
 @https_fn.on_request(cors=cors_settings, secrets=[NLR_API_KEY])
 def run_simulation_post(req: https_fn.Request) -> https_fn.Response:
     """POST: validate contract, run simulation, persist via repository, return contract response."""
@@ -32,6 +37,16 @@ def run_simulation_post(req: https_fn.Request) -> https_fn.Response:
 
     try:
         data = req.get_json(silent=True)
+        # Who is calling comes from their verified ID token. A userId in the
+        # body must match it, so one user can't run or overwrite another's.
+        try:
+            caller_uid(
+                req.headers,
+                claimed_uid=data.get("userId") if isinstance(data, dict) else None,
+            )
+        except AuthError as auth_err:
+            print("[run_simulation_post] Rejected:", str(auth_err))
+            return _auth_failure(auth_err)
         try:
             contract_req = SimulationRequestContract.from_dict(data)
         except ContractValidationError as val_err:
@@ -114,17 +129,25 @@ def get_stored_simulation(req: https_fn.Request) -> https_fn.Response:
         return https_fn.Response("Method Not Allowed", status=405)
 
     try:
-        userId = req.args.get("userId")
+        try:
+            userId = caller_uid(req.headers, claimed_uid=req.args.get("userId"))
+        except AuthError as auth_err:
+            print("[get_stored_simulation] Rejected:", str(auth_err))
+            return _auth_failure(auth_err)
+
         projectId = req.args.get("projectId")
-        if not userId or not projectId:
+        if not projectId:
             return https_fn.Response(
-                "Missing userId or projectId query params",
+                "Missing projectId query param",
                 status=400,
                 headers={"Content-Type": "application/json; charset=utf-8"},
             )
 
+        # Without `keys`, every table except the per-year hourly ones;
+        # `keys=hourly_year_07` (comma-separated) fetches specific tables.
+        keys = [k.strip() for k in (req.args.get("keys") or "").split(",") if k.strip()]
         repo = GcpSimulationRepository()
-        csv_bundle = repo.get_stored_csv_bundle(userId, projectId)
+        csv_bundle = repo.get_stored_csv_bundle(userId, projectId, keys or None)
         print("[get_stored_simulation] Returned", len(csv_bundle), "CSVs")
         stored_contract = StoredSimulationResponseContract(csv_bundle=csv_bundle)
         return https_fn.Response(

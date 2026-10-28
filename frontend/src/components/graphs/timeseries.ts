@@ -189,16 +189,42 @@ export function dateLabel(ts: number, withHour: boolean): string {
 
 /** Month (rows) × hour (columns) average of one column — e.g. solar output. */
 export function monthHourAverages(parsed: ParsedView, column: string): number[][] {
+  return monthHourAveragesOf(parsed, parsed.columns[column] ?? null);
+}
+
+/** Average of `values` for each month (rows) and hour of day (columns). */
+export function monthHourAveragesOf(parsed: ParsedView, values: (number | null)[] | null): number[][] {
   const acc = Array.from({ length: 12 }, () => Array(24).fill(0) as number[]);
   const cnt = Array.from({ length: 12 }, () => Array(24).fill(0) as number[]);
-  const col = parsed.columns[column];
-  if (!col) return acc;
+  if (!values) return acc;
   parsed.x.forEach((ts, i) => {
-    const v = col[i];
+    const v = values[i];
     if (v == null || !Number.isFinite(v)) return;
     const d = new Date(ts * 1000);
     acc[d.getMonth()][d.getHours()] += v;
     cnt[d.getMonth()][d.getHours()] += 1;
   });
   return acc.map((row, m) => row.map((v, h) => (cnt[m][h] ? v / cnt[m][h] : 0)));
+}
+
+/** One row per calendar day (in order) with that day's 24 hourly values; missing hours are null. */
+export type DayHourGrid = { days: number[]; cells: (number | null)[][] };
+
+export function dayHourGrid(parsed: ParsedView, values: (number | null)[] | null): DayHourGrid {
+  const days: number[] = [];
+  const cells: (number | null)[][] = [];
+  if (!values) return { days, cells };
+  let lastKey = "";
+  parsed.x.forEach((ts, i) => {
+    const d = new Date(ts * 1000);
+    const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    if (key !== lastKey) {
+      lastKey = key;
+      days.push(ts);
+      cells.push(Array(24).fill(null));
+    }
+    const v = values[i];
+    if (v != null && Number.isFinite(v)) cells[cells.length - 1][d.getHours()] = v;
+  });
+  return { days, cells };
 }

@@ -5,8 +5,16 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
+from contracts import is_on_demand_key
 from firestore_helpers import get_last_simulation_run, save_last_simulation_run
 from storage import download_csv, upload_csv_bundle
+
+
+def _select_paths(paths: dict[str, str], keys: list[str] | None) -> dict[str, str]:
+    """The stored paths to return: `keys` if given, else all but the per-year hourly tables."""
+    if keys:
+        return {k: v for k, v in paths.items() if k in keys}
+    return {k: v for k, v in paths.items() if not is_on_demand_key(k)}
 
 
 class InMemorySimulationRepository:
@@ -49,15 +57,14 @@ class InMemorySimulationRepository:
     def get_last_run_metadata(self, user_id: str, project_id: str) -> dict[str, Any] | None:
         return self._runs.get((user_id, project_id))
 
-    def get_stored_csv_bundle(self, user_id: str, project_id: str) -> dict[str, str]:
+    def get_stored_csv_bundle(
+        self, user_id: str, project_id: str, keys: list[str] | None = None
+    ) -> dict[str, str]:
         record = self._runs.get((user_id, project_id))
         if not record or not record.get("paths"):
             return {}
-        return {
-            key: self._blobs[gs_url]
-            for key, gs_url in record["paths"].items()
-            if gs_url in self._blobs
-        }
+        paths = _select_paths(record["paths"], keys)
+        return {key: self._blobs[gs_url] for key, gs_url in paths.items() if gs_url in self._blobs}
 
 
 class GcpSimulationRepository:
@@ -83,12 +90,16 @@ class GcpSimulationRepository:
         )
         return paths.get("hourly_simulation")
 
-    def get_stored_csv_bundle(self, user_id: str, project_id: str) -> dict[str, str]:
+    def get_stored_csv_bundle(
+        self, user_id: str, project_id: str, keys: list[str] | None = None
+    ) -> dict[str, str]:
         last_run = get_last_simulation_run(user_id, project_id)
         if not last_run or not last_run.get("paths"):
             return {}
 
-        paths = last_run["paths"]
+        paths = _select_paths(last_run["paths"], keys)
+        if not paths:
+            return {}
 
         def _fetch_one(key: str, gs_url: str) -> tuple[str, str | None]:
             try:

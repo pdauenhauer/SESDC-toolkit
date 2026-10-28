@@ -66,21 +66,7 @@ export default function YearlyOverviewCard({ summary, year, onYear, loading }: P
             {fEnergy(first.unmet)} in year 1 → {fEnergy(last.unmet)} in year {last.year}
           </span>
         </div>
-        <label class="mg-avgday__period">
-          <span class="mg-caption">Showing</span>
-          <select
-            class="mg-select mg-select--sm"
-            aria-label="Year to show in the charts below"
-            value={year}
-            onChange={(e) => onYear(Number((e.currentTarget as HTMLSelectElement).value))}
-          >
-            {data.map((r) => (
-              <option key={r.year} value={r.year} selected={r.year === year}>
-                Year {r.year}
-              </option>
-            ))}
-          </select>
-        </label>
+        <span class="mg-caption">Click a year to show it in every chart</span>
       </div>
 
       <div class="mg-years__plot" onMouseLeave={() => setHover(null)} role="group" aria-label="Energy by year. Select a year to show it below.">

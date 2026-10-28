@@ -1,13 +1,16 @@
-import { Fragment } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { Chart, ChartConfiguration } from "chart.js";
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-preact";
+import type { Load } from "../../database/models/load";
 import type { SimulationResult } from "../../services/simulation";
 import ChartCanvas from "../charts/ChartCanvas";
 import { Button, IconButton, Segmented, STROKE } from "../ui";
 import { f2 } from "../../utils/format";
 import { parseDatetimeWideCsv } from "./parseDateTimeCsv";
 import DailyProfileCard from "./DailyProfileCard";
+import DemandComponentsCard from "./DemandComponentsCard";
+import HeatmapCard, { RAMPS } from "./HeatmapCard";
+import YearBar from "./YearBar";
 import YearlyOverviewCard from "./YearlyOverviewCard";
 import { parseNumericCsv } from "./parseNumericCsv";
 import {
@@ -17,7 +20,6 @@ import {
   dayStarts,
   filterBySeason,
   isoDay,
-  monthHourAverages,
   sliceDays,
   type ParsedView,
   type Resolution,
@@ -48,7 +50,6 @@ const SERIES: SeriesDef[] = [
   { key: "net", column: "net_energy_kW", label: "Net energy", color: "#A8ACB2", width: 1, dash: [], axis: "y" },
 ];
 const DEFAULT_ON = new Set(["load", "solar", "diesel", "soc"]);
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const AXIS = { color: "#9A9EA5", font: { size: 11, family: "Geist, system-ui, sans-serif" } };
 
 type Hover = { index: number; px: number; top: number; bottom: number; width: number } | null;
@@ -67,9 +68,13 @@ type GraphsTabProps = {
   result: SimulationResult;
   /** Loads a later year's hourly table from the stored run (years 2–20 aren't in the bundle). */
   loadYear?: (year: number) => Promise<string | null>;
+  /** The project's schema, for the demand components chart. */
+  loads?: Load[];
+  /** Battery size from the project config, used when the run doesn't report it per year. */
+  batteryKwh?: number;
 };
 
-export default function GraphsTab({ result, loadYear }: GraphsTabProps) {
+export default function GraphsTab({ result, loadYear, loads = [], batteryKwh }: GraphsTabProps) {
   const summaryCsv = result["yearly_summary"];
   const summary = useMemo(() => (summaryCsv ? parseNumericCsv(summaryCsv) : null), [summaryCsv]);
   const [year, setYear] = useState(1);
@@ -108,28 +113,42 @@ export default function GraphsTab({ result, loadYear }: GraphsTabProps) {
   const yearCsv = year === 1 ? result["hourly_simulation"] : cache[year];
   const parsed = useMemo(() => (year === 1 ? baseline : parseHourly(yearCsv)), [year, yearCsv, baseline]);
   const loading = year !== 1 && !yearCsv && !error;
+  // While another year loads (or fails), keep the last year on screen so chart
+  // settings and the scroll position survive a year change.
+  const shown = useRef<{ year: number; parsed: ParsedView; result: SimulationResult } | null>(null);
+  if (shown.current?.result !== result) shown.current = null; // a new run
+  if (parsed && !loading) shown.current = { year, parsed, result };
+  const view = shown.current;
 
   if (!result["hourly_simulation"]) return <div class="mg-card mg-state">This simulation has no hourly table to chart.</div>;
 
   return (
     <div class="mg-graphs" data-screen-label="Graphs">
-      {summary && summary.rowCount > 0 ? (
-        <YearlyOverviewCard summary={summary} year={year} onYear={setYear} loading={loading} />
+      <YearBar year={year} years={summary?.rowCount ?? 1} onYear={setYear} loading={loading} />
+      {summary && summary.rowCount > 0 && <YearlyOverviewCard summary={summary} year={year} onYear={setYear} loading={loading} />}
+      {error && <div class="mg-card mg-state">{error}</div>}
+      {view ? (
+        <div class={`mg-graphs__year${view.year !== year ? " is-stale" : ""}`} aria-busy={loading}>
+          <YearCharts
+            parsed={view.parsed}
+            year={view.year}
+            baseline={view.year === 1 ? null : baseline}
+            loads={loads}
+            batteryKwh={summary?.columns["battery_usable_kWh"]?.[view.year - 1] || batteryKwh || 0}
+          />
+        </div>
       ) : (
-        <div class="mg-card mg-year-note">These results only cover year 1. Re-run the simulation to see all 20 years.</div>
-      )}
-      {error ? (
-        <div class="mg-card mg-state">{error}</div>
-      ) : loading || !parsed ? (
-        <div class="mg-state mg-state--loading">Loading year {year}…</div>
-      ) : (
-        <YearCharts parsed={parsed} year={year} baseline={year === 1 ? null : baseline} />
+        !error && <div class="mg-state mg-state--loading">Loading year {year}…</div>
       )}
     </div>
   );
 }
 
-function YearCharts({ parsed, year, baseline }: { parsed: ParsedView; year: number; baseline: ParsedView | null }) {
+type BatteryView = "charge" | "dod";
+
+type YearChartsProps = { parsed: ParsedView; year: number; baseline: ParsedView | null; loads: Load[]; batteryKwh: number };
+
+function YearCharts({ parsed, year, baseline, loads, batteryKwh }: YearChartsProps) {
   const available = useMemo(() => SERIES.filter((s) => parsed?.names.includes(s.column)), [parsed]);
   const [enabled, setEnabled] = useState<Record<string, boolean>>(() => Object.fromEntries(SERIES.map((s) => [s.key, DEFAULT_ON.has(s.key)])));
   const [season, setSeason] = useState<Season>("all");
@@ -243,8 +262,23 @@ function YearCharts({ parsed, year, baseline }: { parsed: ParsedView; year: numb
     setHover(null);
   }, [config]);
 
-  const heat = useMemo(() => (parsed ? monthHourAverages(parsed, "solar_kW") : null), [parsed]);
-  const heatMax = heat ? Math.max(...heat.flat(), 0) : 0;
+  const [batteryView, setBatteryView] = useState<BatteryView>("charge");
+  // Battery charge as a percentage of this year's usable capacity (falls back to the fullest it got).
+  const batteryCap = useMemo(() => {
+    const soc = parsed.columns["battery_soc_kWh"];
+    if (batteryKwh > 0) return batteryKwh;
+    return soc ? soc.reduce<number>((m, v) => Math.max(m, v ?? 0), 0) : 0;
+  }, [parsed, batteryKwh]);
+  const batteryPct = useMemo(() => {
+    const soc = parsed.columns["battery_soc_kWh"];
+    const cap = batteryCap;
+    if (!soc || cap <= 0) return null;
+    return soc.map((v) => {
+      if (v == null) return null;
+      const pct = Math.min(100, Math.max(0, (v / cap) * 100));
+      return batteryView === "charge" ? pct : 100 - pct;
+    });
+  }, [parsed, batteryCap, batteryView]);
 
   if (!view || !view.x.length) return <div class="mg-state mg-state--loading">Preparing charts…</div>;
 
@@ -384,42 +418,53 @@ function YearCharts({ parsed, year, baseline }: { parsed: ParsedView; year: numb
 
       <DailyProfileCard parsed={parsed} year={year} baseline={baseline} />
 
-      <section class="mg-card mg-heat">
-        <div class="mg-heat__head">
-          <h2 class="mg-h3">Solar output by month and hour · Year {year}</h2>
-          <span class="mg-caption">{heatMax > 0 ? `Average kW · peak ${f2(heatMax)} kW` : "No solar output in this simulation"}</span>
-        </div>
-        {heat && heatMax > 0 && (
-          <div class="mg-heat__grid">
-            {heat.map((row, mIdx) => (
-              <Fragment key={mIdx}>
-                <span class="mg-heat__month">{MONTHS[mIdx]}</span>
-                <div class="mg-heat__row">
-                  {row.map((v, h) => {
-                    const p = Math.round(Math.pow(v / heatMax, 0.85) * 100);
-                    return (
-                      <span
-                        key={h}
-                        class="mg-heat__cell"
-                        title={`${MONTHS[mIdx]} ${String(h).padStart(2, "0")}:00 · ${f2(v)} kW`}
-                        style={{ background: `color-mix(in srgb, #E39B2D ${p}%, #F4F3EF)` }}
-                      />
-                    );
-                  })}
-                </div>
-              </Fragment>
-            ))}
-            <span />
-            <div class="mg-heat__hours">
-              <span>00:00</span>
-              <span>06:00</span>
-              <span>12:00</span>
-              <span>18:00</span>
-              <span>23:00</span>
-            </div>
-          </div>
-        )}
-      </section>
+      <DemandComponentsCard loads={loads} />
+
+      <HeatmapCard
+        title={`Solar output by time of year · Year ${year}`}
+        parsed={parsed}
+        values={parsed.columns["solar_kW"] ?? null}
+        ramp={RAMPS.solar}
+        format={(v) => `${f2(v)} kW`}
+        caption={(peak) => `kW by hour of day · peak ${f2(peak)} kW`}
+        empty="No solar output in this simulation"
+      />
+
+      <HeatmapCard
+        title={`Battery ${batteryView === "charge" ? "state of charge" : "depth of discharge"} · Year ${year}`}
+        parsed={parsed}
+        values={batteryPct}
+        ramp={RAMPS.battery}
+        max={100}
+        format={(v) => `${Math.round(v)}%`}
+        caption={() =>
+          batteryView === "charge"
+            ? `Percent of the ${f2(batteryCap)} kWh usable capacity · darker = fuller`
+            : `Percent of the ${f2(batteryCap)} kWh usable capacity drawn down · darker = more discharged`
+        }
+        empty="No battery in this simulation"
+        controls={
+          <Segmented<BatteryView>
+            ariaLabel="Battery measure"
+            value={batteryView}
+            onChange={setBatteryView}
+            options={[
+              { id: "charge", label: "Charge" },
+              { id: "dod", label: "Depth of discharge" },
+            ]}
+          />
+        }
+      />
+
+      <HeatmapCard
+        title={`Diesel generator output by time of year · Year ${year}`}
+        parsed={parsed}
+        values={parsed.columns["diesel_kW"] ?? null}
+        ramp={RAMPS.diesel}
+        format={(v) => `${f2(v)} kW`}
+        caption={(peak) => `kW by hour of day · peak ${f2(peak)} kW`}
+        empty={`The generator didn't run in year ${year}`}
+      />
     </>
   );
 }

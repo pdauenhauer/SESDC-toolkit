@@ -51,7 +51,10 @@ function buildSeries(loads: Load[]): Series[] {
   ];
 }
 
-function StackedChart({ series, total }: { series: Series[]; total: number[] }) {
+type StackSeries = { id: string; name: string; color: string; profile: number[] };
+
+/** 24 stacked hourly columns with a hover breakdown. Also used by the Graphs tab. */
+export function StackedChart({ series, total }: { series: StackSeries[]; total: number[] }) {
   const [hover, setHover] = useState<number | null>(null);
   const peak = Math.max(...total, 0);
   const scale = Math.max(0.5, Math.ceil(peak * 1.15 * 2) / 2);

@@ -331,6 +331,11 @@ export default function Projects() {
         key={activeProjectId}
         result={simulationResult}
         loadYear={user && activeProjectId ? (year) => fetchSimulationYear(user.uid, activeProjectId, year) : undefined}
+        loads={workbenchLoads}
+        batteryKwh={(() => {
+          const b = sourceConfig(activeProject, "battery");
+          return b.enabled ? Number(b.storageKwh) || 0 : 0;
+        })()}
       />
     );
   };

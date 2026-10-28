@@ -157,7 +157,12 @@ class TestSimulationEngineAndRepository:
         )
         assert storage_path is not None and "hourly_simulation" in storage_path
         stored_bundle = repo.get_stored_csv_bundle("user_1", "proj_1")
-        assert set(stored_bundle.keys()) == set(csv_bundle.keys())
+        default_keys = {k for k in csv_bundle if not k.startswith("hourly_year_")}
+        assert set(stored_bundle.keys()) == default_keys
+        # Years 2-20 are stored too, and come back when asked for by key.
+        assert len(csv_bundle) - len(default_keys) == 19
+        year_7 = repo.get_stored_csv_bundle("user_1", "proj_1", ["hourly_year_07"])
+        assert set(year_7) == {"hourly_year_07"}
         meta = repo.get_last_run_metadata("user_1", "proj_1")
         assert meta is not None
         assert meta["summaryKpis"]["total_initial_capex"] == 18000.0

@@ -19,6 +19,7 @@ from engine.models.financial import (
     predict20years,
     predict_multi_year_daily,
 )
+from engine.models.horizon import DegradationModel, MultiYearDispatchModel
 from engine.models.generator import (
     GeneratorModel,
     calculate_diesel_energy,
@@ -49,6 +50,8 @@ from engine.models.wind import (
 __all__ = [
     "BatteryModel",
     "CoupledDispatchModel",
+    "DegradationModel",
+    "MultiYearDispatchModel",
     "EnergyStorageSystem",
     "FinancialModel",
     "GeneratorModel",

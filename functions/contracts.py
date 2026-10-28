@@ -26,7 +26,27 @@ EXPECTED_CSV_KEYS: tuple[str, ...] = (
     "revenue",
     "solar_heatmap",
     "monthly_heatmap",
+    "yearly_summary",
 )
+
+# Years 2-20 of the hourly simulation. They're large, so they are stored but
+# left out of response bundles unless a client asks for them by key.
+ON_DEMAND_CSV_PREFIX = "hourly_year_"
+
+
+def hourly_year_key(year: int) -> str:
+    """Bundle key for a project year's hourly table (1-based; year 1 is `hourly_simulation`)."""
+    return "hourly_simulation" if year == 1 else f"{ON_DEMAND_CSV_PREFIX}{year:02d}"
+
+
+def is_on_demand_key(key: str) -> bool:
+    return key.startswith(ON_DEMAND_CSV_PREFIX)
+
+
+def default_bundle(csv_bundle: dict) -> dict:
+    """The bundle without the on-demand per-year hourly tables."""
+    return {k: v for k, v in csv_bundle.items() if not is_on_demand_key(k)}
+
 
 # Required column headers for each CSV dataset consumed by the frontend
 EXPECTED_CSV_COLUMNS: dict[str, list[str]] = {
@@ -50,6 +70,20 @@ EXPECTED_CSV_COLUMNS: dict[str, list[str]] = {
         "avg_net_kW",
         "avg_load_serviced_kW",
         "avg_load_not_serviced_kW",
+    ],
+    "yearly_summary": [
+        "year",
+        "load_kWh",
+        "solar_kWh",
+        "wind_kWh",
+        "battery_discharge_kWh",
+        "diesel_kWh",
+        "unmet_kWh",
+        "served_kWh",
+        "excess_kWh",
+        "fuel_liters",
+        "battery_usable_kWh",
+        "solar_output_factor",
     ],
     "twenty_year_daily": [
         "day",
@@ -316,6 +350,8 @@ class SimulationResponseContract:
 
     Guarantees backward-compatible keys (`storagePath`, `csvKeys`, `csvBundle`)
     while supporting additive metadata (`runId`, `summaryKpis`, `tier1Summaries`, `schemaVersion`).
+    `csvKeys` lists every stored table; `csvBundle` leaves out the on-demand
+    per-year hourly tables (`hourly_year_NN`), which clients fetch by key.
     """
 
     storage_path: str | None
@@ -333,7 +369,7 @@ class SimulationResponseContract:
         payload: dict[str, Any] = {
             "storagePath": self.storage_path,
             "csvKeys": self.csv_keys,
-            "csvBundle": self.csv_bundle,
+            "csvBundle": default_bundle(self.csv_bundle),
             "schemaVersion": self.schema_version,
         }
         if self.run_id is not None:
@@ -392,7 +428,9 @@ def validate_csv_bundle_schema(csv_bundle: dict[str, str | None]) -> None:
         except StopIteration as exc:
             raise ContractValidationError(f"CSV entry '{key}' has no header row") from exc
 
-        expected_cols = EXPECTED_CSV_COLUMNS.get(key)
+        expected_cols = EXPECTED_CSV_COLUMNS.get(
+            "hourly_simulation" if is_on_demand_key(key) else key
+        )
         if expected_cols is not None and header != expected_cols:
             raise ContractValidationError(
                 f"CSV '{key}' header mismatch: expected {expected_cols}, got {header}"
