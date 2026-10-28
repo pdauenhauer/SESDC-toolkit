@@ -11,7 +11,7 @@ const COMMERCIAL_SHAPE = [
   0.1, 0.1, 0.1, 0.1, 0.1, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0, 1.0, 1.0, 1.0, 0.9, 0.8, 0.6, 0.4, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1
 ];
 
-/** Peak kW used to scale the shape (approximate nameplate before base load is added). */
+/** Peak kW used to scale the shape (approximate nameplate). */
 export const BUILDING_SIZE_PEAK_KW: Record<LoadPattern, Record<BuildingSize, number>> = {
   residential: { small: 1, medium: 4, large: 12 },
   commercial: { small: 1, medium: 4, large: 12 }
@@ -55,9 +55,8 @@ export function normalizedShape(pattern: LoadPattern): number[] {
   return pattern === 'residential' ? [...RESIDENTIAL_SHAPE] : [...COMMERCIAL_SHAPE];
 }
 
-/** Hourly kW: base + rounded(shape * peak). */
-export function buildHourlyLoads(pattern: LoadPattern, size: BuildingSize, baseLoadKw: number): number[] {
+/** Hourly kW: rounded(shape * peak). */
+export function buildHourlyLoads(pattern: LoadPattern, size: BuildingSize): number[] {
   const peak = BUILDING_SIZE_PEAK_KW[pattern][size];
-  const shape = normalizedShape(pattern);
-  return shape.map((v) => Math.max(0, baseLoadKw + Math.round(v * peak)));
+  return normalizedShape(pattern).map((v) => Math.max(0, Math.round(v * peak)));
 }

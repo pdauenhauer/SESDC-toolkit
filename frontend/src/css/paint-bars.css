@@ -1,0 +1,29 @@
+/* Paint-to-edit 24-hour bar chart (load profiler drawer + new-project wizard). */
+
+.mg-paint { display: grid; gap: 0 8px; }
+.mg-paint__y { display: flex; flex-direction: column; justify-content: space-between; font-size: 11px; color: var(--mg-faint); text-align: right; }
+.mg-paint__plot {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  border-bottom: 1px solid #DAD7D0;
+  cursor: ns-resize;
+  touch-action: none;
+  user-select: none;
+  container-type: inline-size;
+}
+.mg-paint__grid { position: absolute; left: 0; right: 0; border-top: 1px dashed #ECEAE5; pointer-events: none; }
+.mg-paint__grid--top { top: 0; }
+.mg-paint__grid--mid { top: 50%; }
+.mg-paint__col { position: relative; flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; border-radius: 6px 6px 0 0; }
+.mg-paint__col:hover { background: #F6F5F2; }
+.mg-paint__val { padding-bottom: 3px; font-size: 10px; text-align: center; white-space: nowrap; overflow: hidden; color: var(--mg-muted); font-variant-numeric: tabular-nums; pointer-events: none; }
+/* Per-bar value labels need ~22px columns; below that rely on the hover tooltip. */
+@container (max-width: 600px) {
+  .mg-paint__val { visibility: hidden; }
+}
+.mg-paint__bar { min-height: 2px; border-radius: 5px 5px 1px 1px; background: var(--mg-bar-mid); pointer-events: none; }
+.mg-paint__bar.is-peak { background: var(--mg-accent); }
+.mg-paint__hours { display: flex; gap: 4px; padding-top: 6px; }
+.mg-paint__hours span { flex: 1; min-width: 0; text-align: center; font-size: 10px; color: var(--mg-faint); }

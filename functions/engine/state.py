@@ -88,6 +88,11 @@ class SimulationState:
     daily_lns: list[float] | None = None
     daily_load_serviced: list[float] | None = None
 
+    # Multi-year hourly results (MultiYearDispatchModel): one dict of hourly
+    # arrays per project year (index 0 = year 1 baseline), plus per-year totals.
+    horizon_hourly: list[dict[str, np.ndarray]] | None = None
+    yearly_summary: list[dict[str, float]] | None = None
+
     # 20-year financial arrays
     years_arr: np.ndarray = field(default_factory=lambda: np.arange(20))
     battery_expenses: np.ndarray = field(default_factory=lambda: np.zeros(20))

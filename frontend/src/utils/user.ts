@@ -55,7 +55,8 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
 
   const profile: UserProfile = {
     uid,
-    displayName: data.displayName ?? auth.currentUser?.displayName ?? null,
+    // registerUser stores the name as `username`
+    displayName: data.displayName ?? data.username ?? auth.currentUser?.displayName ?? null,
     email: data.email ?? auth.currentUser?.email ?? null,
     metadata: {
       emailUpdates: data.metadata?.emailUpdates ?? defaultMetadata.emailUpdates,

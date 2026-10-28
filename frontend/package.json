@@ -10,11 +10,13 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.17",
+    "chart.js": "^4.4.7",
+    "chartjs-plugin-zoom": "^2.2.0",
     "firebase": "^12.8.0",
+    "lucide-preact": "^1.48.0",
     "marked": "^18.0.2",
     "preact": "^10.27.2",
-    "preact-iso": "^2.11.0",
-    "uplot": "^1.6.32"
+    "preact-iso": "^2.11.0"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.10.2",

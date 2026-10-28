@@ -96,6 +96,39 @@ def run_coupled_dispatch_kernel(
     return diesel_kw, battery_soc, unmet_load, curtailed, soc
 
 
+def dispatch_parameters(state: SimulationState) -> dict:
+    """Battery and generator limits for the dispatch kernel, from the request inputs."""
+    using_battery = bool(state.using_battery and state.battery_inputs)
+    batt_power_cap_kw = 0.0
+    batt_max_kwh = 0.0
+    batt_min_kwh = 0.0
+    initial_soc = 0.0
+
+    if using_battery and state.battery_inputs:
+        batt_power_cap_kw = safe_float(state.battery_inputs.get("charge_capacity"))
+        batt_max_kwh = safe_float(state.battery_inputs.get("maximum_storage"))
+        btype = str(state.battery_inputs.get("battery_type", "lithium-ion") or "lithium-ion")
+        batt_min_kwh = 0.1 * batt_max_kwh if btype == "lithium-ion" else 0.5 * batt_max_kwh
+        initial_soc = batt_min_kwh
+
+    using_generator = bool(state.using_generator and state.generator_inputs)
+    max_diesel_kw = 0.0
+    if using_generator and state.generator_inputs:
+        gen_capacity = safe_float(state.generator_inputs.get("capacity"))
+        loss_vals = list(diesel_losses.values())
+        max_diesel_kw = (gen_capacity * float(np.prod(loss_vals))) / 1000.0
+
+    return {
+        "using_battery": using_battery,
+        "batt_power_cap_kw": batt_power_cap_kw,
+        "batt_max_kwh": batt_max_kwh,
+        "batt_min_kwh": batt_min_kwh,
+        "initial_soc": initial_soc,
+        "using_generator": using_generator,
+        "max_diesel_kw": max_diesel_kw,
+    }
+
+
 class CoupledDispatchModel:
     """Modular Coupled Battery + Diesel Dispatch model conforming to `ComponentModelProtocol`.
 
@@ -105,37 +138,18 @@ class CoupledDispatchModel:
     """
 
     def step(self, state: SimulationState) -> None:
-        using_battery = bool(state.using_battery and state.battery_inputs)
-        batt_power_cap_kw = 0.0
-        batt_max_kwh = 0.0
-        batt_min_kwh = 0.0
-        initial_soc = 0.0
-
-        if using_battery and state.battery_inputs:
-            batt_power_cap_kw = safe_float(state.battery_inputs.get("charge_capacity"))
-            batt_max_kwh = safe_float(state.battery_inputs.get("maximum_storage"))
-            btype = str(state.battery_inputs.get("battery_type", "lithium-ion") or "lithium-ion")
-            batt_min_kwh = 0.1 * batt_max_kwh if btype == "lithium-ion" else 0.5 * batt_max_kwh
-            initial_soc = batt_min_kwh
-
-        using_generator = bool(state.using_generator and state.generator_inputs)
-        max_diesel_kw = 0.0
-        if using_generator and state.generator_inputs:
-            gen_capacity = safe_float(state.generator_inputs.get("capacity"))
-            loss_vals = list(diesel_losses.values())
-            max_diesel_kw = (gen_capacity * float(np.prod(loss_vals))) / 1000.0
-
+        p = dispatch_parameters(state)
         diesel_kw, battery_soc, unmet_load, curtailed, _ = run_coupled_dispatch_kernel(
             np.asarray(state.load_values, dtype=np.float64),
             np.asarray(state.solar_power, dtype=np.float64),
             np.asarray(state.wind_power, dtype=np.float64),
-            using_battery,
-            float(batt_power_cap_kw),
-            float(batt_max_kwh),
-            float(batt_min_kwh),
-            float(initial_soc),
-            using_generator,
-            float(max_diesel_kw),
+            p["using_battery"],
+            float(p["batt_power_cap_kw"]),
+            float(p["batt_max_kwh"]),
+            float(p["batt_min_kwh"]),
+            float(p["initial_soc"]),
+            p["using_generator"],
+            float(p["max_diesel_kw"]),
         )
 
         state.diesel_power = diesel_kw

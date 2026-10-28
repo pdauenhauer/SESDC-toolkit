@@ -1,13 +1,26 @@
-import type { ProjectData, LoadProfilerSettings } from "../components/ProjectWizard/types";
+import type { ProjectData } from "../components/wizard/types";
 import type { Project } from "./models/metadata";
 import type { Load } from "./models/load";
-import { createNewLoad, combined24hProfile } from "../utils/loadUtils";
+import { createNewLoad } from "../utils/loadUtils";
 
-/** Single root load used as canonical24 h site demand for workbench + simulation. */
-export function hourlyProfileToSiteLoads(hourlyKw: number[]): Load[] {
+/**
+ * Single root load used as the canonical 24 h site demand for workbench +
+ * simulation. `labelId` sets the load's type (defaults to the appliance
+ * default); pass a nestable type (e.g. "business"/"building") so the site can
+ * be broken down into child loads.
+ */
+export function hourlyProfileToSiteLoads(hourlyKw: number[], labelId?: string): Load[] {
   const load = createNewLoad("Site demand");
+  if (labelId) load.labelId = labelId;
   load.profile = hourlyKw.map((v) => Math.max(0, Number(v) || 0));
   return [load];
+}
+
+/** Pick the site-demand container type from the wizard's usage pattern. */
+function siteLoadLabelId(data: ProjectData): string {
+  const pattern = data.loadProfiler?.usagePattern ?? data.loadProfiler?.pattern;
+  // Residential → Building (home); commercial or unspecified → Business.
+  return pattern === "residential" ? "building" : "business";
 }
 
 /** Fields written to Firestore when the wizard completes — no `wizardConfig` blob. */
@@ -18,55 +31,10 @@ export function projectPatchFromWizardData(data: ProjectData): Partial<Project> 
     battery: data.battery,
     wind: data.wind,
     generator: data.generator,
-    loads: hourlyProfileToSiteLoads(data.loads)
+    location: data.location,
+    economics: data.economics,
+    loads: hourlyProfileToSiteLoads(data.loads, siteLoadLabelId(data))
   };
-  patch.loadProfiler = { baseLoadKw: 0, ...data.loadProfiler };
+  patch.loadProfiler = { ...data.loadProfiler };
   return patch;
-}
-
-function hourlyFromLoadTree(loads: unknown): number[] | null {
-  if (!Array.isArray(loads) || loads.length === 0) return null;
-  try {
-    const combined = combined24hProfile(loads as Load[]);
-    if (combined.length === 24 && combined.some((n) => n > 0)) return combined;
-  } catch {
-    /* ignore */
-  }
-  return null;
-}
-
-/** Legacy: wizard stored a flat `ProjectData`-shaped object under `wizardConfig`. */
-function legacyWizardConfig(p: Project): Partial<ProjectData> | null {
-  const w = p.wizardConfig;
-  if (!w || typeof w !== "object") return null;
-  const o = w as Record<string, unknown>;
-  if (typeof o.name !== "string" && !o.solar && !o.loads) return null;
-  return w as Partial<ProjectData>;
-}
-
-/**
- * Build wizard initial state from a Firestore project (unified fields or legacy `wizardConfig`).
- */
-export function projectToWizardInitialData(project: Project): Partial<ProjectData> {
-  const legacy = legacyWizardConfig(project);
-  const hourlyFromTree = hourlyFromLoadTree(project.loads as unknown);
-
-  const loads =
-    hourlyFromTree ??
-    (Array.isArray(legacy?.loads) && (legacy!.loads as number[]).length === 24
-      ? [...(legacy!.loads as number[])]
-      : Array(24).fill(0));
-
-  const loadProfiler: LoadProfilerSettings | undefined =
-    (project.loadProfiler as LoadProfilerSettings | undefined) ?? legacy?.loadProfiler;
-
-  return {
-    name: typeof project.name === "string" ? project.name : legacy?.name ?? "",
-    solar: (project.solar as ProjectData["solar"]) ?? legacy?.solar,
-    battery: (project.battery as ProjectData["battery"]) ?? legacy?.battery,
-    wind: (project.wind as ProjectData["wind"]) ?? legacy?.wind,
-    generator: (project.generator as ProjectData["generator"]) ?? legacy?.generator,
-    loads,
-    loadProfiler
-  };
 }

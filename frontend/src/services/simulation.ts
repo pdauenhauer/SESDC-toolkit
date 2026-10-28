@@ -1,5 +1,8 @@
 import type { Load } from "../database/models/load";
+import type { Project } from "../database/models/metadata";
+import type { CostData } from "../components/wizard/types";
 import { combined24hProfile } from "../utils/loadUtils";
+import { auth } from "../utils/firebase/firebase-init";
 
 const REGION = "us-central1";
 const POST_FUNCTION = "run_simulation_post";
@@ -11,8 +14,48 @@ function getProjectId(): string {
   return projectId;
 }
 
+/**
+ * Cloud Functions base URL. Set VITE_FUNCTIONS_BASE_URL to use the local
+ * emulator, e.g. http://127.0.0.1:5001/<project-id>/us-central1
+ */
+function functionsBase(): string {
+  const override = import.meta.env.VITE_FUNCTIONS_BASE_URL as string | undefined;
+  return override ? override.replace(/\/+$/, "") : `https://${REGION}-${getProjectId()}.cloudfunctions.net`;
+}
+
 function getPostUrl(): string {
-  return `https://${REGION}-${getProjectId()}.cloudfunctions.net/${POST_FUNCTION}`;
+  return `${functionsBase()}/${POST_FUNCTION}`;
+}
+
+/**
+ * The signed-in user's Firebase ID token as an Authorization header. The
+ * functions act as the user in this token (any userId sent alongside must
+ * match it). getIdToken() refreshes the token when it is close to expiring.
+ */
+async function authHeaders(): Promise<Record<string, string>> {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Sign in to run or view simulations.");
+  return { Authorization: `Bearer ${await user.getIdToken()}` };
+}
+
+/** CSV key for a simulated year (1-based). Year 1 is the original hourly table. */
+export function hourlyYearKey(year: number): string {
+  return year === 1 ? "hourly_simulation" : `hourly_year_${String(year).padStart(2, "0")}`;
+}
+
+/**
+ * Fetch one year's hourly table from the last stored run. Years 2–20 are not
+ * part of the normal bundle (they are large), so they are loaded on demand.
+ */
+export async function fetchSimulationYear(userId: string, projectId: string, year: number): Promise<string | null> {
+  const key = hourlyYearKey(year);
+  const url =
+    `${functionsBase()}/${STORED_FUNCTION}?userId=${encodeURIComponent(userId)}` +
+    `&projectId=${encodeURIComponent(projectId)}&keys=${encodeURIComponent(key)}`;
+  const res = await fetch(url, { method: "GET", headers: await authHeaders() });
+  if (!res.ok) throw new Error(`Couldn't load year ${year} (${res.status})`);
+  const data = await res.json();
+  return (data?.csvBundle?.[key] as string | undefined) ?? null;
 }
 
 /** Fetch stored simulation CSVs for a project (GET); returns csvBundle for display on Data tab. */
@@ -20,9 +63,9 @@ export async function fetchStoredSimulation(
   userId: string,
   projectId: string
 ): Promise<SimulationResult> {
-  const base = `https://${REGION}-${getProjectId()}.cloudfunctions.net/${STORED_FUNCTION}`;
+  const base = `${functionsBase()}/${STORED_FUNCTION}`;
   const url = `${base}?userId=${encodeURIComponent(userId)}&projectId=${encodeURIComponent(projectId)}`;
-  const res = await fetch(url, { method: "GET" });
+  const res = await fetch(url, { method: "GET", headers: await authHeaders() });
   const data = res.ok ? await res.json() : null;
   const csvBundle = (data?.csvBundle ?? {}) as SimulationResult;
   console.log("[Simulation GET stored] response", {
@@ -71,6 +114,7 @@ export type SimulationPayload = {
   generatorOpex?: number;
   generatorLifespan?: number;
   generatorReplacement?: number;
+  generatorFuelPrice?: number;
   chargeCapacity?: number;
   maximumStorage?: number;
   batteryType?: string;
@@ -118,6 +162,7 @@ const DUMMY_DEFAULTS = {
   generatorOpex: 200,
   generatorLifespan: 10,
   generatorReplacement: 2500,
+  generatorFuelPrice: 1.5,
   chargeCapacity: 50,
   maximumStorage: 200,
   batteryType: "lithium-ion",
@@ -133,10 +178,122 @@ const DUMMY_DEFAULTS = {
   energyPrice: 0.15,
 } as const;
 
+/** Coerce a possibly-string/undefined value to a finite number, else `fallback`. */
+function num(v: unknown, fallback = 0): number {
+  const n = typeof v === "number" ? v : Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+/** Map wizard `CostData` to the backend's flat capex/opex/replacement triple. */
+function costFields(costs: CostData | undefined) {
+  return {
+    capex: num(costs?.capital),
+    opex: num(costs?.opDollar),
+    replacement: num(costs?.repDollar),
+  };
+}
+
+/**
+ * Translate a stored project's system configuration (the same shape the wizard
+ * writes to Firestore) into simulation-payload fields. Only sets a component's
+ * parameters when that component is enabled; the `using*` flags always reflect
+ * the project so a disabled/unconfigured component is correctly excluded.
+ *
+ * Unit conversions match what the backend formulas expect:
+ *  - solar `sizeKw` and generator `capacityKw` are kW in the UI but the Python
+ *    formulas treat the values as watts, so we multiply by 1000.
+ *  - wind `namePlateCapacity` is a turbine *count* and `ratedPower` is watts per
+ *    turbine in the backend, so we derive count = total / per-turbine kW.
+ */
+export function payloadFromProject(project: Project): Partial<SimulationPayload> {
+  const out: Partial<SimulationPayload> = {};
+
+  const solar = project.solar;
+  out.usingSolarPanel = !!solar?.enabled;
+  if (solar?.enabled) {
+    const c = costFields(solar.costs);
+    out.solarArraySize = num(solar.sizeKw) * 1000; // kW -> W nameplate
+    out.wireLosses = num(solar.losses?.wire);
+    out.moduleMismatch = num(solar.losses?.mismatch);
+    out.moduleAging = num(solar.losses?.aging);
+    out.dustDirt = num(solar.losses?.dust);
+    out.converter = num(solar.losses?.converter);
+    out.solarCapex = c.capex;
+    out.solarOpex = c.opex;
+    out.solarReplacement = c.replacement;
+    out.solarLifespan = num(solar.lifespan);
+  }
+
+  const battery = project.battery;
+  out.usingBattery = !!battery?.enabled;
+  if (battery?.enabled) {
+    const c = costFields(battery.costs);
+    out.chargeCapacity = num(battery.chargeKw);
+    out.maximumStorage = num(battery.storageKwh);
+    // Backend compares against the literal "lithium-ion"; normalize "Lithium-Ion" etc.
+    out.batteryType = (battery.type || "lithium-ion").toLowerCase().replace(/\s+/g, "-");
+    out.batteryCapex = c.capex;
+    out.batteryOpex = c.opex;
+    out.batteryReplacement = c.replacement;
+    out.batteryLifespan = num(battery.lifespan);
+  }
+
+  const wind = project.wind;
+  out.usingWindTurbine = !!wind?.enabled;
+  if (wind?.enabled) {
+    const c = costFields(wind.costs);
+    const perTurbineKw = num(wind.powerPerTurbineKw);
+    const totalKw = num(wind.nameplateKw);
+    const numTurbines =
+      perTurbineKw > 0 ? Math.max(1, Math.round(totalKw / perTurbineKw)) : 1;
+    out.namePlateCapacity = numTurbines;
+    out.ratedPower = (perTurbineKw > 0 ? perTurbineKw : totalKw) * 1000; // kW -> W per turbine
+    out.cutInSpeed = num(wind.speeds?.cutIn);
+    out.ratedSpeed = num(wind.speeds?.rated);
+    out.cutOutSpeed = num(wind.speeds?.cutOut);
+    out.windCapex = c.capex;
+    out.windOpex = c.opex;
+    out.windReplacement = c.replacement;
+    out.windLifespan = num(wind.lifespan);
+  }
+
+  const generator = project.generator;
+  out.usingGenerator = !!generator?.enabled;
+  if (generator?.enabled) {
+    const c = costFields(generator.costs);
+    out.generatorCapacity = num(generator.capacityKw) * 1000; // kW -> W
+    out.generatorCapex = c.capex;
+    out.generatorOpex = c.opex;
+    out.generatorReplacement = c.replacement;
+    out.generatorLifespan = num(generator.lifespan);
+    out.generatorFuelPrice = num(generator.costs?.fuelPrice, 1.5);
+  }
+
+  // Site location (captured by the Economics & Location wizard step).
+  const lat = num(project.location?.latitude, NaN);
+  const lng = num(project.location?.longitude, NaN);
+  if (Number.isFinite(lat)) out.latitude = lat;
+  if (Number.isFinite(lng)) out.longitude = lng;
+
+  // Project-level economic assumptions (drive the 20-year financial model).
+  const eco = project.economics;
+  if (eco) {
+    out.inflation = num(eco.inflationPct, 3);
+    out.energyPrice = num(eco.energyPrice, 0.15);
+    out.laborCost = num(eco.laborCost);
+    out.landLeasingCost = num(eco.landLeasingCost);
+    out.licensingCost = num(eco.licensingCost);
+    out.otherCapex = num(eco.otherCapex);
+  }
+
+  return out;
+}
+
 export function buildSimulationPayload(
   userId: string,
   projectId: string,
   workbenchLoads: Load[],
+  project?: Project | null,
   overrides?: Partial<SimulationPayload>
 ): SimulationPayload {
   const loadInputs = combined24hProfile(workbenchLoads);
@@ -182,6 +339,7 @@ export function buildSimulationPayload(
     generatorOpex: DUMMY_DEFAULTS.generatorOpex,
     generatorLifespan: DUMMY_DEFAULTS.generatorLifespan,
     generatorReplacement: DUMMY_DEFAULTS.generatorReplacement,
+    generatorFuelPrice: DUMMY_DEFAULTS.generatorFuelPrice,
     chargeCapacity: DUMMY_DEFAULTS.chargeCapacity,
     maximumStorage: DUMMY_DEFAULTS.maximumStorage,
     batteryType: DUMMY_DEFAULTS.batteryType,
@@ -197,10 +355,11 @@ export function buildSimulationPayload(
     energyPrice: DUMMY_DEFAULTS.energyPrice,
   };
 
-  if (overrides) {
-    return { ...base, ...overrides };
-  }
-  return base;
+  // Layer order: dummy/base defaults → stored project config → explicit overrides.
+  // `base` supplies safe fallbacks (loss %, wind speeds, location) so a partially
+  // configured project still produces a valid request.
+  const projectPayload = project ? payloadFromProject(project) : {};
+  return { ...base, ...projectPayload, ...overrides };
 }
 
 export type SimulationPostResponse = {
@@ -215,7 +374,7 @@ export async function runSimulation(
   const url = getPostUrl();
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
     body: JSON.stringify(payload),
   });
 

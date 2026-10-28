@@ -55,6 +55,9 @@ class SimulationRepositoryProtocol(Protocol):
         """Persist simulation artifacts and metadata; return primary storage path."""
         ...
 
-    def get_stored_csv_bundle(self, user_id: str, project_id: str) -> dict[str, str]:
-        """Fetch stored simulation CSV bundle for `(user_id, project_id)`."""
+    def get_stored_csv_bundle(
+        self, user_id: str, project_id: str, keys: list[str] | None = None
+    ) -> dict[str, str]:
+        """Fetch stored CSVs for `(user_id, project_id)`: just `keys` when given,
+        otherwise every table except the on-demand per-year hourly tables."""
         ...

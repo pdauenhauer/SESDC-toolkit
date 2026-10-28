@@ -11,10 +11,12 @@ from engine.models.battery import BatteryModel
 from engine.models.dispatch import CoupledDispatchModel
 from engine.models.financial import FinancialModel, predict_multi_year_daily
 from engine.models.generator import GeneratorModel
+from engine.models.horizon import DegradationModel, MultiYearDispatchModel
 from engine.models.solar import PVModel
 from engine.models.wind import WindModel
 from engine.protocols import ComponentModelProtocol
 from engine.state import SimulationState
+from contracts import hourly_year_key
 
 
 def _df_to_csv(df: pd.DataFrame) -> str:
@@ -34,6 +36,8 @@ class SimulationEngine:
         generator_model: ComponentModelProtocol | None = None,
         battery_model: ComponentModelProtocol | None = None,
         financial_model: ComponentModelProtocol | None = None,
+        degradation_model: ComponentModelProtocol | None = None,
+        multi_year_model: ComponentModelProtocol | None = None,
     ):
         self.pv_model = pv_model or PVModel()
         self.wind_model = wind_model or WindModel()
@@ -41,6 +45,8 @@ class SimulationEngine:
         self.generator_model = generator_model or GeneratorModel()
         self.battery_model = battery_model or BatteryModel()
         self.financial_model = financial_model or FinancialModel()
+        self.degradation_model = degradation_model or DegradationModel()
+        self.multi_year_model = multi_year_model or MultiYearDispatchModel()
 
     def run(self, state: SimulationState) -> SimulationState:
         """Execute all physical, dispatch, financial, and evaluative steps on `state`."""
@@ -57,6 +63,10 @@ class SimulationEngine:
             self.battery_model.step(state)
         else:
             self.dispatch_model.step(state)
+
+        # Years 2-20: age the assets, then re-dispatch each year.
+        self.degradation_model.step(state)
+        self.multi_year_model.step(state)
 
         self.financial_model.step(state)
         state.summary_kpis = compute_summary_kpis(state)
@@ -84,6 +94,25 @@ class SimulationEngine:
             "load_serviced_kW": state.hourly_load_serviced,
         })
         csvs["hourly_simulation"] = _df_to_csv(hourly_df)
+
+        # Years 2-20 use the same columns. 0.1 W resolution keeps them small.
+        for y, yr in enumerate(state.horizon_hourly or []):
+            if y == 0:
+                continue
+            csvs[hourly_year_key(y + 1)] = _df_to_csv(pd.DataFrame({
+                "Datetime": state.nlr_df["Datetime"].values,
+                "load_kW": yr["load"],
+                "solar_kW": yr["solar"],
+                "wind_kW": yr["wind"],
+                "diesel_kW": yr["diesel"],
+                "net_energy_kW": yr["net"],
+                "battery_soc_kWh": yr["soc"],
+                "load_not_serviced_kW": yr["unmet"],
+                "load_serviced_kW": yr["served"],
+            }).round(4))
+        csvs["yearly_summary"] = (
+            _df_to_csv(pd.DataFrame(state.yearly_summary)) if state.yearly_summary else None
+        )
 
         if state.daily_load is not None:
             daily_df = pd.DataFrame({

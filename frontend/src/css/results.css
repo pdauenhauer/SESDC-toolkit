@@ -1,0 +1,124 @@
+/* Results tab (redesign). */
+
+.mg-results { display: flex; flex-direction: column; gap: 20px; }
+.mg-results-head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.mg-results-head__title { margin-right: auto; }
+
+/* ---------- Hero KPIs ---------- */
+.mg-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.mg-kpi { padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; }
+.mg-kpi__top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.mg-kpi__value { font-size: 36px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.mg-bar-track { height: 4px; overflow: hidden; border-radius: 4px; background: var(--mg-fill); }
+.mg-bar-fill { height: 100%; border-radius: 4px; }
+
+/* ---------- Panels ---------- */
+.mg-row2 { display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch; }
+.mg-row2--top { align-items: flex-start; }
+.mg-panel { min-width: 0; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+.mg-panel--cvr { flex: 2 1 480px; }
+.mg-panel--mix { flex: 1 1 280px; gap: 16px; }
+.mg-panel--metrics { flex: 1 1 420px; gap: 6px; }
+.mg-panel--costs { flex: 1 1 360px; gap: 12px; }
+.mg-panel__head { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+.mg-panel__head .mg-h3 { margin-right: auto; }
+.mg-legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--mg-ink-2); }
+.mg-swatch { width: 10px; height: 10px; flex: none; border-radius: 3px; }
+
+/* ---------- Cost vs revenue ---------- */
+.mg-cvr { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 0 10px; }
+.mg-cvr__y { height: 220px; display: flex; flex-direction: column; justify-content: space-between; font-size: 11px; color: var(--mg-faint); text-align: right; }
+.mg-cvr__plot { position: relative; height: 220px; }
+.mg-cvr__plot svg { display: block; overflow: visible; }
+.mg-cvr__payback { position: absolute; top: 0; bottom: 0; border-left: 1px dashed var(--mg-accent); }
+.mg-cvr__pill {
+  position: absolute;
+  top: 0;
+  left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--mg-accent-ghost);
+  color: var(--mg-accent-ink);
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.mg-cvr__payback.is-late .mg-cvr__pill { left: auto; right: 8px; }
+.mg-cvr__x { position: relative; height: 22px; font-size: 11px; color: var(--mg-faint); }
+.mg-cvr__x span { position: absolute; top: 6px; transform: translateX(-50%); white-space: nowrap; }
+.mg-cvr__x span:first-child { transform: none; }
+.mg-cvr__x span:last-child { transform: translateX(-100%); }
+
+/* ---------- Generation mix ---------- */
+.mg-mixbar { display: flex; height: 12px; overflow: hidden; border-radius: 12px; background: var(--mg-fill); }
+.mg-mixbar__seg { height: 100%; box-shadow: inset -2px 0 0 #fff; }
+.mg-mix-rows { display: flex; flex-direction: column; gap: 12px; }
+.mg-mix-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.mg-mix-row__label { flex: 1; }
+.mg-mix-row__value { color: var(--mg-muted); font-variant-numeric: tabular-nums; }
+.mg-mix-row__pct { width: 40px; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ---------- All metrics ---------- */
+.mg-metric-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 28px; }
+.mg-metric-col { display: flex; flex-direction: column; }
+.mg-metric-col__title { padding: 6px 0; font-size: 12px; color: var(--mg-faint); }
+.mg-metric-row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--mg-hairline-2); font-size: 13px; }
+.mg-metric-row__label { color: var(--mg-ink-2); }
+.mg-metric-row__value { font-weight: 500; font-variant-numeric: tabular-nums; }
+
+/* ---------- Cost breakdown ---------- */
+.mg-cost-row { display: flex; flex-direction: column; gap: 5px; }
+.mg-cost-row__top { display: flex; justify-content: space-between; font-size: 13px; }
+.mg-cost-row__label { color: var(--mg-ink-2); }
+.mg-cost-row__value { font-weight: 500; font-variant-numeric: tabular-nums; }
+.mg-cost-row .mg-bar-track { height: 6px; border-radius: 6px; }
+.mg-cost-row .mg-bar-fill { border-radius: 6px; background: var(--mg-ink); opacity: 0.85; }
+
+/* ---------- Raw data ---------- */
+.mg-raw { overflow: hidden; }
+.mg-raw__toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  border: none;
+  background: transparent;
+  color: var(--mg-ink);
+  text-align: left;
+  cursor: pointer;
+}
+.mg-raw__toggle:hover { background: #FAFAF8; }
+.mg-raw__chev { margin-left: auto; display: flex; color: var(--mg-muted); }
+.mg-raw__list { border-top: 1px solid var(--mg-hairline); padding: 6px 8px 10px; }
+.mg-raw__row { display: flex; align-items: center; gap: 12px; padding: 4px 12px; border-radius: 9px; }
+.mg-raw__row:hover { background: var(--mg-row-hover); }
+.mg-raw__name { flex: 1; display: flex; align-items: center; gap: 8px; padding: 6px 0; border: none; background: transparent; color: var(--mg-ink); font-size: 13px; text-align: left; cursor: pointer; }
+.mg-raw__name-chev { display: flex; color: var(--mg-faint); }
+.mg-raw__rows { font-size: 12px; color: var(--mg-faint); font-variant-numeric: tabular-nums; }
+.mg-raw__dl {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid var(--mg-control-border);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--mg-ink-2);
+  font-size: 12px;
+  cursor: pointer;
+}
+.mg-raw__dl:hover { border-color: var(--mg-accent); color: var(--mg-accent); }
+.mg-raw__preview {
+  max-height: 200px;
+  margin: 4px 12px 10px;
+  padding: 12px 14px;
+  overflow: auto;
+  border-radius: 9px;
+  background: #F7F6F3;
+  color: var(--mg-ink-2);
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: pre;
+}

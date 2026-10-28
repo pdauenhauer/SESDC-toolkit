@@ -97,6 +97,7 @@ function sanitizeLoads(loads: Load[]): any[] {
     labelId: l.labelId,
     profile: Array.isArray(l.profile) ? l.profile : [],
     ...(l.children && l.children.length ? { children: l.children.map(sanitize) } : {}),
+    ...(l.tags && l.tags.length ? { tags: l.tags } : {}),
   });
 
   return loads.map(sanitize);
