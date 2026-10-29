@@ -3,6 +3,7 @@
 import pandas as pd
 import pytest
 
+from contract_export import DEFAULT_OUTPUT_PATH, render_typescript_contracts
 from contracts import (
     CONTRACT_SCHEMA_VERSION,
     EXPECTED_CSV_COLUMNS,
@@ -199,3 +200,19 @@ class TestSimulationResponseAndCsvSchemaContract:
         data = stored.to_dict()
         assert data["csvBundle"] == {"hourly_simulation": "Datetime,load_kW\n"}
         assert data["schemaVersion"] == CONTRACT_SCHEMA_VERSION
+
+    def test_generated_typescript_contract_snapshot_is_in_sync(self):
+        """Enforce that `contracts/simulation-contracts.d.ts` matches `functions/contracts.py` byte-for-byte."""
+        assert DEFAULT_OUTPUT_PATH.exists(), (
+            "Missing contracts/simulation-contracts.d.ts. Run: python functions/contract_export.py --write"
+        )
+        actual = DEFAULT_OUTPUT_PATH.read_text(encoding="utf-8")
+        expected = render_typescript_contracts()
+        assert actual == expected, (
+            "contracts/simulation-contracts.d.ts is out of sync with functions/contracts.py! "
+            "Regenerate with: python functions/contract_export.py --write"
+        )
+        for frontend_key in _canonical_frontend_payload():
+            assert f"  {frontend_key}" in actual, (
+                f"Frontend request key '{frontend_key}' missing from SimulationRequestPayload in simulation-contracts.d.ts"
+            )

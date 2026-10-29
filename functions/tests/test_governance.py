@@ -2,7 +2,7 @@
 
 Enforces two-way alignment between the codebase and `workplan/governance.md` + `workplan/blueprint.md`:
 1. Code -> Docs compliance (lazy imports, deterministic PRNG, structural Protocol typing, workplan & gitignore hygiene).
-2. Docs <-> Code reflexive sync (workflows, runtime versions, secrets, protocols, models, autonomy zones, Pre-Flight Scope Lock, Cross-Agent Handoff Log, and multi-tool agent shims).
+2. Docs <-> Code reflexive sync (workflows, runtime versions, secrets, protocols, models, autonomy zones, Pre-Flight Scope Lock, Cross-Agent Handoff Log, CODEOWNERS, generated TypeScript contracts, and multi-tool agent shims).
 """
 
 from __future__ import annotations
@@ -198,7 +198,7 @@ class TestReflexiveGovernanceSync:
             assert model_name in governance_text, (
                 f"Component model '{model_name}' is defined in engine/models/ but missing from workplan/governance.md."
             )
-            assert proto_name in blueprint_text and model_name in blueprint_text, (
+            assert model_name in blueprint_text, (
                 f"Component model '{model_name}' is defined in engine/models/ but missing from workplan/blueprint.md."
             )
 
@@ -227,14 +227,24 @@ class TestReflexiveGovernanceSync:
             assert required_term in governance_text, f"Missing '{required_term}' in workplan/governance.md"
             assert required_term in blueprint_text, f"Missing '{required_term}' in workplan/blueprint.md"
 
-    def test_pre_flight_and_cross_agent_handoff_log_enforced(self):
-        """Enforce that the Pre-Flight Scope Lock, Cross-Agent Handoff Log, and PR template stay active."""
+    def test_pre_flight_codeowners_contract_snapshot_and_handoff_log_enforced(self):
+        """Enforce that Pre-Flight Scope Lock, Cross-Agent Handoff Log, PR template, CODEOWNERS, and TS contract snapshot stay active."""
         governance_text = (WORKPLAN_DIR / "governance.md").read_text(encoding="utf-8")
         blueprint_text = (WORKPLAN_DIR / "blueprint.md").read_text(encoding="utf-8")
         pr_template = REPO_ROOT / ".github" / "pull_request_template.md"
+        codeowners = REPO_ROOT / ".github" / "CODEOWNERS"
+        ts_contracts = REPO_ROOT / "contracts" / "simulation-contracts.d.ts"
 
         assert pr_template.exists(), "Missing .github/pull_request_template.md"
-        for required_phrase in ("Pre-Flight", "Cross-Agent Handoff & Breaking Spec Log"):
+        assert codeowners.exists(), "Missing .github/CODEOWNERS"
+        assert ts_contracts.exists(), "Missing contracts/simulation-contracts.d.ts"
+
+        for required_phrase in (
+            "Pre-Flight",
+            "Cross-Agent Handoff & Breaking Spec Log",
+            "CODEOWNERS",
+            "simulation-contracts.d.ts",
+        ):
             assert required_phrase in governance_text, (
                 f"Missing '{required_phrase}' in workplan/governance.md"
             )

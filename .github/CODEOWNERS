@@ -1,0 +1,22 @@
+# SESDC-Toolkit Domain Ownership & Cross-Agent Blast-Radius Guardrails
+# Note: In GitHub CODEOWNERS, the LAST matching rule takes precedence.
+# General domain directories are listed first, followed by specific shared contract/governance overrides.
+
+# Domain-Specific Ownership
+/functions/                        @pdauenhauer
+/frontend/                         @jbaron2025
+
+# Shared Governance, Infrastructure, E2E Tests & Cross-Domain Contracts (Require/Notify Both Owners)
+/workplan/                         @pdauenhauer @jbaron2025
+/contracts/                        @pdauenhauer @jbaron2025
+/functions/contracts.py            @pdauenhauer @jbaron2025
+/functions/contract_export.py      @pdauenhauer @jbaron2025
+/tests/                            @pdauenhauer @jbaron2025
+/firestore.rules                   @pdauenhauer @jbaron2025
+/storage.rules                     @pdauenhauer @jbaron2025
+/firebase.json                     @pdauenhauer @jbaron2025
+/.github/                          @pdauenhauer @jbaron2025
+/AGENTS.md                         @pdauenhauer @jbaron2025
+/CLAUDE.md                         @pdauenhauer @jbaron2025
+/GEMINI.md                         @pdauenhauer @jbaron2025
+/.rules                            @pdauenhauer @jbaron2025
