@@ -2,7 +2,7 @@
 
 Enforces two-way alignment between the codebase and `workplan/governance.md` + `workplan/blueprint.md`:
 1. Code -> Docs compliance (lazy imports, deterministic PRNG, structural Protocol typing, workplan & gitignore hygiene).
-2. Docs <-> Code reflexive sync (workflows, runtime versions, secrets, protocols, models, frontend stack dependencies, autonomy zones, Pre-Flight Scope Lock, Cross-Agent Handoff Log, CODEOWNERS, generated TypeScript contracts, and multi-tool agent shims).
+2. Docs <-> Code reflexive sync (workflows, runtime versions, secrets, protocols, models, frontend stack dependencies, autonomy zones, Pre-Flight Scope Lock, Cross-Agent Handoff Log, CODEOWNERS, generated TypeScript contracts, multi-boundary contract/security architecture, and multi-tool agent shims).
 """
 
 from __future__ import annotations
@@ -286,6 +286,29 @@ class TestReflexiveGovernanceSync:
             )
             assert required_phrase in blueprint_text, (
                 f"Missing '{required_phrase}' in workplan/blueprint.md"
+            )
+
+    def test_multi_boundary_contracts_and_user_security_standards_synced(self):
+        """Enforce that layered contract boundaries and zero-trust Custom Claims security stay synced across governance.md and blueprint.md."""
+        governance_text = (WORKPLAN_DIR / "governance.md").read_text(encoding="utf-8")
+        blueprint_text = (WORKPLAN_DIR / "blueprint.md").read_text(encoding="utf-8")
+
+        for required_contract_boundary in (
+            "CallerContext",
+            "Firebase Auth Custom Claims",
+            "UserProfileDoc",
+            "LastSimulationRunDoc",
+            "AdminRunLedgerEntry",
+            "ApiErrorEnvelope",
+            "EngineConfig",
+            "EngineOutputs",
+            "WeatherDataset",
+        ):
+            assert required_contract_boundary in governance_text, (
+                f"Missing multi-boundary contract standard '{required_contract_boundary}' in workplan/governance.md"
+            )
+            assert required_contract_boundary in blueprint_text, (
+                f"Missing multi-boundary contract standard '{required_contract_boundary}' in workplan/blueprint.md"
             )
 
     def test_multi_tool_agent_shims_synced_and_free_of_obsolete_rules(self):
