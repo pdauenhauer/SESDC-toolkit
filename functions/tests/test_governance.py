@@ -1,8 +1,8 @@
 """Automated Governance-as-Code and Bidirectional Drift test suite.
 
 Enforces two-way alignment between the codebase and `workplan/governance.md` + `workplan/blueprint.md`:
-1. Code -> Docs compliance (lazy imports, deterministic PRNG, structural Protocol typing).
-2. Docs <-> Code reflexive sync (workflows, runtime versions, secrets, protocols, models, and autonomy/acceptance guardrails must be documented).
+1. Code -> Docs compliance (lazy imports, deterministic PRNG, structural Protocol typing, workplan & gitignore hygiene).
+2. Docs <-> Code reflexive sync (workflows, runtime versions, secrets, protocols, models, autonomy zones, Pre-Flight Scope Lock, Cross-Agent Handoff Log, and multi-tool agent shims).
 """
 
 from __future__ import annotations
@@ -23,6 +23,19 @@ ENGINE_DIR = FUNCTIONS_DIR / "engine"
 WORKPLAN_DIR = REPO_ROOT / "workplan"
 WORKFLOWS_DIR = REPO_ROOT / ".github" / "workflows"
 FIREBASE_JSON = REPO_ROOT / "firebase.json"
+
+AGENT_SHIM_FILES = (
+    REPO_ROOT / "GEMINI.md",
+    REPO_ROOT / "AGENTS.md",
+    REPO_ROOT / "CLAUDE.md",
+    REPO_ROOT / ".rules",
+    REPO_ROOT / ".github" / "copilot-instructions.md",
+)
+
+FORBIDDEN_OBSOLETE_SHIM_TERMS = (
+    "qwen2.5-coder",
+    "SESDC-toolkit/",
+)
 
 FORBIDDEN_TOP_LEVEL_HEAVY_IMPORTS = {
     "numpy",
@@ -116,9 +129,17 @@ class TestCodeObeysGovernance:
             f"workplan/ should contain only blueprint.md and governance.md, found: {sorted(md_files)}"
         )
 
+    def test_gitignore_protects_venvs_os_clutter_and_local_ai_state(self):
+        """Enforce `.gitignore` hygiene so AI agents never stage virtualenvs, OS clutter, or local AI session state."""
+        gitignore_text = (REPO_ROOT / ".gitignore").read_text(encoding="utf-8")
+        for required_pattern in ("venv/", "functions/venv/", ".DS_Store", "desktop.ini", ".claude/"):
+            assert required_pattern in gitignore_text, (
+                f".gitignore is missing required safety pattern '{required_pattern}'"
+            )
+
 
 class TestReflexiveGovernanceSync:
-    """Bidirectional drift checks: fail if code/workflows/configs evolve without updating governance.md & blueprint.md."""
+    """Bidirectional drift checks: fail if code/workflows/configs/shims evolve without updating governance.md & blueprint.md."""
 
     def test_all_github_workflows_documented_in_governance(self):
         """Every `.yml`/`.yaml` file in `.github/workflows/` must be documented in `workplan/governance.md`."""
@@ -177,7 +198,7 @@ class TestReflexiveGovernanceSync:
             assert model_name in governance_text, (
                 f"Component model '{model_name}' is defined in engine/models/ but missing from workplan/governance.md."
             )
-            assert model_name in blueprint_text, (
+            assert proto_name in blueprint_text and model_name in blueprint_text, (
                 f"Component model '{model_name}' is defined in engine/models/ but missing from workplan/blueprint.md."
             )
 
@@ -205,3 +226,41 @@ class TestReflexiveGovernanceSync:
             assert required_term in gemini_text, f"Missing '{required_term}' in GEMINI.md"
             assert required_term in governance_text, f"Missing '{required_term}' in workplan/governance.md"
             assert required_term in blueprint_text, f"Missing '{required_term}' in workplan/blueprint.md"
+
+    def test_pre_flight_and_cross_agent_handoff_log_enforced(self):
+        """Enforce that the Pre-Flight Scope Lock, Cross-Agent Handoff Log, and PR template stay active."""
+        governance_text = (WORKPLAN_DIR / "governance.md").read_text(encoding="utf-8")
+        blueprint_text = (WORKPLAN_DIR / "blueprint.md").read_text(encoding="utf-8")
+        pr_template = REPO_ROOT / ".github" / "pull_request_template.md"
+
+        assert pr_template.exists(), "Missing .github/pull_request_template.md"
+        for required_phrase in ("Pre-Flight", "Cross-Agent Handoff & Breaking Spec Log"):
+            assert required_phrase in governance_text, (
+                f"Missing '{required_phrase}' in workplan/governance.md"
+            )
+            assert required_phrase in blueprint_text, (
+                f"Missing '{required_phrase}' in workplan/blueprint.md"
+            )
+
+    def test_multi_tool_agent_shims_synced_and_free_of_obsolete_rules(self):
+        """Enforce that all multi-tool shims (GEMINI.md, AGENTS.md, CLAUDE.md, .rules, copilot-instructions.md) exist, point to governance.md & blueprint.md, include Traffic-Light guardrails + Pre-Flight checks, and contain no obsolete qwen2.5 rules."""
+        for shim_path in AGENT_SHIM_FILES:
+            assert shim_path.exists(), f"Missing multi-tool agent shim: {shim_path.relative_to(REPO_ROOT)}"
+            text = shim_path.read_text(encoding="utf-8")
+
+            for obsolete in FORBIDDEN_OBSOLETE_SHIM_TERMS:
+                assert obsolete not in text, (
+                    f"Agent shim '{shim_path.name}' contains obsolete rule reference '{obsolete}'"
+                )
+
+            for required_ref in (
+                "governance.md",
+                "blueprint.md",
+                "Pre-Flight",
+                "Green Zone",
+                "Yellow Zone",
+                "Red Zone",
+            ):
+                assert required_ref in text, (
+                    f"Agent shim '{shim_path.relative_to(REPO_ROOT)}' is missing required governance reference '{required_ref}'"
+                )

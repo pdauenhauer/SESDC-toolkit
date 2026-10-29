@@ -1,16 +1,13 @@
-# SESDC-toolkit Hybrid Multi-Agent Rules
+# SESDC-Toolkit — Zed Workspace Agent Rules (`.rules`)
 
-You are the Lead Architect & Orchestrator (`gemini-4-argon`) for `SESDC-toolkit` (a microgrid design toolkit using TypeScript/HTML/CSS in `frontend/`, Firebase Cloud Functions in `functions/`, and Python scripts in `SESDC-toolkit/`).
+All AI assistants running in Zed (whether **Gemini Argon**, **Claude**, or another model) MUST follow the single authoritative repository canon:
+1. **[workplan/governance.md](workplan/governance.md)** — Engineering standards, **6-Point Pre-Flight Scope Lock**, **Traffic-Light Autonomy Matrix** (`Green Zone` / `Yellow Zone` / `Red Zone`), single-layer task chunking, and contract isolation.
+2. **[workplan/blueprint.md](workplan/blueprint.md)** — System architecture, `Preliminary` frontend status & `Dev Accepted` lifecycle, phased workplan, and the **Cross-Agent Handoff & Breaking Spec Log** (Section 8).
+3. **[AGENTS.md](AGENTS.md)** / **[GEMINI.md](GEMINI.md)** / **[CLAUDE.md](CLAUDE.md)** — Quick-reference operational checklists.
 
-Your worker subagents run locally for free on `qwen2.5-coder:14b` (14B parameters, 32k context window).
-
-## CORE ORCHESTRATION STRATEGY
-1. **Always Delegate Heavy Lifting via `spawn_agent`**:
-   - Never pull large files or broad grep searches into your own context window unless necessary.
-   - Spawn `qwen2.5-coder:14b` subagents to search directories, read files, and apply code edits (`edit_file`).
-2. **Scope Subagent Tasks by Module**:
-   - Give each subagent a clear objective scoped to a specific folder or feature (e.g., one subagent for `frontend/`, one for `functions/`, or one for `SESDC-toolkit/`).
-3. **Require Concise Summaries from Subagents**:
-   - Always instruct every subagent at the end of its task prompt: *"Return ONLY a concise summary of the file paths, key findings, or lines changed. Do not paste entire files back."* (This keeps cloud input token costs near zero).
-4. **Verify Diagnostics**:
-   - After a subagent edits files, check `diagnostics` to ensure no TypeScript or Python syntax/type errors were introduced.
+## Mandatory Execution Rules in Zed
+1. **Pre-Flight Scope Lock First**: Never edit files on `main` or `test`. Before your first edit, verify `git branch --show-current` (`be/<topic>`, `fe/<topic>`, or `chore/<topic>`), read the **Cross-Agent Handoff Log** in `workplan/blueprint.md` Section 8, and output the **Pre-Flight Scope Banner** (`Branch | Autonomy Zone | Allowed Write | Read-Only Context | Forbidden | Verification Gate`).
+2. **Respect Blast Radius despite Large Context**: Even when reading wide swathes of the workspace for context, restrict writes **strictly** to `Allowed Write`. Touching `frontend/**` during a `be/*` task (or `functions/**` during a `fe/*` task), breaking `functions/contracts.py`, editing `firestore.rules`/`storage.rules`/`firebase.json`/`.github/workflows/*.yml`, or running `git push`/`firebase deploy` is a **🔴 Red Zone** hard stop.
+3. **Propose & Confirm on 🟡 Yellow Zone**: Pause for confirmation before additive contract extensions, dependency updates, phase transitions in `workplan/blueprint.md`, file deletions, or agent shim updates.
+4. **Model Self-Detection**: If you are running a non-Gemini/Argon model in Zed and need model-specific prompt/adapter refinements, propose them under the **🟡 Yellow Zone** while keeping `workplan/governance.md` as the single source of truth.
+5. **Verify Before Concluding**: Run `npm run test:functions` (and `cd frontend && npm run build` when frontend is in scope) and update `workplan/blueprint.md` Section 8 Handoff Log whenever structural or contract changes occur.
