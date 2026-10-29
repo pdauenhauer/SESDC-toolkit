@@ -32,27 +32,49 @@ The architecture is founded on four key principles:
 ## 2. System Architecture Overview
 The system operates on a client-server model. A lightweight web frontend provides the user interface, while a powerful serverless backend handles all simulation and data processing tasks.
 
-- **Client (The Browser — Preliminary)**: A lightweight web application allows users to configure simulation parameters, launch runs, and visualize results without performing heavy local calculations. *(All client-side UI, UX, framework, and visualization details are preliminary pending input from the frontend developer).*
+- **Client (The Browser — v2 Reference Baseline)**: A lightweight **Preact + TypeScript + Vite** single-page application allows users to configure simulation parameters via a guided wizard or interactive workbench, preview instant typical-day dispatch estimates, launch 20-year cloud simulations, and inspect results and multi-year visualizations. *(Core v2 UI patterns represent the intended direction going forward; unbuilt frontend roadmap features remain **Preliminary** pending co-design and `Dev Accepted` sign-off on `test`).*
 - **Server (Google Cloud)**: A suite of serverless services that work in concert:
     - An API layer receives requests from the client and validates them against the API contract.
     - A long-running task service executes multi-year agent simulations and scenario sweeps.
     - A 3-tier hybrid data storage system manages simulation metadata, compact summaries, operational run ledgers, weather caches, and columnar time-series results behind a clean `SimulationRepository` abstraction.
-- **Data Flow**: The client sends small configuration requests to the server. The server runs the entire simulation in memory using typed NumPy arrays, persists compact summaries to Firestore and canonical hourly time-series to columnar storage (Parquet on GCS / BigQuery), and returns only lightweight, pre-aggregated or downsampled numeric arrays to the client for visualization.
+- **Data Flow**: The client sends small configuration requests to the server. The server runs the entire simulation in memory using typed NumPy arrays, persists compact summaries to Firestore and canonical hourly time-series to cloud storage (transitioning from `.csv.gz` bundles to Parquet on GCS / BigQuery), and delivers structured outputs to the client for visualization.
 - **Frontend–Backend Contract Isolation**: Communication between client and server is governed by explicit, versioned API contracts (`functions/contracts.py`, deterministically mirrored to `contracts/simulation-contracts.d.ts` via `functions/contract_export.py`) so frontend and backend development can proceed independently without breaking integrations.
 
-## 3. Frontend & Visualization Architecture (Preliminary — Subject to Frontend Developer Review & Co-Design)
-> **Preliminary Status (Not Yet Canon)**: All frontend architectural items, framework/library selections, visualization strategies, and feature proposals in this section—and across this blueprint—are **preliminary baselines and discussion seeds**. None of the frontend specifications are established as canon until reviewed, brainstormed, deployed to `test`, and marked `Dev Accepted` with the frontend developer.
+## 3. Frontend & Visualization Architecture (v2 Reference Baseline — Unbuilt Proposals Preliminary)
+> **Status Note**: Sections 3.1–3.4 document the active `frontend/` v2 implementation pulled into `test` and `main` as the reference pattern going forward. Section 3.5 (Runtime Admin Viewer) and future Sync 2/3 extensions remain **Preliminary** discussion seeds until co-designed, deployed to `test`, and marked `Dev Accepted`.
 
-- **Framework (Preliminary Baseline)**: Currently Preact + TypeScript (React-compatible ecosystem), bundled with Vite.
-    - *Rationale*: Modern component-based UI frameworks enable the creation of a rich, responsive user interface with minimal bundle size, ideal for low-bandwidth environments and student-led development (subject to frontend developer review).
-- **Visualization Strategy (`uPlot` + Pre-Aggregated Summaries — Preliminary)**:
-    - *Interactive Time-Series Charts (`uPlot` — Preliminary)*: `uPlot` is currently used as the baseline interactive charting engine (`UPlotChart.tsx`, `SimulationGraphsPanel.tsx`, `GraphsTab.tsx`) because of its tiny footprint, low CPU/memory overhead on older devices, and native support for columnar numeric arrays (`[timestamps[], series1[], ...]`). Charting library choices, signal interactions, and downsampling UX remain open to frontend developer input.
-    - *Summary & Report Views (Preliminary)*: High-level KPIs, 20-year financial projections, and monthly summaries are designed to render from lightweight pre-aggregated Tier-1 data (`tier1Summaries` and `summaryKpis`), with exact UI layouts to be defined by the frontend developer.
-- **Runtime Admin Viewer (Preliminary Seeded Proposal)**:
-    - *Purpose*: A proposed role-gated administrative interface focused on four operational "Jobs to be Done": **Support & Triage**, **Curation & Hygiene**, **Cost/Quota Protection**, and **Adoption/Bottleneck Discovery**.
-    - *Design Philosophy (Preliminary)*: Focus custom UI on domain-specific state and high-leverage actions (simulation run ledger, one-click failure replay, cross-user project cloning, starter template promotion, and storage/weather cache hygiene), while delegating raw infrastructure telemetry via direct deep-links to native Firebase and GCP Consoles. To be co-designed and refined with the frontend developer.
-- **Hosting**: Firebase Hosting.
-    - *Rationale*: Firebase Hosting provides a simple, secure, and globally distributed CDN for the web application. Its seamless integration with the backend and generous free tier make it a cost-effective and low-maintenance choice.
+### 3.1 Core Stack & Routing
+- **Framework & Build**: **Preact** (`preact` `^10.27`, `@preact/preset-vite`) + strict **TypeScript** (`~5.7`) bundled with **Vite** (`^6.1`).
+    - *Rationale*: Preact provides React-compatible ergonomics (`hooks`, JSX, `preact/compat` aliases) in a ~4 KB runtime footprint well suited to student/NGO contributor familiarity and constrained client devices.
+- **Routing (`preact-iso`)**: Client-side HTML5 history routing in `frontend/src/app.tsx` (`LocationProvider`, `ErrorBoundary`, `Router`, `Route`) across two shell modes:
+    - *Redesigned `.mg-root` Workspace & Onboarding Routes*: `/` (`Home.tsx`), `/projects` (`Projects.tsx` 3-tab app shell: `Workbench`, `Results`, `Graphs`), `/projects/new` (`NewProjectWizard.tsx` full-screen guided wizard), `/account` (`Account.tsx` / `AccountView.tsx`), and `/logout` (`Logout.tsx`).
+    - *Static Chrome Routes*: `/about` (`About.tsx`), `/contact` (`Contact.tsx` via Web3Forms), and `/guide` (`UserGuide.tsx` rendering root `USER-GUIDE.md?raw` via **`marked`**) wrapped in `SESDCHeader` + `SESDCFooter`, with `AuthModal` (`LoginForm` / `RegisterForm`) isolated outside `.mg-root`.
+
+### 3.2 Design System, UI Primitives & Styling
+- **`.mg-*` CSS Custom-Property System (`frontend/src/css/theme.css`)**:
+    - Defines `--mg-*` design tokens (`Geist` / `Geist Mono` typography, `.mg-tnum` tabular numerals, warm neutral surfaces, `--mg-accent` teal, and colorblind-separated energy source tokens `--mg-solar`, `--mg-wind`, `--mg-diesel`, `--mg-battery`) plus scoped feature stylesheets (`app-shell.css`, `workbench-v2.css`, `wizard-v2.css`, `graphs-v2.css`, `results.css`, `drawers.css`, `paint-bars.css`, `account-v2.css`, `landing.css`).
+    - *Note on Unused Tailwind Dependencies*: `@tailwindcss/vite` / `tailwindcss` remain in `frontend/package.json` and `vite.config.ts` from an earlier iteration, with zero usage in `frontend/src/`; styling going forward standardizes on `.mg-*` CSS tokens and custom properties.
+- **Shared Primitive Kit (`frontend/src/components/ui/` + `lucide-preact`)**:
+    - Custom zero-dependency Preact primitives (`Button`, `IconButton`, `Segmented`, `Switch`, `NumberField`, `TextField`, `SelectField`, `Drawer`, `PaintBars`, `TagInput`, `ToastProvider`/`useToast`) paired with **`lucide-preact`** icons (`STROKE = 1.75` via `icons.tsx`).
+
+### 3.3 Hybrid Multi-Mode Visualization Strategy
+Rather than forcing every visual through a single heavy charting library, the v2 frontend matches each visualization to the lightest appropriate renderer:
+1. **Interactive Zoom/Pan Time-Series (`chart.js` + `chartjs-plugin-zoom` in `ChartCanvas.tsx`, `GraphsTab.tsx`)**:
+    - Tree-shaken `Chart.register(...)` wrapper driving dual-axis (`kW` left, `kWh` right) daily and windowed hourly energy-flow line charts with drag-to-zoom, shift-pan, season/date-window controls, and custom DOM crosshair tooltips.
+    - Supports 20-year exploration via `YearBar.tsx`, fetching years 2–20 (`hourly_year_02`…`hourly_year_20`) lazily on demand (`fetchSimulationYear`) and caching visited years in memory while preserving scroll/signal state.
+2. **2D Temporal Heatmaps (`HeatmapCard.tsx`)**:
+    - Renders 365×24 "By day" matrices directly onto an HTML5 2D `<canvas>` via single-pixel `ImageData` (`ctx.putImageData`) scaled by CSS, and 12×24 "By month" averages via accessible CSS grid cells (for Solar output, Battery SoC / Depth of Discharge, and Diesel output).
+3. **Zero-Library SVG & CSS Flexbox Charts**:
+    - *Results Summary (`ResultsTab.tsx`, `simulationMetrics.ts`)*: Headline KPI cards (Demand met, Renewable share, Payback), a responsive inline `<svg>` 20-year cumulative Cost vs. Revenue polyline chart with payback callout, Generation mix bar, 20-year cost breakdown bars, and expandable raw CSV preview/download controls.
+    - *Multi-Year & Typical-Day Stacks*: Interactive clickable 20-year stacked column overview (`YearlyOverviewCard.tsx`), 24-hour Average Day supply composition with Year-1 delta table (`DailyProfileCard.tsx`), live client-side 4-day steady-state `typicalDayDispatch` feedback while editing inputs (`SupplyCards.tsx`), and 8-color categorical demand breakdowns by End Use, Facility, Tag, or Load (`SchemaBreakdown.tsx`, `DemandComponentsCard.tsx`).
+
+### 3.4 Client State, Persistence & Hosting
+- **State & Persistence**: Local Preact hooks with 800 ms debounced Firestore autosave (`Projects.tsx`), hierarchical load trees (`Load[]` with nestable buildings/facilities, appliance labels, `PaintBars` 24h profiles, and tags), root-level project schemas in `frontend/src/database/firestore.ts` & `projectPayload.ts`, and Bearer-authenticated Cloud Functions calls in `frontend/src/services/simulation.ts`.
+- **Hosting**: Firebase Hosting (`frontend/dist`), serving static assets globally via CDN. *(Note: Adding an SPA `"rewrites"` rule to `firebase.json` is tracked below so deep-linked client routes resolve cleanly on refresh).*
+
+### 3.5 Runtime Admin Viewer (Preliminary Seeded Proposal)
+- **Purpose (Preliminary)**: A proposed role-gated administrative interface (built with `.mg-*` primitives and `lucide-preact`) focused on four operational "Jobs to be Done": **Support & Triage**, **Curation & Hygiene**, **Cost/Quota Protection**, and **Adoption/Bottleneck Discovery**.
+- **Design Philosophy (Preliminary)**: Focus custom UI on domain-specific state and high-leverage actions (simulation run ledger, one-click failure replay, cross-user project cloning, starter template promotion, and storage/weather cache hygiene), while delegating raw infrastructure telemetry via direct deep-links to native Firebase and GCP Consoles. To be co-designed and refined with the frontend developer.
 
 ## 4. Backend Architecture
 
@@ -79,17 +101,17 @@ The core simulation is a modular Python application designed for both behavioral
 - **Event Scheduler**: A priority timeline used to inject discrete, scheduled or stochastic events into the simulation (e.g., external economic shocks, fuel price spikes, or equipment derating/failures).
 
 ## 5. Data & Storage Architecture (3-Tier Hybrid Strategy)
-Rather than serializing multiple redundant datasets into text CSV blobs, the system uses a three-tier storage and delivery model optimized for speed, low bandwidth, cost, and analytical query capabilities:
+Rather than serializing multiple redundant datasets into text CSV blobs long-term, the system uses a three-tier storage and delivery model optimized for speed, low bandwidth, cost, and analytical query capabilities:
 
 1. **Tier 1 — Metadata, KPIs, Compact Summaries & Operational Ledger (in Cloud Firestore)**:
     - *What is stored*: User inputs, run status (`queued` | `running` | `completed` | `failed`), scalar summary KPIs (`summaryKpis`), small pre-aggregated summary series (`tier1Summaries`: 20-year annual `financial_expenses` and `revenue` arrays [20 rows], and 12-month solar averages), and lightweight operational run ledger records (`admin_run_logs`).
-    - *Rationale*: These datasets total less than 15 KB per run as native JSON. Storing them directly in Firestore (`users/{uid}/projects/{pid}` or a `simulations/{runId}` subcollection) allows the frontend and admin viewer to render KPIs, financial charts, and run diagnostics **instantly** without invoking a Cloud Function, downloading GCS blobs, or parsing CSV text.
+    - *Rationale*: These datasets total less than 15 KB per run as native JSON. Storing them directly in Firestore (`users/{uid}/projects/{pid}` or a `simulations/{runId}` subcollection) allows `ResultsTab.tsx` and the admin viewer to render KPIs, financial charts, and run diagnostics **instantly** without invoking a Cloud Function, downloading GCS blobs, or parsing CSV text in the browser.
 2. **Tier 2 — Canonical Hourly Time-Series (Apache Parquet on GCS + Google BigQuery)**:
-    - *What is stored*: A single canonical hourly table per simulation run (8,760 to 175,200 rows) stored as a typed, compressed **Apache Parquet** file (`{run_id}_hourly.parquet`) in Google Cloud Storage and loaded/mounted into **Google BigQuery** (partitioned by time and clustered by `simulation_run_id`).
-    - *Rationale*: Eliminates the 6 redundant derived CSV files (`daily_averages`, `twenty_year_daily`, `solar_heatmap`, `monthly_heatmap`, etc.). Parquet is 5–10x smaller and 10x faster to read/write than `.csv.gz`, preserves strict numeric types, supports reading only selected columns (column projection), and bridges natively into BigQuery with zero transformation overhead.
-3. **Tier 3 — Columnar Wire Delivery & On-Demand CSV Export (Preliminary Frontend Alignment)**:
-    - *Interactive Chart Delivery (Preliminary)*: Backend endpoints are planned to serve downsampled, time-windowed **columnar JSON arrays** (`[timestamps[], load_kW[], solar_kW[], ...]`) matching `uPlot`'s input format to avoid client-side CSV parsing on low-power devices. Exact payload shapes and query parameters will be finalized with the frontend developer.
-    - *On-Demand CSV Export*: CSV is treated strictly as an **end-user export format** (generated on the fly or served via signed URL only when a user clicks "Download CSV"), never as an internal storage or default API wire format.
+    - *What is stored*: A single canonical hourly table per simulation run (8,760 to 175,200 rows across 20 years) stored as a typed, compressed **Apache Parquet** file (`{run_id}_hourly.parquet`) in Google Cloud Storage and loaded/mounted into **Google BigQuery** (partitioned by time and clustered by `simulation_run_id`).
+    - *Rationale*: Replaces the 9 default + 19 per-year `.csv.gz` blobs (`daily_averages`, `twenty_year_daily`, `solar_heatmap`, `monthly_heatmap`, `hourly_year_02`…`hourly_year_20`). Parquet is 5–10x smaller and 10x faster to read/write than `.csv.gz`, preserves strict numeric types, supports column/year projection, and bridges natively into BigQuery with zero transformation overhead.
+3. **Tier 3 — Columnar Wire Delivery & On-Demand CSV Export (Preliminary Phase 3 Alignment)**:
+    - *Interactive Chart Delivery (Preliminary)*: Backend endpoints are planned to serve downsampled or year-scoped **columnar JSON** (`{ x: number[], columns: Record<string, number[]> }`, matching `GraphsTab.tsx`'s internal `ParsedView` shape consumed by `Chart.js`, `HeatmapCard`, and `DailyProfileCard`) to eliminate client-side CSV string parsing (`parseDateTimeCsv.ts` / `parseNumericCsv.ts`) on low-power devices.
+    - *On-Demand CSV Export*: CSV is treated strictly as an **end-user export format** (generated on the fly or served via signed URL only when a user clicks "Download CSV" in `ResultsTab.tsx`), never as an internal storage or default API wire format.
 
 ## 6. Performance & Optimization Strategy
 
@@ -100,13 +122,14 @@ Rather than serializing multiple redundant datasets into text CSV blobs, the sys
 ### Scenario Throughput
 - **Parallelization (`multiprocessing`)**: Used to execute multiple independent simulation scenarios in parallel on multi-core Cloud Run instances, with isolated `np.random.SeedSequence` streams per worker and lazy serialization (skipping CSV string formatting during intermediate Monte Carlo runs).
 
-### End-User Experience
-- **Server-Side Aggregation & Downsampling**: All queries and downsampling against the hourly Parquet/BigQuery dataset are performed on the server. The backend sends only small, pre-aggregated (`tier1Summaries`) or viewport-downsampled numeric arrays to the client, ensuring a responsive experience even on low-bandwidth connections.
+### End-User Experience & Low-Bandwidth Delivery (Global South Target)
+- **Server-Side Aggregation & Downsampling**: Queries and downsampling against the hourly Parquet/BigQuery dataset are performed on the server so low-bandwidth mobile/laptop clients receive compact JSON (`tier1Summaries` + year/window slices).
+- **Client Bundle & Media Discipline**: Route-level lazy loading (`preact-iso` `lazy()`), tree-shaken `Chart.js` registration (`ChartCanvas.tsx`), zero-library SVG/CSS charts where possible, and compressed WebP/AVIF static imagery prevent multi-megabyte cold loads on metered 3G connections.
 
 ## 7. Phased Implementation Plan (Rolling-Wave, Guardrailed & Dev-Acceptance Driven)
 
 > **Expectation for Future Phased Work & Multi-Developer Agentic Coordination**:
-> 1. **Rolling-Wave Planning**: Future phases (`Phase 1C` through `Phase 4` and the `Parallel Frontend Track`) are **intentionally provisional**. All frontend-related items are **strictly preliminary** until co-designed with the frontend developer.
+> 1. **Rolling-Wave Planning**: Future phases (`Phase 1C` through `Phase 4` and unbuilt items in the `Parallel Frontend Track`) are **intentionally provisional**. Unbuilt frontend roadmap items remain **Preliminary** until co-designed with the frontend developer.
 > 2. **Mandatory Pre-Flight Scope Lock & Tiered Agent Autonomy**: Contributors and AI agents (across Zed + Argon, VS Code + Claude/Copilot, etc.) must execute the **6-Point Pre-Flight Checklist** (`workplan/governance.md`), output a **Pre-Flight Scope Banner** before editing files, and obey the **🟢 Green / 🟡 Yellow / 🔴 Red** autonomy matrix synchronized across `GEMINI.md`, `AGENTS.md`, `CLAUDE.md`, `.rules`, and `.github/copilot-instructions.md`.
 > 3. **Scoped Branching, Cross-Agent Handoff Log & 4-Stage Dev Acceptance**:
 >    - Work is developed as single-layer tasks on domain-scoped branches (`be/<topic>`, `fe/<topic>`, `chore/<topic>`), recorded in the **Cross-Agent Handoff & Breaking Spec Log** (Section 8) when contracts or structural patterns change, and squash-merged via PR into `test` (auto-deploying to `sesdc-toolkit2` staging).
@@ -133,48 +156,53 @@ Rather than serializing multiple redundant datasets into text CSV blobs, the sys
 
 ---
 
-### Phase 1C: Multi-Agent Coordination Activation, Repository Hygiene, Weather Cache & Admin Run Ledger (Next Up — Priority Foundation)
-*Goal: Activate cross-developer multi-AI guardrails before parallel work accelerates, clean out legacy student vestiges, protect external NSRDB weather API quotas via caching, and record backend run diagnostics for the Runtime Admin Viewer MVP.*
+### Phase 1C: Multi-Agent Coordination, Repo Hygiene, Financial/Fuel Contract Alignment, Weather Cache & Admin Run Ledger (Next Up — Priority Foundation)
+*Goal: Activate cross-developer multi-AI guardrails, remove legacy vestiges, reconcile live Frontend–Backend financial/fuel contract gaps discovered during the Frontend v2 audit, protect external NSRDB weather API quotas via caching, and record backend run diagnostics for the Runtime Admin Viewer MVP.*
 
-#### 0. Phase 1C.0 — Multi-Developer Agentic Coordination & Guardrail Activation (Completed & Promoted to `test` + `main`)
+#### 0. Phase 1C.0 — Multi-Developer Agentic Coordination & Frontend v2 Governance Sync (Completed)
 - **Governance, Shims, `CODEOWNERS` & Generated TypeScript Contracts**:
-    - Consolidated multi-tool coordination rules into `workplan/governance.md` (6-Point Pre-Flight Scope Lock, Dependency/Blast-Radius Audit, Agent-Ready Task Card standard, Squash-and-Merge hygiene) and removed standalone `workplan/agentic_coordination.md`.
+    - Consolidated multi-tool coordination rules into `workplan/governance.md` (6-Point Pre-Flight Scope Lock, Dependency/Blast-Radius Audit, Agent-Ready Task Card standard, Squash-and-Merge hygiene).
     - Embedded the **Cross-Agent Handoff & Breaking Spec Log** in Section 8 of `workplan/blueprint.md`.
-    - Replaced the obsolete `qwen2.5-coder` `.rules` file and added synchronized multi-tool entrypoint shims (`AGENTS.md`, `CLAUDE.md`, `.rules`, `.github/copilot-instructions.md`) alongside `GEMINI.md`, enforced by `functions/tests/test_governance.py`.
-    - Added `.github/CODEOWNERS` (`/functions/` -> `@pdauenhauer`, `/frontend/` -> `@jbaron2025`, shared contracts/governance -> both) and `.github/pull_request_template.md`, hardened `.gitignore`, and aligned `origin/test` and `origin/main`.
-    - Added `functions/contract_export.py` and `contracts/simulation-contracts.d.ts` (verified byte-for-byte in `functions/tests/test_contracts.py` and strict `tsc --noEmit`) so frontend AI tools read exact TypeScript mirrors of `functions/contracts.py`.
-- **Organic Next-Session Refinements (Deferred Until Active Domain Runs)**:
-    1. **Non-Argon Agent Self-Detection & Shim Refinement (🟡 Yellow Zone — First Non-Argon Session)**: On the first session run with a non-Gemini/Argon workflow (e.g., **VS Code + Claude / Copilot**), let the agent self-detect its runtime harness and propose any needed `CLAUDE.md` / `AGENTS.md` / `.github/copilot-instructions.md` refinements while keeping `workplan/governance.md` authoritative.
-    2. **Formatter Normalization**: Add `ruff` (`pyproject.toml`) during backend hygiene work and co-select a frontend formatter (`Biome` or `Prettier`) + import wiring for `contracts/simulation-contracts.d.ts` during **Frontend Sync 1**.
+    - Replaced obsolete `.rules` and added synchronized multi-tool entrypoint shims (`AGENTS.md`, `CLAUDE.md`, `.rules`, `.github/copilot-instructions.md`) alongside `GEMINI.md`, enforced by `functions/tests/test_governance.py`.
+    - Added `.github/CODEOWNERS` (`/functions/` -> `@pdauenhauer`, `/frontend/` -> `@jbaron2025`, shared contracts/governance -> both) and `.github/pull_request_template.md`, hardened `.gitignore`, and added `functions/contract_export.py` generating `contracts/simulation-contracts.d.ts`.
+    - Audited the pulled-in `frontend/` v2 codebase and updated `workplan/governance.md`, `workplan/blueprint.md`, and `functions/tests/test_governance.py` to reflect the actual stack (`Preact + TS + Vite`, `preact-iso`, `.mg-*` CSS design system, `lucide-preact`, `Chart.js` + `chartjs-plugin-zoom`, `<canvas>` `HeatmapCard`, custom SVG/CSS charts, `marked`, and `VITE_FUNCTIONS_BASE_URL`).
 
 #### 1. Defensive Repository & Legacy Vestige Cleanup (3-Stage Protocol)
-- **Stage 1 — Automated Reference Audit & Triage Matrix (Completed — Read-Only Findings Recorded Below)**:
+- **Stage 1 — Automated Reference Audit & Triage Matrix (Completed — Updated Post-PR #88)**:
     - **Bucket A — Confirmed Dead / Safe Immediate Removal (0 Active References)**:
         - *Legacy Vanilla Website (`public/`, 32 files)*: `public/index.html`, `public/404.html`, `public/pages/*.html`, `public/js/*.js`, `public/css/*.css`, `public/media/*`. Zero references across `frontend/`, `functions/`, `tests/`, or `.github/workflows/`; `firebase.json` deploys `frontend/dist`.
         - *Empty Nested Directory (`SESDC-toolkit/`)*: Empty nested directory at repository root.
         - *Duplicate Root Python Dependencies (`requirements.txt`)*: Root `pip freeze` dump; unused by CI/CD or Cloud Functions (`functions/requirements.txt` is authoritative).
-        - *Obsolete Agent Rules (`.rules` — Resolved in Phase 1C.0)*: Replaced stale `SESDC-toolkit/` + `qwen2.5-coder` instructions with a synchronized Zed governance pointer shim verified by `test_governance.py`.
         - *Dead Backend Scripts & Static Artifacts in `functions/`*:
             - `functions/financial_calculations.py` & `functions/20_year_financial_expenses.png` (0 imports; standalone student script with hardcoded values that writes a local PNG via `matplotlib`).
-            - `functions/graph.py` & `functions/firebase_storage_setup.py` (0 imports in active modules; legacy server-side `matplotlib`/`seaborn` PNG plotters looking for local `serviceAccount.json`, superseded by `uPlot` and `functions/storage.py`).
+            - `functions/graph.py` & `functions/firebase_storage_setup.py` (0 imports in active modules; legacy server-side `matplotlib`/`seaborn` PNG plotters looking for local `serviceAccount.json`, superseded by `functions/storage.py`).
             - `functions/test.csv` (0 references; static student test CSV).
         - *OS & Emulator Debug Clutter*: `.DS_Store`, `functions/.DS_Store`, `public/.DS_Store`, `firestore-debug.log`, `pglite-debug.log`.
     - **Bucket B — Root Config Slimming & Caught Hidden Couplings**:
-        - *Caught Build-Time Coupling — KEEP `USER-GUIDE.md`*: Referenced in `frontend/src/pages/UserGuide.tsx` (`import guideMarkdown from '../../../USER-GUIDE.md?raw'`). Must **not** be deleted (can be relocated inside `frontend/src/` later in coordination with the frontend developer).
+        - *Caught Build-Time Coupling — KEEP `USER-GUIDE.md`*: Referenced in `frontend/src/pages/UserGuide.tsx` (`import guideMarkdown from '../../../USER-GUIDE.md?raw'`). Must **not** be deleted.
         - *Root `package.json` Dependency Slimming*: Root `tests/*.ts` only import `vitest` and `firebase/*`. Unused UI/server packages at root (`@google-cloud/storage`, `@tailwindcss/postcss`, `tailwindcss`, `autoprefixer`, `postcss`, `http-server`, `papaparse`) are candidates for removal from root `package.json`.
-    - **Bucket C — Frontend Internal Vestiges (`frontend/src/` — Preliminary / Hold for Co-Review with Frontend Dev in Sync 1)**:
-        - *3 Unreferenced CSS Files (0 imports)*: `frontend/src/css/project-outputs.css`, `frontend/src/css/project-selection-test.css`, `frontend/src/css/project-selection.css`.
-        - *3 Unreferenced Components (0 imports)*: `frontend/src/components/projectModalTailwind.tsx`, `frontend/src/components/ProjectWizard/LoadProfileChart.tsx`, `frontend/src/components/ProjectWizard/steps/NameStep.tsx`.
-        - *9 Unreferenced Media Assets in `frontend/src/media/` (0 references)*: `boxes-3.svg`, `circle-user-2.svg`, `circle-user.svg`, `green.png`, `house-2.svg`, `info.svg`, `mail-4.svg`, `milad-fakurian-Kd2MCCeEhrc-unsplash-2.jpg`, `placeholder_user.png`.
+    - **Bucket C — Frontend Internal Hygiene (`frontend/` — Updated After v2 Audit)**:
+        - *Resolved in PR #88*: All 15 previously flagged student-era CSS, component (`projectModalTailwind.tsx`, `LoadProfileChart.tsx`, `NameStep.tsx`), and media vestiges have already been removed.
+        - *Remaining Frontend Hygiene Candidates (Co-Review in Sync 1)*:
+            - 3 empty directories left behind in `frontend/src/`: `assets/`, `components/ProjectWizard/steps/`, and `css/ProjectsPage/`.
+            - Unused Tailwind/PostCSS packages (`@tailwindcss/vite` duplicated in both `dependencies` and `devDependencies`, `@tailwindcss/cli`, `tailwindcss`, `postcss`, `autoprefixer`) and `tailwindcss()` plugin in `frontend/vite.config.ts` (0 Tailwind usage across `frontend/src/`).
+            - Legacy unused Storage folder helper (`createFolder` writing `{uid}/.temp` in `frontend/src/utils/firebase/storage.ts`) and deprecated `BatteryInputs` type (`frontend/src/database/models/inputs.ts`).
 - **Stage 2 — Quarantined Removal & Multi-Gate Verification (🟡 Yellow Zone — Pending User Confirmation)**:
-    - Remove remaining Bucket A & B vestiges on a scoped branch and verify zero regressions across `pytest` (`functions/tests/`), `npm run build` (`frontend/`), and emulator E2E tests (`tests/`).
+    - Remove Bucket A & B vestiges on a scoped branch and verify zero regressions across `pytest` (`functions/tests/`), `npm run build` (`frontend/`), and emulator E2E tests (`tests/`).
 - **Stage 3 — Governance-as-Code Lock-In (`functions/tests/test_governance.py` & `.gitignore`)**:
     - Extend `test_governance.py` to permanently forbid duplicate root `requirements.txt`, legacy `public/` directories, nested repository clones, dead backend plotting scripts, and committed debug/OS artifacts (`*.log`, `.DS_Store`).
 
-#### 2. NSRDB Weather Cache Adapter (`functions/nlr.py`, `functions/repository.py`)
-- Cache fetched NSRDB weather data by rounded `(latitude, longitude)` key through `SimulationRepositoryProtocol` (`InMemorySimulationRepository` & `GcpSimulationRepository`) so repeated simulations at the same site bypass external HTTP calls, protect `NLR_API_KEY` rate limits during workshops, and execute 5–10x faster.
+#### 2. Frontend–Backend Financial & Fuel Contract Reconciliation (`functions/contracts.py`, `functions/engine/models/financial.py` — 🟡 Yellow Zone)
+- **Restore `generatorFuelPrice`, `fuel_expenses`, and `fixed_expenses` Parity**:
+    - Accept `generatorFuelPrice` (`$/L`, default `1.5`) in `GeneratorInputs` / `SimulationRequestContract` (already sent by `frontend/src/services/simulation.ts`), compute annual escalated diesel fuel expenses from multi-year `fuel_liters` (`MultiYearDispatchModel`), and emit `fuel_expenses` and `fixed_expenses` columns in `financial_expenses` (already expected by `ResultsTab.tsx` `COST_CATEGORIES`) while updating `contracts/simulation-contracts.d.ts`.
+- **Align 20-Year Revenue with Degraded Multi-Year Served Energy**:
+    - Compute `revenue_yearly` in `FinancialModel` from per-year `served_kWh` in `state.yearly_summary` when available (rather than repeating Year-1 `daily_load_serviced`) so solar/battery degradation is reflected consistently in both energy and financial projections.
 
-#### 3. Backend Admin Run Ledger & Failure Capture Hook (`functions/handlers.py`, `functions/repository.py`, `functions/contracts.py`)
+#### 3. NSRDB Weather Cache Adapter & Geographic Coverage Guardrails (`functions/nlr.py`, `functions/repository.py`)
+- Cache fetched NSRDB weather data by rounded `(latitude, longitude)` key through `SimulationRepositoryProtocol` (`InMemorySimulationRepository` & `GcpSimulationRepository`) so repeated simulations at the same site bypass external HTTP calls, protect `NLR_API_KEY` rate limits during workshops, and execute 5–10x faster.
+- Document and address `nsrdb-msg-v1-0-0` geographic bounds (currently Meteosat Prime Meridian: Africa/Europe/Middle East) vs. Americas (`GOES`/PSM) and Asia-Pacific (`Himawari`) or fallback global datasets (`PVGIS` / NASA POWER) + `GHI` vs. `DNI` irradiance selection for flat-plate tropical PV arrays.
+
+#### 4. Backend Admin Run Ledger & Failure Capture Hook (`functions/handlers.py`, `functions/repository.py`, `functions/contracts.py`)
 - Record lightweight structured run telemetry (`runId`, `userId`, `projectId`, `status`, `weatherCacheHit`, `weatherFetchMs`, `engineComputeMs`, `storageWriteMs`, `errorMessage`, and failing `SimulationRequestContract` snapshot) via `SimulationRepositoryProtocol` so backend observability is active immediately and ready for the **Runtime Admin Viewer MVP (Sync 1)**.
 
 ---
@@ -194,8 +222,8 @@ Rather than serializing multiple redundant datasets into text CSV blobs, the sys
 
 ### Phase 3: Tier-2 Parquet Storage, Tier-3 Columnar API & On-Demand CSV Export (Provisional — Zero New Cloud Infra)
 *Goal: Deliver full storage compression and low-bandwidth client performance using existing Cloud Functions and GCS before provisioning any heavy batch infrastructure.*
-- **Tier 2 Storage (Canonical Parquet on GCS)**: Replace the legacy `.csv.gz` bundle (including `hourly_year_02`…`hourly_year_20`) with a single typed `{run_id}_hourly.parquet` artifact in GCS via `SimulationRepositoryProtocol` (testable offline with `pyarrow` + `InMemorySimulationRepository`).
-- **Tier 3 API (Windowed Columnar JSON & On-Demand CSV Export)**: Serve downsampled, time-windowed columnar numeric arrays (`[timestamps[], series1[], ...]`) from Cloud Functions and move CSV generation to an on-demand export endpoint.
+- **Tier 2 Storage (Canonical Parquet on GCS)**: Replace the `.csv.gz` bundle (including `hourly_year_02`…`hourly_year_20`) with a single typed `{run_id}_hourly.parquet` artifact in GCS via `SimulationRepositoryProtocol` (testable offline with `pyarrow` + `InMemorySimulationRepository`).
+- **Tier 3 API (Columnar `ParsedView` JSON & On-Demand CSV Export)**: Serve compact columnar numeric JSON (`{ x: number[], columns: Record<string, number[]> }` matching `GraphsTab.tsx`'s `ParsedView` interface) from Cloud Functions and move CSV generation to an on-demand export endpoint.
 
 ---
 
@@ -208,19 +236,21 @@ Rather than serializing multiple redundant datasets into text CSV blobs, the sys
 
 ---
 
-### Parallel Track: Frontend Development & Runtime Admin Viewer (Preliminary Placeholder — Not Canon Until Co-Designed & `Dev Accepted` on `test`)
-> **Preliminary Status & Parallel Execution**: Everything in this track is a **preliminary placeholder and brainstorming seed** organized around **3 Backend Sync Milestones** so the frontend developer can work in parallel on `fe/<topic>` branches without blocking on backend phases. Items graduate to **Canon** only after co-design, deployment to `test`, and `Dev Accepted` sign-off.
+### Parallel Track: Frontend Hardening, Low-Bandwidth Optimization & Runtime Admin Viewer (Unbuilt Items Preliminary)
+> **Parallel Execution**: Core v2 UI architecture is live; the optimization, hygiene, and new feature items below are organized around **3 Backend Sync Milestones** so frontend work on `fe/<topic>` branches proceeds cleanly alongside backend phases. Unbuilt feature items graduate to **Canon** after co-design, deployment to `test`, and `Dev Accepted` sign-off.
 
 #### Frontend Sync 1 (Unblocked Immediately / Pairs with Phase 1B & Phase 1C)
-- **Non-Argon AI Tool Onboarding, Formatter & Generated Contract Consumption (Phase 1C.0 Alignment)**:
-    - On the first VS Code + Claude (or Zed) frontend agent session, let the agent self-detect its IDE/model harness and propose any needed `CLAUDE.md` / `AGENTS.md` / `.github/copilot-instructions.md` adapter refinements (🟡 Yellow Zone).
-    - Co-select a universal frontend formatter (`Biome` or `Prettier`) and optionally wire `frontend/src/services/simulation.ts` to import shared types directly from `contracts/simulation-contracts.d.ts`.
-- **Co-Design & Internal `frontend/` Vestige Cleanup (Bucket C — Preliminary)**:
-    - Review and confirm the Stage 1 audited student-era media assets (9 unreferenced files in `frontend/src/media/`), dead CSS files (`project-outputs.css`, `project-selection-test.css`, `project-selection.css`), and unreferenced components (`projectModalTailwind.tsx`, `LoadProfileChart.tsx`, `NameStep.tsx`) with the frontend developer, and decide whether to relocate `USER-GUIDE.md` inside `frontend/src/`.
+- **Hosting SPA Rewrite & CI Frontend Build Gate (🔴 Red-Zone Config Sign-Off)**:
+    - Add `"rewrites": [{ "source": "**", "destination": "/index.html" }]` to `firebase.json` `hosting` so direct links/refreshes on `/projects`, `/projects/new`, `/guide`, `/account`, etc. do not 404 on Firebase Hosting.
+    - Add a `frontend` build/typecheck step (`npm ci && npm run build`) to PR verification workflows so TypeScript/Vite breakages are caught before merging into `test`.
+- **Low-Bandwidth Bundle & Media Optimization (Global South Priority)**:
+    - Compress `frontend/src/media/team.png` (**currently 25.5 MB**) and `david-ouma-U13RrgO6f7g-unsplash.jpg` (**880 KB**) to WebP/AVIF (< 150–250 KB), fix `favicon.png` MIME type / conditional `Logo-white.svg` preload in `frontend/index.html`, and add route-level `lazy()` code splitting in `frontend/src/app.tsx` so initial `/` and `/projects` loads do not download the entire `992 kB` JS bundle (`chart.js`, `marked`, `USER-GUIDE.md`) up front.
+- **Dependency Hygiene, Contract Wiring & Unit Tests**:
+    - Remove unused `@tailwindcss/*`, `tailwindcss`, `postcss`, and `autoprefixer` packages from `frontend/package.json` + `vite.config.ts`, delete the 3 empty legacy directories in `frontend/src/`, consolidate scattered user-doc Firestore helpers (`utils/user.ts`, `utils/firebase/auth.ts`) into `frontend/src/database/`, wire `frontend/src/services/simulation.ts` to import types from `contracts/simulation-contracts.d.ts`, and add `vitest` unit tests for pure frontend logic (`typicalDayDispatch`, `payloadFromProject`, `computeSimulationMetrics`, `timeseries.ts`).
 - **Tier-1 Instant Summary Rendering (Preliminary)**:
-    - Wire existing Firestore `summaryKpis` and `tier1Summaries` (completed in Phase 1B) into overview cards and 20-year financial/monthly solar charts.
+    - Wire existing Firestore `lastSimulationRun.summaryKpis` and `tier1Summaries` (completed in Phase 1B) into `Projects.tsx` / `ResultsTab.tsx` so headline KPIs and 20-year financial curves render immediately on project load before fetching full hourly CSVs.
 - **Seeded Feature Proposal — Runtime Admin Viewer MVP (Preliminary)**:
-    - Designed around four operational "Jobs to be Done" (**Support & Triage**, **Curation & Hygiene**, **Cost/Quota Protection**, and **Adoption/Bottleneck Discovery**):
+    - Designed around four operational "Jobs to be Done" (**Support & Triage**, **Curation & Hygiene**, **Cost/Quota Protection**, and **Adoption/Bottleneck Discovery**) using the `.mg-*` design system:
     1. **Simulation Run Ledger & One-Click Failure Replay**: Filterable table consuming Phase 1C run ledger records (`runId`, user, project, status, `weatherCacheHit`, `weatherFetchMs`, `engineComputeMs`, `storageWriteMs`), with one-click download of failing `SimulationRequestContract` JSON payloads for `pytest` reproduction.
     2. **Cross-Tenant Project Browser & "Clone to Admin"**: Browse/search all projects with summary tags and a one-click **"Clone to My Account"** action for zero-risk support debugging.
     3. **Curated "Starter Templates" & Asset Promotion**: Toggle to promote exemplary projects into public **Global Starter Templates** (`isTemplate: true`, e.g., *Rural Health Clinic*, *Agri-Processing Mill*).
@@ -229,13 +259,13 @@ Rather than serializing multiple redundant datasets into text CSV blobs, the sys
 
 #### Frontend Sync 2 (Pairs with Phase 2A & Phase 2B)
 - **Multi-Year Agent & Scenario Configuration UI (Preliminary)**:
-    - Co-design user-friendly controls for operator/customer agent parameters, shock scenario presets (`EventScheduler`), and multi-year sustainability health score cards.
+    - Co-design user-friendly controls for operator/customer agent parameters, shock scenario presets (`EventScheduler`), and multi-year sustainability health score cards, updating ` DemandComponentsCard` / `TypicalDayCard` notes where demand evolves dynamically across years (`load_multiplier`).
 - **Broader Admin Capabilities (Preliminary)**:
     - Expand the Runtime Admin Viewer with User Directory & Cohort Organization (`admin`, `researcher`, `standard` roles, workshop cohorts) and Workflow Completion Funnel analytics.
 
 #### Frontend Sync 3 (Pairs with Phase 3)
-- **Tier-3 Windowed Charting & On-Demand CSV Export (Preliminary)**:
-    - Connect interactive time-series charts (`SimulationGraphsPanel.tsx`, `GraphsTab.tsx`) to the Phase 3 Tier-3 windowed columnar JSON endpoint, wire the "Download CSV" button to the on-demand export endpoint, and track low-bandwidth client render telemetry.
+- **Tier-3 Columnar JSON Charting & On-Demand CSV Export (Preliminary)**:
+    - Connect `GraphsTab.tsx` (`ParsedView`) to the Phase 3 Tier-3 columnar JSON endpoint (bypassing client-side CSV parsing), wire the "Download CSV" actions in `ResultsTab.tsx` to the on-demand export endpoint, and track low-bandwidth client render telemetry.
 
 ---
 
@@ -245,6 +275,12 @@ Rather than serializing multiple redundant datasets into text CSV blobs, the sys
 ### Cross-Agent Handoff & Breaking Spec Log
 *Maintain the 10 most recent structural, contract, or governance updates here (newest first). Every AI agent MUST read this log during Pre-Flight and append an entry when completing changes that affect contracts, auth, shared state, or parallel workflows.*
 
+- **`[2026-10-28] chore/frontend-governance-sync (Frontend v2 Stack Audit & Governance/Blueprint Alignment — Antigravity)`**
+    - **Changes**: Audited the pulled-in `frontend/` v2 codebase and updated `workplan/governance.md`, `workplan/blueprint.md`, and `functions/tests/test_governance.py` to replace obsolete `uPlot` / `UPlotChart.tsx` / `SimulationGraphsPanel.tsx` / `SimulationResults.tsx` references with the actual v2 architecture (`Preact + TS + Vite`, `preact-iso`, `.mg-*` CSS custom-property design system in `theme.css`, `lucide-preact`, `Chart.js` + `chartjs-plugin-zoom` in `ChartCanvas.tsx`, `<canvas>` `ImageData` `HeatmapCard.tsx`, custom SVG/CSS charts, `marked`, and `VITE_FUNCTIONS_BASE_URL`), and updated Phase 1C Bucket C + discrepancy trackers.
+    - **Action / Context for Parallel Devs**:
+        1. **Live FE/BE Contract Gap Flagged**: Frontend sends `generatorFuelPrice` (`simulation.ts`) and `ResultsTab.tsx` expects `fuel_expenses` and `fixed_expenses` in `financial_expenses` CSV, while backend `contracts.py` / `FinancialModel` currently drops `generatorFuelPrice` ($0 diesel fuel cost) and omits both columns; reconcile additively in Phase 1C.2 (🟡 Yellow Zone).
+        2. **Hosting & CI Gaps Flagged**: `firebase.json` needs an SPA `"rewrites"` rule for deep-linked `preact-iso` routes, and PR workflows should run `cd frontend && npm run build` (🔴 Red-Zone config updates).
+        3. **Frontend Styling Standard**: Build new UI with `frontend/src/components/ui/` primitives + `.mg-*` CSS tokens (`theme.css`), not Tailwind (`@tailwindcss/*` is unused in `src/`).
 - **`[2026-10-28] Phase 1C.0 -> test & main (Multi-Tool Governance, CODEOWNERS & Generated TS Contracts — Argon)`**
     - **Changes**: Integrated Multi-Tool Agentic Coordination protocol, 6-Point Pre-Flight Scope Lock, and Agent-Ready Task Card standard into `workplan/governance.md`; replaced stale `.rules` and added synchronized shims (`AGENTS.md`, `CLAUDE.md`, `.rules`, `.github/copilot-instructions.md`); added `.github/CODEOWNERS` + `.github/pull_request_template.md` + hardened `.gitignore`; added `functions/contract_export.py` generating `contracts/simulation-contracts.d.ts` (enforced against drift in `test_contracts.py` and `test_governance.py`); aligned `origin/test` and `origin/main`.
     - **Action / Context for Parallel Devs**: Branch new work (`be/*`, `fe/*`, `chore/*`) from `origin/test`. Frontend agents/devs can inspect or import exact backend payload, KPI, Tier-1, and CSV schemas directly from `contracts/simulation-contracts.d.ts`. On first non-Argon session (e.g., VS Code + Claude), allow the agent to self-detect its IDE/model and propose any needed `CLAUDE.md` / `AGENTS.md` / `.github/copilot-instructions.md` refinements (🟡 Yellow Zone).
@@ -254,33 +290,36 @@ Rather than serializing multiple redundant datasets into text CSV blobs, the sys
 
 ### Current Codebase State (Audit Summary)
 - **Multi-Tool Agent Governance & Ownership (`workplan/governance.md`, `.github/CODEOWNERS`, `GEMINI.md`, `AGENTS.md`, `CLAUDE.md`, `.rules`, `.github/copilot-instructions.md`)**: Unified under a single authoritative governance canon with 6-point Pre-Flight Scope Locks, Traffic-Light autonomy zones, Cross-Agent Handoff logging, `.github/CODEOWNERS` domain review triggers, Non-Argon Self-Detection onboarding, and automated drift enforcement in `functions/tests/test_governance.py`.
-- **Frontend (`frontend/` — Preliminary Baseline, Subject to Frontend Developer Review)**: Currently uses **Preact + TypeScript + Vite** with authentication, project management, hierarchical load `Workbench`, CSV preview/download (`SimulationResults.tsx`), and interactive `uPlot` time-series and heatmap charts (`SimulationGraphsPanel.tsx`, `GraphsTab.tsx`, `DemandComponentsCard.tsx`, `HeatmapCard.tsx`, `YearBar.tsx`). *(Note: Frontend files are treated as 🔴 Red-Zone off-limits during backend tasks to avoid conflicts with parallel frontend development; all frontend architectural patterns and proposed features—including the Runtime Admin Viewer and `frontend/` Bucket C asset cleanup—are preliminary and not established as canon until co-designed with the frontend developer and marked `Dev Accepted` on `test`).*
+- **Frontend (`frontend/` — v2 Reference Baseline; Unbuilt Roadmap Items Preliminary)**: Uses **Preact + TypeScript + Vite**, `preact-iso` routing, `.mg-*` CSS custom-property tokens (`theme.css`), `lucide-preact` icons, zero-dependency UI primitives (`components/ui/`), full-screen `NewProjectWizard.tsx`, hierarchical load `Workbench.tsx` with tags + `SchemaBreakdown.tsx` + live `typicalDayDispatch`, `ResultsTab.tsx` (KPIs, SVG 20-year Cost vs. Revenue chart, raw CSV downloads), `GraphsTab.tsx` (`Chart.js` + `chartjs-plugin-zoom` via `ChartCanvas.tsx`, `<canvas>` `ImageData` `HeatmapCard.tsx`, `YearlyOverviewCard.tsx`, `YearBar.tsx`, `DailyProfileCard.tsx`, `DemandComponentsCard.tsx`), and `marked` (`UserGuide.tsx`). *(Note: `frontend/**` remains 🔴 Red-Zone off-limits during backend tasks; unbuilt frontend proposals remain Preliminary until co-designed and marked `Dev Accepted` on `test`).*
 - **Backend API, Auth, Contracts & Repository (`functions/main.py`, `functions/handlers.py`, `functions/caller_auth.py`, `functions/contracts.py`, `functions/contract_export.py`, `contracts/simulation-contracts.d.ts`, `functions/repository.py`)**: Exposes Python 3.13 HTTP Cloud Functions (`run_simulation_post` and `get_stored_simulation`) protected by Firebase Bearer token caller verification (`caller_auth.py`), validated contracts (`SimulationRequestContract`, `SimulationResponseContract`, `StoredSimulationResponseContract`, `Tier1SimulationSummaries`) mirrored deterministically to `contracts/simulation-contracts.d.ts`, and a pluggable `SimulationRepositoryProtocol` (`InMemorySimulationRepository` / `GcpSimulationRepository`).
 - **Simulation Core (`functions/engine/`, `functions/simulation.py`, `functions/calculations.py`)**: Refactored into modular `SimulationEngine` ("Clock"), `SimulationState` (with `EpochModifiers`, `curtailed_power`, and deterministic `np.random.Generator` seeding), `protocols.py` (`ComponentModelProtocol`, `BehavioralAgentProtocol`, `EvaluativeAgentProtocol`, `SimulationRepositoryProtocol`), `compute_summary_kpis`, `compute_tier1_summaries`, and component models (`PVModel`, `WindModel`, `CoupledDispatchModel`, `GeneratorModel`, `BatteryModel`, `FinancialModel`, `DegradationModel`, `MultiYearDispatchModel`). Epoch callbacks, comprehension layer, and event scheduler are scoped for Phase 2A; behavioral and evaluative agents are scoped for Phase 2B.
 - **Data Storage (`functions/storage.py`, `functions/firestore_helpers.py`, `functions/repository.py`)**: Records **Tier-1** `summaryKpis` and `tier1Summaries` (20-year financials and monthly solar averages) directly in **Firestore** alongside backward-compatible `.csv.gz` bundles (including on-demand `hourly_year_02`…`hourly_year_20` and `yearly_summary`) in **Google Cloud Storage**. Weather caching and admin run ledger hooks are scoped for Phase 1C; Tier-2 Parquet and Tier-3 columnar JSON / on-demand CSV export are scoped for Phase 3; Cloud Run + BigQuery scale-out is scoped for Phase 4.
-- **Testing (`tests/`, `functions/tests/`)**: Vitest + Firebase Emulators test Firestore rules and project CRUD (`e2e-emulators.yml`). `pytest` tests contracts & TypeScript snapshot parity (`test_contracts.py`), caller auth (`test_handlers_auth.py`), modular component models & coupled dispatch (`test_models.py`), 20-year degradation & multi-year dispatch (`test_horizon.py`), protocols, repository adapters, deterministic seeding, Tier-1 summaries, and full-year engine execution (`test_engine.py`), bidirectional governance & multi-tool shim compliance (`test_governance.py`), NSRDB resampling (`test_nlr.py`), Firestore helpers (`test_firestore_helpers.py`), storage (`test_storage.py`), and utilities (`test_utils.py`).
+- **Testing (`tests/`, `functions/tests/`)**: Vitest + Firebase Emulators test Firestore rules and project CRUD (`e2e-emulators.yml`). `pytest` tests contracts & TypeScript snapshot parity (`test_contracts.py`), caller auth (`test_caller_auth.py`, `test_handlers_auth.py`), modular component models & coupled dispatch (`test_models.py`), 20-year degradation & multi-year dispatch (`test_horizon.py`), protocols, repository adapters, deterministic seeding, Tier-1 summaries, and full-year engine execution (`test_engine.py`), bidirectional governance & frontend stack sync (`test_governance.py`), NSRDB resampling (`test_nlr.py`), Firestore helpers (`test_firestore_helpers.py`), storage (`test_storage.py`), and utilities (`test_utils.py`).
 
 ### Key Discrepancies Checklist
-- [x] **Frontend Framework & Interactive Charts (Preliminary Baseline)**: Preact + TypeScript + Vite + `uPlot` currently in place (`frontend/`); subject to frontend developer review and `Dev Accepted` sign-off before establishing as canon.
+- [x] **Frontend v2 Stack & Visualization Baseline Documented**: Preact + TypeScript + Vite + `preact-iso` + `.mg-*` CSS design system + `lucide-preact` + `Chart.js` (`chartjs-plugin-zoom`) + `<canvas>`/`ImageData` heatmaps + custom SVG/CSS charts audited and reflected across `governance.md`, `blueprint.md`, and `test_governance.py` (stale `uPlot` references removed).
 - [x] **Frontend–Backend Interface Contracts & Generated TS Mirror (Phase 1A & Phase 1C.0)**: Request, response, CSV header, KPI, and Tier-1 summary contracts implemented in `functions/contracts.py`, exported to `contracts/simulation-contracts.d.ts` (`functions/contract_export.py`), and verified by `functions/tests/test_contracts.py`.
 - [x] **Modular Engine & Vectorized Component Models (Phase 1A)**: `SimulationEngine`, `SimulationState`, and vectorized `PVModel`, `WindModel`, `GeneratorModel`, `BatteryModel`, `FinancialModel` implemented in `functions/engine/`.
 - [x] **Structural Protocols, Coupled Dispatch Kernel, Epoch Modifiers, Deterministic PRNG, Repository Adapter & Tier-1 Summaries (Phase 1B)**: Implemented in `functions/engine/protocols.py`, `functions/engine/models/dispatch.py`, `functions/engine/state.py`, `functions/repository.py`, and `functions/engine/kpis.py`.
-- [x] **Multi-Developer Agentic Coordination Baseline, `CODEOWNERS` & Multi-Tool Shims (Phase 1C.0)**: `origin/test` and `origin/main` aligned; 6-Point Pre-Flight Scope Lock, Cross-Agent Handoff Log, Non-Argon Self-Detection onboarding, `.gitignore` hardening, `.github/pull_request_template.md`, `.github/CODEOWNERS`, `contracts/simulation-contracts.d.ts`, and synchronized shims (`GEMINI.md`, `AGENTS.md`, `CLAUDE.md`, `.rules`, `.github/copilot-instructions.md`) enforced via `functions/tests/test_governance.py`. *(Organic follow-ups on active sessions: first non-Argon shim check, `ruff` + frontend formatter selection).*
-- [ ] **Repo Hygiene, Weather Cache & Admin Run Ledger Hook (Phase 1C.1–1C.3)**: Stage 1 Read-Only Audit recorded (Buckets A, B, C; `.rules` resolved in Phase 1C.0). Pending Stage 2/3 cleanup (`public/`, `SESDC-toolkit/`, root `requirements.txt`, dead scripts in `functions/`, debug logs, `test_governance.py` lock-in), NSRDB weather caching, and backend admin run ledger logging.
+- [x] **Multi-Developer Agentic Coordination Baseline, `CODEOWNERS` & Multi-Tool Shims (Phase 1C.0)**: 6-Point Pre-Flight Scope Lock, Cross-Agent Handoff Log, Non-Argon Self-Detection onboarding, `.gitignore` hardening, `.github/pull_request_template.md`, `.github/CODEOWNERS`, `contracts/simulation-contracts.d.ts`, and synchronized shims (`GEMINI.md`, `AGENTS.md`, `CLAUDE.md`, `.rules`, `.github/copilot-instructions.md`) enforced via `functions/tests/test_governance.py`.
+- [ ] **FE–BE Financial/Fuel Contract Parity (`generatorFuelPrice`, `fuel_expenses`, `fixed_expenses` & Multi-Year Revenue — Phase 1C.2)**: Frontend sends `generatorFuelPrice` and `ResultsTab.tsx` expects `fuel_expenses` + `fixed_expenses` columns, while backend `FinancialModel` omits diesel fuel costs and calculates 20-year revenue from Year-1 served load instead of degraded `yearly_summary`.
+- [ ] **Firebase Hosting SPA Rewrite & PR Frontend Build Check (Sync 1 / Infra)**: `firebase.json` lacks `"rewrites"` for `preact-iso` client routes, and GitHub PR workflows do not yet run `cd frontend && npm run build`.
+- [ ] **Low-Bandwidth Bundle, Media & NSRDB Geographic Scope (Sync 1 / Phase 1C.3)**: `team.png` (25.5 MB), landing hero JPG (880 KB), and monolithic `992 kB` JS bundle need compression + route code-splitting for Global South devices; `functions/nlr.py` (`nsrdb-msg-v1-0-0`, `DNI`) currently covers only Meteosat Prime Meridian (Africa/Europe/ME) and uses `DNI` rather than `GHI`.
+- [ ] **Repo Hygiene, Weather Cache & Admin Run Ledger Hook (Phase 1C.1, 1C.3, 1C.4)**: Pending Stage 2/3 cleanup (`public/`, `SESDC-toolkit/`, root `requirements.txt`, dead scripts in `functions/`, debug logs, unused `@tailwindcss/*` deps & empty dirs in `frontend/`), NSRDB weather caching, and backend admin run ledger logging.
 - [ ] **Multi-Year Clock, Comprehension Layer & Event Scheduler (Phase 2A)**: Extend `SimulationEngine` + `horizon.py` with epoch boundary callbacks, `ComprehensionLayer`, and `EventScheduler` shock injection.
 - [ ] **Behavioral & Evaluative Agents (Phase 2B)**: Implement `Operator_Agent`, `Customer_Agent`, and `EvaluativeAgentProtocol` scorers on `EpochModifiers`.
-- [ ] **Tier-2 Parquet & Tier-3 Columnar API (Phase 3 — Zero New Infra)**: Transition from `.csv.gz` blobs to single `{run_id}_hourly.parquet` in GCS, windowed columnar JSON endpoint, and on-demand CSV export.
+- [ ] **Tier-2 Parquet & Tier-3 Columnar API (Phase 3 — Zero New Infra)**: Transition from `.csv.gz` blobs to single `{run_id}_hourly.parquet` in GCS, columnar `ParsedView` JSON endpoint, and on-demand CSV export.
 - [ ] **Cloud Scale-Out & CI/CD (Phase 4 — 🔴 Red-Zone Infra)**: Add `multiprocessing` sweeps, **Pub/Sub -> Cloud Run** workers, **BigQuery** table mounting, and Cloud Run / `main` release workflows.
-- [ ] **Parallel Frontend Development Track & Runtime Admin Viewer (Preliminary Placeholder)**: Co-design and implement across **Sync 1** (Non-Argon shim check, formatter/contract sync, Bucket C asset cleanup, Tier-1 summaries, Runtime Admin Viewer MVP), **Sync 2** (multi-year agent/shock UI), and **Sync 3** (Tier-3 windowed charts & on-demand CSV export).
+- [ ] **Parallel Frontend Track & Runtime Admin Viewer (Unbuilt Items Preliminary)**: Co-design and implement across **Sync 1** (Hosting rewrite, PR build gate, media/bundle split, Tailwind/empty-dir cleanup, contract TS imports, Tier-1 instant summaries, Runtime Admin Viewer MVP), **Sync 2** (multi-year agent/shock UI), and **Sync 3** (Tier-3 columnar JSON charts & on-demand CSV export).
 
 ### Progress & Dev Acceptance Tracker
 - [x] **Phase 1A: Backend Modularization, Vectorization & Interface Contracts** — *Status: Completed & Verified (`pytest`)*
 - [x] **Phase 1B: Structural Protocols, Coupled Dispatch Kernel, Epoch Modifiers, Repository Pattern & Tier-1 Summaries** — *Status: Completed & Verified (`pytest`)*
-- [x] **Phase 1C.0: Multi-Developer Agentic Coordination, `CODEOWNERS`, Generated TS Contracts & Multi-Tool Shims** — *Status: Verified (`pytest` + `tsc`) -> `On test (Staging)` -> `Promoted to main`*
-- [x] **Phase 1C.1 (Stage 1): Defensive Repository Read-Only Reference Audit & Triage Matrix** — *Status: Completed & Recorded*
-- [ ] **Phase 1C (Remaining): Stage 2/3 Repo Cleanup, NSRDB Weather Cache & Admin Run Ledger Hook** — *Status: Next Up (🟡 Yellow-Zone Confirmation Required) -> `On test (Staging)` -> `Dev Accepted`*
+- [x] **Phase 1C.0: Multi-Developer Agentic Coordination, `CODEOWNERS`, Generated TS Contracts, Shims & Frontend v2 Governance Sync** — *Status: Verified (`pytest` + `tsc`) -> `In Progress` (`chore/frontend-governance-sync`)*
+- [x] **Phase 1C.1 (Stage 1): Defensive Repository Read-Only Reference Audit & Triage Matrix (Updated for Frontend v2)** — *Status: Completed & Recorded*
+- [ ] **Phase 1C (Remaining): Stage 2/3 Repo Cleanup, Financial/Fuel Contract Parity, NSRDB Weather Cache & Admin Run Ledger** — *Status: Next Up (🟡 Yellow-Zone Confirmation Required) -> `On test (Staging)` -> `Dev Accepted`*
 - [ ] **Phase 2A: Multi-Year Epoch Clock, Comprehension Layer & Event Scheduler** — *Status: Provisional (🟡 Yellow-Zone Phase Gate) -> `In Progress` -> `On test (Staging)` -> `Dev Accepted`*
 - [ ] **Phase 2B: Behavioral & Evaluative Agents** — *Status: Provisional (🟡 Yellow-Zone Phase Gate) -> `In Progress` -> `On test (Staging)` -> `Dev Accepted`*
 - [ ] **Phase 3: Tier-2 Parquet Storage, Tier-3 Columnar API & On-Demand CSV Export** — *Status: Provisional (🟡 Yellow-Zone Phase Gate) -> `In Progress` -> `On test (Staging)` -> `Dev Accepted`*
 - [ ] **Phase 4: Cloud Scale-Out (Multiprocessing, Pub/Sub -> Cloud Run & BigQuery)** — *Status: Provisional (🔴 Red-Zone Infrastructure Gate) -> `In Progress` -> `On test (Staging)` -> `Dev Accepted`*
-- [ ] **Parallel Frontend Track (Sync 1, Sync 2, Sync 3) & Runtime Admin Viewer** — *Status: Preliminary Placeholder (Co-Design with Frontend Dev -> `On test (Staging)` -> `Dev Accepted [Graduates to Canon]`)*
+- [ ] **Parallel Frontend Track (Sync 1 Hardening/Admin MVP, Sync 2, Sync 3)** — *Status: Core v2 UI Baseline Active; Unbuilt Items Preliminary (Co-Design with Frontend Dev -> `On test (Staging)` -> `Dev Accepted [Graduates to Canon]`)*

@@ -2,7 +2,7 @@
 
 Enforces two-way alignment between the codebase and `workplan/governance.md` + `workplan/blueprint.md`:
 1. Code -> Docs compliance (lazy imports, deterministic PRNG, structural Protocol typing, workplan & gitignore hygiene).
-2. Docs <-> Code reflexive sync (workflows, runtime versions, secrets, protocols, models, autonomy zones, Pre-Flight Scope Lock, Cross-Agent Handoff Log, CODEOWNERS, generated TypeScript contracts, and multi-tool agent shims).
+2. Docs <-> Code reflexive sync (workflows, runtime versions, secrets, protocols, models, frontend stack dependencies, autonomy zones, Pre-Flight Scope Lock, Cross-Agent Handoff Log, CODEOWNERS, generated TypeScript contracts, and multi-tool agent shims).
 """
 
 from __future__ import annotations
@@ -20,6 +20,7 @@ from engine.protocols import ComponentModelProtocol
 FUNCTIONS_DIR = Path(__file__).resolve().parent.parent
 REPO_ROOT = FUNCTIONS_DIR.parent
 ENGINE_DIR = FUNCTIONS_DIR / "engine"
+FRONTEND_DIR = REPO_ROOT / "frontend"
 WORKPLAN_DIR = REPO_ROOT / "workplan"
 WORKFLOWS_DIR = REPO_ROOT / ".github" / "workflows"
 FIREBASE_JSON = REPO_ROOT / "firebase.json"
@@ -35,6 +36,13 @@ AGENT_SHIM_FILES = (
 FORBIDDEN_OBSOLETE_SHIM_TERMS = (
     "qwen2.5-coder",
     "SESDC-toolkit/",
+)
+
+FORBIDDEN_STALE_GOVERNANCE_FRONTEND_TERMS = (
+    "uPlot",
+    "UPlotChart.tsx",
+    "SimulationGraphsPanel.tsx",
+    "SimulationResults.tsx",
 )
 
 FORBIDDEN_TOP_LEVEL_HEAVY_IMPORTS = {
@@ -210,6 +218,34 @@ class TestReflexiveGovernanceSync:
         for secret_name in secrets:
             assert secret_name in governance_text, (
                 f"SecretParam '{secret_name}' is used in functions/handlers.py but is not documented in workplan/governance.md."
+            )
+
+    def test_frontend_dependencies_and_env_vars_synced_with_governance(self):
+        """Every runtime dependency in `frontend/package.json` and `VITE_*` env var in `frontend/src/` must be documented in `workplan/governance.md`, with no stale uPlot references."""
+        governance_text = (WORKPLAN_DIR / "governance.md").read_text(encoding="utf-8")
+        governance_lower = governance_text.lower()
+
+        for stale_term in FORBIDDEN_STALE_GOVERNANCE_FRONTEND_TERMS:
+            assert stale_term not in governance_text, (
+                f"Stale removed frontend reference '{stale_term}' found in workplan/governance.md"
+            )
+
+        fe_pkg = json.loads((FRONTEND_DIR / "package.json").read_text(encoding="utf-8"))
+        for dep_name in fe_pkg.get("dependencies", {}):
+            assert dep_name.lower() in governance_lower, (
+                f"Frontend runtime dependency '{dep_name}' in frontend/package.json is not documented in workplan/governance.md."
+            )
+
+        vite_env_vars: set[str] = set()
+        for src_file in (FRONTEND_DIR / "src").rglob("*"):
+            if src_file.suffix in {".ts", ".tsx"} and src_file.is_file():
+                content = src_file.read_text(encoding="utf-8")
+                vite_env_vars.update(re.findall(r"import\.meta\.env\.(VITE_[A-Z0-9_]+)", content))
+
+        assert len(vite_env_vars) >= 6
+        for env_var in sorted(vite_env_vars):
+            assert env_var in governance_text, (
+                f"Frontend env var '{env_var}' is used in frontend/src/ but missing from workplan/governance.md."
             )
 
     def test_agent_autonomy_zones_and_dev_acceptance_documented(self):

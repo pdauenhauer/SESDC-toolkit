@@ -5,15 +5,15 @@ This document captures the current design, architectural, onboarding, and operat
 
 ## Project Architecture
 The project is a microgrid design toolkit featuring a decoupled frontend and backend architecture:
-- **Frontend (Preliminary — Subject to Frontend Developer Review)**: Currently built with **Preact + TypeScript** (`@preact/preset-vite`), bundled using **Vite**, and served from `frontend/dist` via **Firebase Hosting**. *(Note: All frontend architectural choices, UI patterns, and charting conventions are preliminary and are not established as permanent canon until reviewed, verified on `test`, and ratified with the frontend developer).*
+- **Frontend (v2 Reference Baseline — Unbuilt Proposals Remain Preliminary)**: Built as a lightweight SPA with **Preact + TypeScript** (`@preact/preset-vite`), routed with **`preact-iso`**, styled with a custom CSS token design system (`frontend/src/css/theme.css` + feature stylesheets) and **`lucide-preact`** icons, visualized via **`chart.js`** (`chartjs-plugin-zoom`), custom HTML5 `<canvas>` heatmaps, and zero-dependency SVG/CSS charts, bundled using **Vite**, and served from `frontend/dist` via **Firebase Hosting**. *(Note: Core v2 UI patterns in `frontend/` represent the intended baseline going forward; unbuilt frontend proposals—such as the Runtime Admin Viewer, Sync 2 agent/shock controls, and Sync 3 columnar wire integration—remain **Preliminary** until co-designed, verified on `test`, and marked `Dev Accepted`).*
 - **Backend**: Powered by **Firebase** and **Google Cloud Platform** (`us-central1` region, project `sesdc-toolkit2`).
     - **API Layer**: Firebase Cloud Functions (Python 3.13) handle requests (`run_simulation_post`, `get_stored_simulation`) and initiate tasks.
     - **Task Execution**: Long-running simulations are orchestrated via **Pub/Sub** and executed on **Google Cloud Run** to bypass standard function timeouts.
     - **Data Storage (3-Tier Hybrid Model)**:
-        1. **Cloud Firestore**: Stores simulation metadata, run status, summary KPIs (`summaryKpis`), and compact pre-aggregated Tier-1 summaries (`tier1Summaries`: 20-year financials, monthly summaries) as native JSON for instant dashboard rendering.
-        2. **Columnar Time-Series Storage (Apache Parquet on GCS + Google BigQuery)**: Stores a single canonical hourly time-series dataset per run in typed columnar format (`Parquet`) on Google Cloud Storage, bridged natively to **BigQuery** for windowed analytical queries and multi-scenario comparisons.
-        3. **On-Demand CSV Export**: CSV is used strictly as an end-user download/export format, not as an internal intermediate state or primary API transport format.
-- **Language Stack**: Python (Simulation & Functions), TypeScript (Frontend — Preliminary), and SQL-like rules for Firestore/Storage.
+        1. **Cloud Firestore**: Stores user profiles, project configurations (supply sources, economics, location, hierarchical `loads`), simulation metadata (`lastSimulationRun`), summary KPIs (`summaryKpis`), and compact pre-aggregated Tier-1 summaries (`tier1Summaries`: 20-year financials, monthly summaries) as native JSON for instant dashboard rendering.
+        2. **Columnar Time-Series Storage (Apache Parquet on GCS + Google BigQuery)**: Target architecture stores a single canonical hourly time-series dataset per run in typed columnar format (`Parquet`) on Google Cloud Storage, bridged natively to **BigQuery** for windowed analytical queries and multi-scenario comparisons (currently transitioning from `.csv.gz` bundles including `hourly_year_02`…`hourly_year_20` and `yearly_summary`).
+        3. **On-Demand CSV Export**: CSV is intended strictly as an end-user download/export format rather than a long-term primary API wire format once Tier-3 columnar JSON endpoints land in Phase 3.
+- **Language Stack**: Python (Simulation & Functions), TypeScript (Frontend SPA & Emulator E2E tests), and SQL-like security rules for Firestore/Storage.
 
 ## Development Workflow
 
@@ -28,7 +28,7 @@ To support parallel frontend and backend development (and multiple AI-assisted c
 3. **Pull Request Firewall into `test`**:
     - Opening a PR targeting `test` (using `.github/pull_request_template.md`) triggers automated pre-merge verification: backend unit, contract, and governance drift tests (`functions-unit-tests.yml`) and Firebase Emulator E2E tests (`e2e-emulators.yml`).
     - `.github/CODEOWNERS` enforces domain review boundaries (`/functions/` owned by `@pdauenhauer`, `/frontend/` owned by `@jbaron2025`, and shared contracts/governance/rules requiring both owners).
-    - For frontend PRs, Firebase Hosting Preview Channels may be used to inspect UI changes on a temporary preview URL prior to merging into `test`.
+    - For frontend PRs, always verify `cd frontend && npm run build` (`tsc -b && vite build`) locally (and via CI PR checks once added); Firebase Hosting Preview Channels may also be used to inspect UI changes on a temporary preview URL prior to merging into `test`.
 4. **Staging Auto-Deploy (`test`) & Dev Acceptance Lifecycle**:
     - **`test` (Shared Integration & Staging Branch)**: Merging a PR into `test` automatically deploys to the `sesdc-toolkit2` staging environment via `firebase-dev-deploy.yml` and `firebase-functions-deploy.yml`.
     - **4-Stage Dev Acceptance Lifecycle**: All deliverables in `workplan/blueprint.md` progress through:
@@ -36,7 +36,7 @@ To support parallel frontend and backend development (and multiple AI-assisted c
         2. `On test (Staging)` (merged to `test`, deployed to staging for integration testing)
         3. `Dev Accepted [FE/BE Sign-Off]` (verified on staging and accepted by the relevant developer(s))
         4. `Promoted to main` (production release)
-    - **Graduating from Preliminary to Canon**: Any item marked **Preliminary** (such as frontend conventions, charting workflows, or Runtime Admin Viewer designs) only becomes authoritative **Canon** in this governance document once co-designed, deployed to `test`, and marked `Dev Accepted`.
+    - **Graduating from Preliminary to Canon**: Any unbuilt or proposed item marked **Preliminary** (such as future Runtime Admin Viewer designs, multi-year shock UI controls, or Tier-3 columnar wire endpoints) only becomes authoritative **Canon** in this governance document once co-designed, deployed to `test`, and marked `Dev Accepted`.
 5. **Production (`main`)**:
     - `main` is reserved for stable, `Dev Accepted` releases promoted from `test`.
 
@@ -45,8 +45,8 @@ AI agents operating in this repository must follow the 3-tier approval protocol 
 
 | Zone | Agent Requirement | Scope of Actions |
 | :--- | :--- | :--- |
-| **🟢 Green Zone**<br>*(Autonomous Execution)* | Proceed directly, verify with tests, and report results. | • Internal code/model implementation within the active scoped directory (e.g., `functions/engine/`) preserving existing contracts.<br>• Adding/updating unit, contract, governance, or emulator tests (`functions/tests/`, `tests/`).<br>• Running read-only audits, searches, and test suites (`pytest`, `vitest`).<br>• Routine reflexive updates to `workplan/blueprint.md` trackers and Handoff Log for approved work. |
-| **🟡 Yellow Zone**<br>*(Propose & Confirm)* | Pause and present a brief 2–3 bullet impact summary; wait for user confirmation before applying. | • **Additive Contract/Schema Extensions**: Adding new optional fields to `functions/contracts.py` (and regenerating `contracts/simulation-contracts.d.ts`) or `functions/firestore_helpers.py`.<br>• **Dependency Updates**: Modifying `functions/requirements.txt`, root `package.json`, or `frontend/package.json`.<br>• **Phase-Gate Transitions**: Moving a provisional phase in `workplan/blueprint.md` into active implementation.<br>• **Tool-Shim Customizations**: Refining `CLAUDE.md`, `AGENTS.md`, `.rules`, or `.github/copilot-instructions.md` when onboarding a new IDE/agent tool.<br>• **Bulk File Cleanup**: Deleting files/directories (including audited Bucket A/B legacy vestiges). |
+| **🟢 Green Zone**<br>*(Autonomous Execution)* | Proceed directly, verify with tests, and report results. | • Internal code/model implementation within the active scoped directory (e.g., `functions/engine/` on `be/*` or `frontend/src/` on `fe/*`) preserving existing contracts.<br>• Adding/updating unit, contract, governance, or emulator tests (`functions/tests/`, `tests/`).<br>• Running read-only audits, searches, builds, and test suites (`pytest`, `vitest`, `tsc -b`).<br>• Routine reflexive updates to `workplan/blueprint.md` trackers, Handoff Log, and `workplan/governance.md` for approved work. |
+| **🟡 Yellow Zone**<br>*(Propose & Confirm)* | Pause and present a brief 2–3 bullet impact summary; wait for user confirmation before applying. | • **Additive Contract/Schema Extensions**: Adding new optional fields to `functions/contracts.py` (and regenerating `contracts/simulation-contracts.d.ts`) or `functions/firestore_helpers.py`.<br>• **Dependency Updates**: Modifying `functions/requirements.txt`, root `package.json`, or `frontend/package.json`.<br>• **Phase-Gate Transitions**: Moving a provisional phase in `workplan/blueprint.md` into active implementation.<br>• **Tool-Shim Customizations**: Refining `CLAUDE.md`, `AGENTS.md`, `.rules`, or `.github/copilot-instructions.md` when onboarding a new IDE/agent tool.<br>• **Bulk File Cleanup**: Deleting files/directories (including audited Bucket A/B/C legacy vestiges). |
 | **🔴 Red Zone**<br>*(Hard Stop — Explicit Sign-Off)* | Mandatory stop; explain blast radius, security/cost impact, or cross-dev impact and wait for explicit approval. | • **Cross-Domain Edits**: Modifying `frontend/**` during a backend task (or `functions/**` during a frontend task) without the owning developer's sign-off.<br>• **Breaking Contract Changes**: Renaming, removing, or changing types of existing fields in `functions/contracts.py` (`storagePath`, `csvKeys`, `csvBundle`, `EXPECTED_CSV_COLUMNS`).<br>• **Security, IAM & Infra Configs**: Modifying `firestore.rules`, `storage.rules`, `firebase.json`, `.firebaserc`, `.github/CODEOWNERS`, or `.github/workflows/*.yml`.<br>• **Cloud Cost, Quotas & Services**: Changing function memory/timeout/concurrency, provisioning new GCP services (Cloud Run, BigQuery, Pub/Sub), or changing external API (`NLR_API_KEY`) call patterns.<br>• **Git Push & Deployments**: Executing `git push`, `firebase deploy`, or merging branches into `test` or `main`. |
 
 ### Multi-Tool Agentic Coordination, Pre-Flight Scope Lock & Task Chunking
@@ -103,13 +103,13 @@ Because separate developers and LLMs do not share live session memory, Section 8
 
 ### Environment, Prerequisites & Local Setup
 - **Required Runtime Versions**:
-    - **Node.js**: `20` (for frontend builds, Firebase CLI, and Vitest execution).
-    - **Python**: `3.13` (for Firebase Cloud Functions and simulation execution, matching `python313` in `firebase.json`).
+    - **Node.js**: `20` (for frontend Vite/TypeScript builds, Firebase CLI, and Vitest execution).
+    - **Python**: `3.13` (for Firebase Cloud Functions and simulation execution, matching `python313` in `firebase.json`; `3.11+` supported locally for `pytest`, though `3.12+` avoids `google.api_core` deprecation warnings).
     - **Java**: `21` (Temurin distribution; required by `firebase-tools` to run the local/CI Firestore emulator).
 - **Initial Repository Setup**:
     1. Clone the repository and check out a scoped branch from `test`.
-    2. Install root dependencies: `npm install`
-    3. Install frontend dependencies: `cd frontend && npm install`
+    2. Install root dependencies: `npm install` (or `npm ci`)
+    3. Install frontend dependencies: `cd frontend && npm ci` (or `npm install`)
     4. Install backend Python dependencies in a virtual environment:
        ```bash
        cd functions
@@ -125,7 +125,7 @@ Because separate developers and LLMs do not share live session memory, Section 8
     6. **Security Rule Precaution**: [firebase.json](file:///C:/Users/peter/Projects/SESDC-toolkit/firebase.json) is already tracked in git (`hosting.public` set to `frontend/dist`, rules in `firestore.rules` and `storage.rules`). Avoid re-running `firebase init`; if ever necessary, **never overwrite** existing `firestore.rules`, `storage.rules`, or `functions/` files.
 - **Local Development & Emulators**:
     - Start the Firebase Emulator Suite (Auth `9099`, Functions `5001`, Firestore `8080`, Hosting `5005`, Storage `9199`) from the repository root: `firebase emulators:start`
-    - Run the Vite frontend dev server (port `5173`) from `frontend/`: `npm run dev` (or `npm run build` / `npm run preview` for production builds).
+    - Run the Vite frontend dev server (port `5173`) from `frontend/`: `npm run dev` (or `npm run build` / `npm run preview` for production builds). Note `vite.config.ts` sets `server.fs.allow: ['..']` so `frontend/src/pages/UserGuide.tsx` can import root `USER-GUIDE.md?raw`.
 
 ### Environment Variables
 The project uses two separate `.env` files (both gitignored and never committed):
@@ -140,6 +140,7 @@ The project uses two separate `.env` files (both gitignored and never committed)
    | `VITE_FIREBASE_STORAGE_BUCKET` | GCS bucket (`sesdc-toolkit2.appspot.com`) |
    | `VITE_FIREBASE_MESSAGING_SENDER_ID` | FCM sender ID |
    | `VITE_FIREBASE_APP_ID` | Firebase app ID |
+   | `VITE_FUNCTIONS_BASE_URL` | *(Optional)* Override Cloud Functions base URL for local emulator testing (e.g., `http://127.0.0.1:5001/sesdc-toolkit2/us-central1`) |
    | `VITE_USE_FIRESTORE_EMULATOR` | Set to `"true"` to connect Firestore client to the local emulator |
    | `VITE_FIRESTORE_EMULATOR_HOST` | Emulator host (default `127.0.0.1`) |
    | `VITE_FIRESTORE_EMULATOR_PORT` | Emulator port (default `8080`) |
@@ -151,15 +152,33 @@ The project uses two separate `.env` files (both gitignored and never committed)
    | `NLR_API_KEY` | API key for the National Solar Radiation Database (NSRDB / NLR) weather API. Stored in Google Cloud Secret Manager (`firebase functions:secrets:set NLR_API_KEY`) in production. |
    | `GCS_BUCKET` | *(Optional)* Override the GCS bucket name (defaults to `<GOOGLE_CLOUD_PROJECT>.appspot.com`). |
 
-### Frontend Standards (Preliminary — Subject to Frontend Developer Review)
-> **Preliminary Status (Not Yet Canon)**: All frontend standards, directory layouts, routing conventions, component boundaries, state/database wrappers, styling choices, and charting libraries (`uPlot`) described below represent the current baseline only. They are **preliminary** and will not be established as authoritative canon until reviewed, revised, and marked `Dev Accepted` on `test` with the frontend developer.
+### Frontend Standards (v2 Reference Baseline — Unbuilt Features Remain Preliminary)
+> **Scope Note**: The tools, design tokens, component layout, and multi-mode visualization patterns below reflect the active `frontend/` v2 implementation and serve as the intended architectural approach going forward. Unbuilt roadmap proposals (such as the Runtime Admin Viewer, Sync 2 agent/shock controls, and Sync 3 Tier-3 columnar wire consumption) remain **Preliminary** until co-designed, deployed to `test`, and marked `Dev Accepted`.
 
-- **Project Layout (Preliminary)**: Entry point is currently `frontend/src/main.tsx`. Routing is managed in `frontend/src/app.tsx` using `LocationProvider`, `Router`, and `Route` from `preact-iso`.
-- **Component Architecture (Preliminary)**:
-    - Page-level components currently reside in `frontend/src/pages`.
-    - Reusable leaf components currently reside in `frontend/src/components`.
-    - Firestore access is currently encapsulated in `frontend/src/database/firestore.ts` rather than calling the SDK directly inside UI components; always guard authenticated calls with `auth.currentUser` checks and make reads resilient to missing fields.
-- **Styling (Preliminary)**: Current baseline uses vanilla CSS files in `frontend/src/css/` (subject to frontend developer preference).
+- **Core Tooling & Dependencies (`frontend/package.json`, `tsconfig.app.json`, `vite.config.ts`)**:
+    - **Framework & Compiler**: **Preact** (`preact` `^10.27`, `@preact/preset-vite`) with strict **TypeScript** (`~5.7`, `strict: true`, `noUnusedLocals: true`, `noUnusedParameters: true`, `jsxImportSource: "preact"`, and `preact/compat` path aliases for `react`/`react-dom`), bundled by **Vite** (`^6.1`). Production build gate is `tsc -b && vite build`.
+    - **Routing**: **`preact-iso`** (`LocationProvider`, `ErrorBoundary`, `Router`, `Route`, `useLocation`) in `frontend/src/app.tsx`.
+    - **Icons, Fonts & Markdown**: **`lucide-preact`** (`STROKE = 1.75` standard in `frontend/src/components/ui/icons.tsx`) for all redesigned `.mg-root` views, `Geist` + `Geist Mono` fonts, and **`marked`** for rendering `USER-GUIDE.md?raw` in `UserGuide.tsx`. *(Legacy static/auth modals still reference `boxicons` CDN in `frontend/index.html` and local SVGs in `frontend/src/media/`).*
+- **Shell Split & Route Layout (`frontend/src/main.tsx`, `frontend/src/app.tsx`)**:
+    - **Redesigned `.mg-root` App Shell Routes**: `/` (`Home.tsx` landing), `/projects` (`Projects.tsx` 3-tab workspace: `Workbench`, `Results`, `Graphs`), `/projects/new` (`NewProjectWizard.tsx` full-screen multi-step wizard), `/account` (`Account.tsx` / `AccountView.tsx`), and `/logout` (`Logout.tsx`).
+    - **Legacy Static-Chrome Routes**: `/about` (`About.tsx`), `/contact` (`Contact.tsx` via Web3Forms), and `/guide` (`UserGuide.tsx`) render inside `SESDCHeader` + `SESDCFooter` (`showStaticChrome`), while `AuthModal` (`LoginForm` / `RegisterForm`) renders outside `.mg-root` to isolate legacy styles.
+- **Domain Component Architecture (`frontend/src/components/`)**:
+    - `ui/`: Shared zero-dependency primitive library (`Button`, `IconButton`, `Segmented`, `Switch`, `NumberField`, `TextField`, `SelectField`, `Drawer`, `PaintBars`, `TagInput`, `ToastProvider`/`useToast`, `LoadIcon`, `SOURCE_META`). New screens should compose these primitives rather than introducing external UI component kits.
+    - `workbench/`: Demand tree editor (`DemandCard`), supply toggles (`SupplyCards`), 8-color categorical demand breakdown (`SchemaBreakdown`), and client-side steady-state `typicalDayDispatch` estimator (`workbench/model.ts`).
+    - `wizard/` & `drawers/`: Step-by-step new-project flow (`wizard/steps.tsx`, `wizard/model.ts`, `wizard/constants.ts`) and slide-over editors (`ConfigDrawer.tsx`, `LoadProfilerDrawer.tsx`).
+    - `charts/`, `graphs/`, & `results/`: Post-simulation analysis views (`ChartCanvas.tsx`, `GraphsTab.tsx`, `YearlyOverviewCard.tsx`, `YearBar.tsx`, `DailyProfileCard.tsx`, `DemandComponentsCard.tsx`, `HeatmapCard.tsx`, `ResultsTab.tsx`, and CSV/time-series parsers `parseDateTimeCsv.ts`, `parseNumericCsv.ts`, `timeseries.ts`, `simulationMetrics.ts`).
+- **Design System & Styling (`frontend/src/css/`)**:
+    - **`.mg-*` Custom-Property Design System**: Authoritative tokens and primitives live in `frontend/src/css/theme.css` (`--mg-*` warm neutral surfaces, `--mg-accent` teal, colorblind-validated energy tokens `--mg-solar`, `--mg-wind`, `--mg-diesel`, `--mg-battery`, `.mg-tnum` tabular numerals) paired with scoped feature stylesheets (`app-shell.css`, `workbench-v2.css`, `wizard-v2.css`, `graphs-v2.css`, `results.css`, `drawers.css`, `paint-bars.css`, `account-v2.css`, `landing.css`).
+    - **Legacy Global CSS Isolation**: `app.css` and `SESDCHeader.css` apply global element selectors (`* { font-family: Arial }`, `body { margin-top: 60px }`, `nav { position: fixed }`); `theme.css` scopes redesigned screens inside `.mg-root` and `.mg-portal` (`body:has(.mg-root)`) to override legacy globals cleanly until static routes are migrated.
+    - **No Utility-Framework Coupling**: Although `@tailwindcss/vite` / `tailwindcss` currently appear in `frontend/package.json` and `vite.config.ts` from an earlier prototype, `frontend/src/` uses zero Tailwind imports or classes; new UI code must follow the `.mg-*` CSS token system rather than mixing Tailwind utilities.
+- **Visualization Strategy (Hybrid Multi-Renderer)**:
+    1. **Interactive Time-Series Line Charts (`chart.js` + `chartjs-plugin-zoom`)**: Wrapped in `ChartCanvas.tsx` using explicit tree-shaken `Chart.register(...)` (never `chart.js/auto`) for dual-axis (`kW` / `kWh`) daily and windowed hourly energy-flow plots (`GraphsTab.tsx`) with drag-zoom, shift-pan, and DOM crosshair tooltips.
+    2. **High-Density 2D Heatmaps (`HeatmapCard.tsx`)**: Uses direct HTML5 2D `<canvas>` `ImageData` pixel rendering for 365×24 "By day" views and accessible CSS grid cells for 12×24 "By month" averages (Solar, Battery SoC/DoD, Diesel).
+    3. **Zero-Library SVG & CSS Charts**: Used wherever full canvas charting is unnecessary to minimize overhead—including SVG cumulative Cost vs. Revenue polylines (`ResultsTab.tsx`) and CSS flexbox stacked bar charts (`YearlyOverviewCard.tsx`, `DailyProfileCard.tsx`, `TypicalDayCard`, `SchemaBreakdown.tsx`, `DemandComponentsCard.tsx`).
+- **State, Persistence & API Services**:
+    - **Local Hook State + Debounced Autosave**: State is managed with Preact hooks (`useState`, `useMemo`, `useRef`, `useCallback`) rather than external state stores, with 800 ms debounced Firestore autosave and project-switch flush in `Projects.tsx`.
+    - **Firestore & Auth Data Layer**: Project CRUD is encapsulated in `frontend/src/database/firestore.ts` and `projectPayload.ts` (`users/{uid}/projects/{projectId}` storing root-level `solar`, `battery`, `wind`, `generator`, `location`, `economics`, `loads`, `loadProfiler`; legacy `wizardConfig` is deprecated). User profile/auth/storage helpers currently reside in `frontend/src/utils/user.ts`, `utils/firebase/auth.ts`, and `utils/firebase/storage.ts`; always guard authenticated operations with `auth.currentUser` / `onAuthStateChanged` and make reads resilient to missing legacy fields.
+    - **Simulation Client (`frontend/src/services/simulation.ts`)**: Centralizes `POST /run_simulation_post` and `GET /get_stored_simulation` (including on-demand per-year `?keys=hourly_year_02`…`hourly_year_20` via `fetchSimulationYear`), injects `Authorization: Bearer <idToken>`, and performs explicit UI-to-backend unit conversions (`kW` -> `W` for `solarArraySize`, `ratedPower`, `generatorCapacity`).
 
 ### Backend & Simulation Standards
 - **Architecture & Structural Typing**:
@@ -179,15 +198,15 @@ The project uses two separate `.env` files (both gitignored and never committed)
 - **Cold-Start Optimization**:
     - Heavy imports (`numpy`, `pandas`, `numba`, `pyarrow`, `google.cloud`) must remain lazy-loaded inside execution paths or worker containers so Firebase CLI discovery of `functions/main.py` never times out during deployment.
 - **Data & Storage Standards**:
-    - **No Intermediate CSVs**: Keep intermediate simulation arrays strictly in memory as typed NumPy arrays inside `SimulationState`. Do not persist redundant derived views as separate CSV blobs.
-    - **Tiered Persistence**: Persist small scalar KPIs (`summaryKpis`) and 20-year/monthly summaries (`tier1Summaries`, < 15 KB) directly to **Firestore**. Persist canonical hourly time-series data as a single **Parquet** file in GCS and/or stream to **BigQuery**.
-    - **Wire Format (Preliminary Frontend Alignment)**: Serve downsampled, columnar numeric JSON arrays (`[timestamps[], series1[], ...]`) for interactive charting (currently `uPlot`, subject to frontend developer input), reserving CSV generation strictly for on-demand user file downloads.
+    - **No Intermediate CSVs**: Keep intermediate simulation arrays strictly in memory as typed NumPy arrays inside `SimulationState`. Do not persist redundant derived views as separate CSV blobs once Tier-2/Tier-3 migration completes.
+    - **Tiered Persistence**: Persist small scalar KPIs (`summaryKpis`) and 20-year/monthly summaries (`tier1Summaries`, < 15 KB) directly to **Firestore**. Persist canonical hourly time-series data as a single **Parquet** file in GCS and/or stream to **BigQuery** (Phase 3/4).
+    - **Wire Format (Preliminary Phase 3 Alignment)**: Serve compact, time-windowed columnar numeric JSON (`{ x: number[], columns: Record<string, number[]> }`, matching `GraphsTab.tsx`'s `ParsedView` structure for `Chart.js`, `HeatmapCard`, and `DailyProfileCard`) to eliminate client-side CSV parsing on low-power devices, reserving CSV generation strictly for on-demand user file downloads (`ResultsTab.tsx`).
 
 ### Frontend–Backend Contract Standards
 - **Decoupled Evolution & Generated TypeScript Mirror**:
     - Frontend and backend communicate through explicit, versioned data contracts (`functions/contracts.py`) covering HTTP request payloads, HTTP response envelopes, CSV column headers, and Firestore metadata schemas.
     - `functions/contract_export.py` (`python functions/contract_export.py --write`) deterministically exports `contracts/simulation-contracts.d.ts` so frontend contributors and AI tools always have a zero-hallucination TypeScript mirror without manual transcription.
-- **Additive Backward Compatibility**: Backend changes must preserve existing contract fields (`storagePath`, `csvKeys`, `csvBundle`, and CSV column schemas) until coordinated migrations occur (🔴 Red Zone); new capabilities (such as `summaryKpis`, `tier1Summaries`, `runId`, columnar series, or status fields) must be introduced additively (🟡 Yellow Zone).
+- **Additive Backward Compatibility**: Backend changes must preserve existing contract fields (`storagePath`, `csvKeys`, `csvBundle`, and CSV column schemas) until coordinated migrations occur (🔴 Red Zone); new capabilities (such as `summaryKpis`, `tier1Summaries`, `runId`, `generatorFuelPrice` / `fuel_expenses` / `fixed_expenses`, columnar series, or status fields) must be introduced additively (🟡 Yellow Zone).
 - **Contract & Snapshot Drift Testing**: Every backend PR/push must pass automated contract unit tests in `functions/tests/test_contracts.py` verifying request parsing, response serialization, CSV column schemas, and byte-for-byte parity between `functions/contracts.py` and `contracts/simulation-contracts.d.ts`.
 
 ### Iterative Workplan, Phase-Gate & Reflexive Governance
@@ -196,18 +215,19 @@ The project uses two separate `.env` files (both gitignored and never committed)
     1. Audit the actual state of the codebase (both `frontend/` and `functions/`) against `workplan/governance.md` and `workplan/blueprint.md`.
     2. Re-evaluate assumptions, technical constraints, parallel developer progress, and interface contracts based on lessons learned in the completing phase.
     3. Revise and fully flesh out the upcoming phase in `workplan/blueprint.md` into concrete, testable deliverables (and adjust or re-order later phases as needed) and confirm with the user before writing implementation code.
-- **Reflexive Governance Co-Update Rule**: Governance is a living system. Any commit or agent turn that adds or modifies a `.github/workflows/*.yml` file, runtime version (`firebase.json`), backend secret (`SecretParam`), `Protocol` interface (`functions/engine/protocols.py`), component model (`functions/engine/models/`), contract definition (`functions/contracts.py` -> `contracts/simulation-contracts.d.ts`), agent coordination rule, or architectural approach **must reflexively update `workplan/governance.md`, `workplan/blueprint.md` (including the Cross-Agent Handoff Log when applicable), and `functions/tests/test_governance.py` in the same change**.
-- **Bidirectional Drift Enforcement (`functions/tests/test_governance.py`)**: Automated `pytest` assertions verify both that **code obeys governance** (lazy imports, `Protocol` conformance, seeded PRNG, `workplan/` file hygiene, `.gitignore` safety) and that **governance docs & multi-tool shims stay in sync with code** (every workflow, runtime version, secret, protocol, component model, `CODEOWNERS`, generated TypeScript contract snapshot, and agent entrypoint shim in the repo must stay aligned with `workplan/governance.md` and `workplan/blueprint.md`).
+- **Reflexive Governance Co-Update Rule**: Governance is a living system. Any commit or agent turn that adds or modifies a `.github/workflows/*.yml` file, runtime version (`firebase.json`), backend secret (`SecretParam`), `Protocol` interface (`functions/engine/protocols.py`), component model (`functions/engine/models/`), contract definition (`functions/contracts.py` -> `contracts/simulation-contracts.d.ts`), frontend core library (`frontend/package.json`), agent coordination rule, or architectural approach **must reflexively update `workplan/governance.md`, `workplan/blueprint.md` (including the Cross-Agent Handoff Log when applicable), and `functions/tests/test_governance.py` in the same change**.
+- **Bidirectional Drift Enforcement (`functions/tests/test_governance.py`)**: Automated `pytest` assertions verify both that **code obeys governance** (lazy imports, `Protocol` conformance, seeded PRNG, `workplan/` file hygiene, `.gitignore` safety) and that **governance docs & multi-tool shims stay in sync with code** (every workflow, runtime version, secret, protocol, component model, frontend core stack dependency, `CODEOWNERS`, generated TypeScript contract snapshot, and agent entrypoint shim in the repo must stay aligned with `workplan/governance.md` and `workplan/blueprint.md`).
 
 ## CI/CD, Testing & Deployment
 - **Tools**: Managed via **GitHub Actions** (`.github/workflows/`), deploying to the `sesdc-toolkit2` Firebase project.
 - **Workflows**:
     - `firebase-dev-deploy.yml`: Automatically builds the frontend (`frontend/`) with `VITE_FIREBASE_*` secrets and deploys to Firebase Hosting (`--only hosting`) when changes are merged/pushed to the `test` branch.
     - `firebase-functions-deploy.yml`: Sets up a Python 3.13 virtual environment, installs `functions/requirements.txt`, and deploys Firebase Cloud Functions (`--only functions`) when changes modifying `functions/**` are merged/pushed to `test` or via manual `workflow_dispatch`.
-    - `e2e-emulators.yml`: Runs end-to-end (E2E) tests (`npm run test:e2e`) against the Firebase Auth and Firestore emulators on pushes and pull requests to `test`, or via manual `workflow_dispatch`.
+    - `e2e-emulators.yml`: Runs root Firestore/Auth emulator end-to-end (E2E) tests (`npm run test:e2e`) against the Firebase Auth and Firestore emulators on pushes and pull requests to `test`, or via manual `workflow_dispatch`. *(Note: Does not yet compile `frontend/` on PRs; adding a `frontend` `tsc -b && vite build` check is tracked for CI hardening).*
     - `functions-unit-tests.yml`: Runs backend Python unit tests (`pytest`) on pull requests to `test`, pushes to `test` modifying `functions/**`, or via manual `workflow_dispatch`.
-- **Testing Commands**:
-    - **Frontend Unit Tests**: `npm run test:unit` (`vitest run`).
+- **Testing & Build Commands**:
+    - **Frontend Typecheck & Production Build**: `cd frontend && npm run build` (`tsc -b && vite build`).
+    - **Root Vitest Runner (Firestore Rules/CRUD Suite)**: `npm run test:unit` (`vitest run` against `tests/*.ts`; requires running Auth/Firestore emulators—use `npm run test:e2e` for standalone execution).
     - **Emulator E2E Tests**: `npm run test:e2e` (or `npm run test:emulators` — runs `vitest` inside `firebase emulators:exec --only auth,firestore --project demo-sesdc-toolkit`). In local dev mode (`import.meta.env.DEV`), `window.FirestoreSmokeTest` is also available in the browser console.
     - **Backend Unit, Contract & Governance Tests**: `npm run test:functions` (or `cd functions && python -m pytest tests/ -v`).
 - **Required GitHub Secrets**: `FIREBASE_TOKEN` for Firebase CLI deployment authentication, along with `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, and `VITE_FIREBASE_APP_ID` for frontend builds.
